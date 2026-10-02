@@ -1,0 +1,142 @@
+/* 语义层：渲染层只消费 --c-* / --r-* / --font-*，它们一律从 100themes 生成的 --pf-* 派生。
+   基础样式里不写调色板色值（唯一例外见下面三条 mac-* 品牌常量与阴影里的中性 alpha）。 */
+
+:root {
+  color-scheme: light dark;
+
+  --c-surface: var(--pf-bg);
+  --c-chrome: var(--pf-bg-dark);
+  --c-deep: var(--pf-bg-darker);
+  --c-raised: var(--pf-bg-lighter);
+  --c-line: var(--pf-border);
+  --c-line-strong: var(--pf-border-strong);
+  --c-text: var(--pf-fg);
+  --c-text-dim: var(--pf-fg-dim);
+  --c-text-soft: var(--pf-fg-soft);
+  --c-text-strong: var(--pf-fg-strong);
+  --c-accent: var(--pf-accent);
+  --c-accent-fg: var(--pf-accent-fg);
+  --c-hover: var(--pf-hover);
+  --c-active: var(--pf-active);
+  --c-sel: var(--pf-selection);
+  --c-ok: var(--pf-success);
+  --c-err: var(--pf-danger);
+  --c-warn: var(--pf-warning);
+  --c-info: var(--pf-info);
+  --c-scroll: var(--pf-scrollbar);
+
+  /* 毛玻璃：菜单栏、Dock、启动台的半透明底都走这两个 */
+  --veil: color-mix(in srgb, var(--pf-bg) 52%, transparent);
+  --veil-strong: color-mix(in srgb, var(--pf-bg) 72%, transparent);
+  --glass-line: color-mix(in srgb, var(--pf-fg) 16%, transparent);
+
+  --r-win: 12px;
+  --r-lg: 10px;
+  --r-md: var(--pf-radius, 8px);
+  --r-sm: var(--pf-radius-sm, 6px);
+
+  --font-ui: system-ui, 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei', -apple-system, sans-serif;
+  --font-mono: var(--pf-font-mono, 'Cascadia Mono', Consolas, monospace);
+
+  --shadow-win: 0 22px 54px -16px color-mix(in srgb, var(--pf-bg-darker) 88%, transparent), 0 3px 12px -4px rgba(0, 0, 0, 0.45);
+  --shadow-pop: 0 16px 40px -12px color-mix(in srgb, var(--pf-bg-darker) 80%, transparent), 0 2px 8px -2px rgba(0, 0, 0, 0.35);
+
+  /* 窗口控制灯是 macOS 的品牌常量，不参与换肤：换色板时它们必须不变，否则用户学不到"红=关"。 */
+  --mac-close: #ff5f57;
+  --mac-min: #febc2e;
+  --mac-max: #28c840;
+}
+
+:root[data-mode='light'] {
+  color-scheme: light;
+}
+
+:root[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  /* 基准字号交给用户缩放（Ctrl +/−）与系统 DPI，页面整体走 zoomFactor 等比放大；
+     所以这里只保证不写死根字号，布局尺寸仍按 px 维护。 */
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+textarea,
+input,
+.plain-text,
+.md-text {
+  user-select: text;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+input {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-scroll);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-line-strong);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border: 1px solid var(--c-line);
+  background: var(--c-raised);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px
+  ;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -1,0 +1,30 @@
+{
+  "note": "本工程的渲染层只挂这 24 个主题（× 5 变体 = 120 个 [data-theme] 块）。raw/ 仍是 500 份全量种子，改清单后重跑 npm run themes 即可，不必回源。",
+  "source": "bjarneo/100-themes，名称必须与 manifest.json 的 themes 逐项一致",
+  "themes": [
+    "abyss",
+    "ambient",
+    "aurora",
+    "candy",
+    "cotton-candy",
+    "coral-reef",
+    "dawn",
+    "deep-space",
+    "dusk",
+    "espresso",
+    "glacier",
+    "lofi",
+    "matcha",
+    "miami-night",
+    "midnight",
+    "neon-tokyo",
+    "polaroid",
+    "sakura",
+    "stealth",
+    "synthwave",
+    "terminal-blue",
+    "tundra",
+    "vaporwave",
+    "watermelon"
+  ]
+}

@@ -1,0 +1,601 @@
+/* 桌面壳：壁纸、菜单栏、Dock、Spotlight、启动台、右键菜单 */
+
+.desktop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------- 壁纸：全部由色板 token 派生，换主题时壁纸跟着换调子 ---------- */
+
+.desktop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transition: opacity 0.5s ease;
+}
+
+.wall-sonoma::before {
+  background-image:
+    radial-gradient(60% 70% at 18% 22%, color-mix(in srgb, var(--c-accent) 55%, transparent), transparent 70%),
+    radial-gradient(55% 65% at 82% 18%, color-mix(in srgb, var(--c-info) 45%, transparent), transparent 72%),
+    radial-gradient(70% 80% at 62% 92%, color-mix(in srgb, var(--c-ok) 32%, transparent), transparent 70%),
+    linear-gradient(160deg, var(--c-chrome), var(--c-deep) 60%, var(--c-surface));
+  animation: wall-drift 34s ease-in-out infinite alternate;
+}
+
+.wall-sequoia::before {
+  background-image:
+    conic-gradient(from 210deg at 30% 70%, color-mix(in srgb, var(--c-accent) 42%, transparent), transparent 40%, color-mix(in srgb, var(--c-warn) 30%, transparent), transparent 70%),
+    radial-gradient(80% 60% at 70% 25%, color-mix(in srgb, var(--c-info) 38%, transparent), transparent 75%),
+    linear-gradient(200deg, var(--c-deep), var(--c-surface));
+  animation: wall-drift 46s ease-in-out infinite alternate-reverse;
+}
+
+.wall-bigsur::before {
+  background-image:
+    linear-gradient(115deg, transparent 12%, color-mix(in srgb, var(--c-accent) 38%, transparent) 46%, transparent 70%),
+    linear-gradient(245deg, color-mix(in srgb, var(--c-info) 34%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--c-chrome) 0%, var(--c-surface) 55%, var(--c-deep) 100%);
+}
+
+.wall-ventura::before {
+  background-image:
+    radial-gradient(42% 42% at 50% 42%, color-mix(in srgb, var(--c-accent) 72%, transparent), transparent 68%),
+    radial-gradient(90% 90% at 50% 120%, color-mix(in srgb, var(--c-raised) 60%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--c-deep), var(--c-chrome));
+  animation: wall-pulse 26s ease-in-out infinite alternate;
+}
+
+.wall-flat::before {
+  background-image: linear-gradient(180deg, var(--c-surface), var(--c-deep));
+}
+
+@keyframes wall-drift {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.06) translate3d(-1.5%, 1.2%, 0);
+  }
+}
+
+@keyframes wall-pulse {
+  from {
+    filter: saturate(1) brightness(1);
+  }
+  to {
+    filter: saturate(1.25) brightness(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desktop::before {
+    animation: none;
+  }
+}
+
+/* ---------- 菜单栏 ---------- */
+
+.menubar {
+  position: relative;
+  z-index: 40;
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  background: var(--veil);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border-bottom: 1px solid color-mix(in srgb, var(--c-line) 60%, transparent);
+  font-size: 13px;
+  color: var(--c-text-strong);
+}
+
+.mb-slot {
+  position: relative;
+  display: flex;
+}
+
+.mb-item {
+  padding: 3px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  color: inherit;
+}
+
+.mb-item:hover,
+.mb-item.is-open {
+  background: color-mix(in srgb, var(--c-accent) 88%, transparent);
+  color: var(--c-accent-fg);
+}
+
+.mb-apple {
+  padding: 2px 12px 2px 8px;
+  display: flex;
+  align-items: center;
+}
+
+.mb-app-name {
+  font-weight: 650;
+}
+
+.mb-spacer {
+  flex: 1 1 auto;
+}
+
+.mb-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.mb-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  border-radius: 5px;
+  color: var(--c-text-soft);
+}
+
+.mb-glyph:hover,
+.mb-glyph.is-open {
+  background: color-mix(in srgb, var(--c-accent) 88%, transparent);
+  color: var(--c-accent-fg);
+}
+
+.mb-clock {
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: var(--c-text-strong);
+}
+
+.mb-clock:hover {
+  background: var(--c-hover);
+}
+
+/* ---------- 下拉菜单 ---------- */
+
+.menu-pop {
+  position: absolute;
+  top: 30px;
+  min-width: 232px;
+  padding: 6px;
+  border-radius: var(--r-lg);
+  background: var(--veil-strong);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-pop);
+  z-index: 41;
+}
+
+.cc-pop {
+  left: auto;
+  right: 0;
+  width: 288px;
+  padding: 12px;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--c-text);
+}
+
+.menu-row:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--c-accent) 90%, transparent);
+  color: var(--c-accent-fg);
+}
+
+.menu-row:disabled {
+  color: var(--c-text-dim);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.menu-row .mr-key {
+  font-size: 11.5px;
+  color: var(--c-text-dim);
+}
+
+.menu-row:hover:not(:disabled) .mr-key {
+  color: color-mix(in srgb, var(--c-accent-fg) 80%, transparent);
+}
+
+.menu-sep {
+  height: 1px;
+  margin: 5px 8px;
+  background: var(--c-line);
+}
+
+.menu-caption {
+  padding: 4px 10px 2px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+/* ---------- 桌面图标 ---------- */
+
+.desk-icons {
+  position: absolute;
+  top: 40px;
+  right: 18px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 96px;
+}
+
+.desk-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  color: var(--c-text-strong);
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--c-deep) 90%, transparent);
+}
+
+.desk-icon:hover {
+  background: color-mix(in srgb, var(--c-accent) 26%, transparent);
+}
+
+.desk-icon .di-label {
+  font-size: 11.5px;
+  line-height: 1.25;
+  text-align: center;
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 工作区 ---------- */
+
+.desk-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  z-index: 2;
+}
+
+/* ---------- Dock ---------- */
+
+.dock-zone {
+  position: relative;
+  z-index: 30;
+  flex: 0 0 74px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dock-zone > * {
+  pointer-events: auto;
+}
+
+.dock-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-md);
+}
+
+/* 启动瞬间的弹跳：类名挂在 DockItem 上（Dock 把 className 透传给 .dock-item） */
+.dock-item.is-bounce {
+  animation: dock-bounce 0.62s cubic-bezier(0.3, 0.85, 0.35, 1);
+}
+
+@keyframes dock-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-16px);
+  }
+  62% {
+    transform: translateY(-5px);
+  }
+}
+
+.dock-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 6px 2px;
+  background: var(--c-line);
+}
+
+/* ---------- Spotlight ---------- */
+
+.spotlight-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--c-deep) 45%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.spotlight {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  z-index: 61;
+  width: min(620px, calc(100% - 48px));
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--veil-strong);
+  backdrop-filter: blur(34px) saturate(190%);
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-pop);
+}
+
+.spotlight-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--c-line);
+}
+
+.spotlight-input {
+  flex: 1 1 auto;
+  border: 0;
+  background: transparent;
+  font-size: 1.35rem;
+  font-weight: 400;
+  outline: none;
+  color: var(--c-text-strong);
+}
+
+.spotlight-input::placeholder {
+  color: var(--c-text-dim);
+  font-size: 1.15rem;
+}
+
+.spotlight-results {
+  max-height: 268px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.spotlight-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--c-text);
+}
+
+.spotlight-row:hover,
+.spotlight-row.is-on {
+  background: color-mix(in srgb, var(--c-accent) 90%, transparent);
+  color: var(--c-accent-fg);
+}
+
+.spotlight-row .sr-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.spotlight-row .sr-title {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotlight-row .sr-sub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--c-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotlight-row:hover .sr-sub,
+.spotlight-row.is-on .sr-sub {
+  color: color-mix(in srgb, var(--c-accent-fg) 78%, transparent);
+}
+
+.spotlight-empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--c-text-dim);
+}
+
+/* ---------- 启动台 ---------- */
+
+.launchpad {
+  position: absolute;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  background: color-mix(in srgb, var(--c-surface) 55%, transparent);
+  backdrop-filter: blur(34px) saturate(170%);
+  -webkit-backdrop-filter: blur(34px) saturate(170%);
+}
+
+.lp-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 26px 20px;
+  width: min(760px, calc(100% - 64px));
+}
+
+.lp-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--c-text-strong);
+}
+
+.lp-tile .lp-name {
+  font-size: 12.5px;
+  max-width: 108px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lp-tile:hover .lp-icon {
+  transform: scale(1.07);
+}
+
+.lp-tile .lp-icon {
+  transition: transform 0.18s ease;
+}
+
+.lp-search {
+  width: min(360px, 60%);
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-line);
+  background: color-mix(in srgb, var(--c-deep) 60%, transparent);
+  outline: none;
+  text-align: center;
+}
+
+/* ---------- 右键菜单 ---------- */
+
+.ctx-menu {
+  position: absolute;
+  z-index: 70;
+  min-width: 208px;
+  padding: 6px;
+  border-radius: var(--r-lg);
+  background: var(--veil-strong);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-pop);
+}
+
+/* ---------- 通用小部件 ---------- */
+
+.pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line);
+  background: var(--c-raised);
+  font-size: 12px;
+  color: var(--c-text-dim);
+}
+
+.text-btn {
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  background: var(--c-raised);
+  border: 1px solid var(--c-line);
+  color: var(--c-text);
+  font-size: 12.5px;
+}
+
+.text-btn:hover:not(:disabled) {
+  background: var(--c-hover);
+  border-color: var(--c-line-strong);
+}
+
+.text-btn.is-primary {
+  background: var(--c-accent);
+  border-color: transparent;
+  color: var(--c-accent-fg);
+}
+
+.text-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--c-deep) 65%, transparent);
+  border: 1px solid var(--c-line);
+}
+
+.seg-btn {
+  padding: 4px 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--c-text-dim);
+}
+
+.seg-btn.is-on {
+  background: var(--c-surface);
+  color: var(--c-text-strong);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+/* ---------- 空桌面提示与启动态 ---------- */
+
+.desk-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--c-text-soft);
+  background: var(--veil);
+  border: 1px solid var(--glass-line);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.boot-hint {
+  margin: auto;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--c-text-soft);
+  background: var(--veil-strong);
+  border: 1px solid var(--glass-line);
+}

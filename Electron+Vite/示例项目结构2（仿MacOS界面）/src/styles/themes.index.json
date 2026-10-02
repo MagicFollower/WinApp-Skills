@@ -1,0 +1,722 @@
+[
+  {
+    "id": "abyss--dark",
+    "theme": "abyss",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "abyss--day",
+    "theme": "abyss",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "abyss--day-high-contrast",
+    "theme": "abyss",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "abyss--high-contrast",
+    "theme": "abyss",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "abyss--oled",
+    "theme": "abyss",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "ambient--dark",
+    "theme": "ambient",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "ambient--day",
+    "theme": "ambient",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "ambient--day-high-contrast",
+    "theme": "ambient",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "ambient--high-contrast",
+    "theme": "ambient",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "ambient--oled",
+    "theme": "ambient",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "aurora--dark",
+    "theme": "aurora",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "aurora--day",
+    "theme": "aurora",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "aurora--day-high-contrast",
+    "theme": "aurora",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "aurora--high-contrast",
+    "theme": "aurora",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "aurora--oled",
+    "theme": "aurora",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "candy--dark",
+    "theme": "candy",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "candy--day",
+    "theme": "candy",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "candy--day-high-contrast",
+    "theme": "candy",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "candy--high-contrast",
+    "theme": "candy",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "candy--oled",
+    "theme": "candy",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "coral-reef--dark",
+    "theme": "coral-reef",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "coral-reef--day",
+    "theme": "coral-reef",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "coral-reef--day-high-contrast",
+    "theme": "coral-reef",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "coral-reef--high-contrast",
+    "theme": "coral-reef",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "coral-reef--oled",
+    "theme": "coral-reef",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "cotton-candy--dark",
+    "theme": "cotton-candy",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "cotton-candy--day",
+    "theme": "cotton-candy",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "cotton-candy--day-high-contrast",
+    "theme": "cotton-candy",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "cotton-candy--high-contrast",
+    "theme": "cotton-candy",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "cotton-candy--oled",
+    "theme": "cotton-candy",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "dawn--dark",
+    "theme": "dawn",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "dawn--day",
+    "theme": "dawn",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "dawn--day-high-contrast",
+    "theme": "dawn",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "dawn--high-contrast",
+    "theme": "dawn",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "dawn--oled",
+    "theme": "dawn",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "deep-space--dark",
+    "theme": "deep-space",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "deep-space--day",
+    "theme": "deep-space",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "deep-space--day-high-contrast",
+    "theme": "deep-space",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "deep-space--high-contrast",
+    "theme": "deep-space",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "deep-space--oled",
+    "theme": "deep-space",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "dusk--dark",
+    "theme": "dusk",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "dusk--day",
+    "theme": "dusk",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "dusk--day-high-contrast",
+    "theme": "dusk",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "dusk--high-contrast",
+    "theme": "dusk",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "dusk--oled",
+    "theme": "dusk",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "espresso--dark",
+    "theme": "espresso",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "espresso--day",
+    "theme": "espresso",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "espresso--day-high-contrast",
+    "theme": "espresso",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "espresso--high-contrast",
+    "theme": "espresso",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "espresso--oled",
+    "theme": "espresso",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "glacier--dark",
+    "theme": "glacier",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "glacier--day",
+    "theme": "glacier",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "glacier--day-high-contrast",
+    "theme": "glacier",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "glacier--high-contrast",
+    "theme": "glacier",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "glacier--oled",
+    "theme": "glacier",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "lofi--dark",
+    "theme": "lofi",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "lofi--day",
+    "theme": "lofi",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "lofi--day-high-contrast",
+    "theme": "lofi",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "lofi--high-contrast",
+    "theme": "lofi",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "lofi--oled",
+    "theme": "lofi",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "matcha--dark",
+    "theme": "matcha",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "matcha--day",
+    "theme": "matcha",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "matcha--day-high-contrast",
+    "theme": "matcha",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "matcha--high-contrast",
+    "theme": "matcha",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "matcha--oled",
+    "theme": "matcha",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "miami-night--dark",
+    "theme": "miami-night",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "miami-night--day",
+    "theme": "miami-night",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "miami-night--day-high-contrast",
+    "theme": "miami-night",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "miami-night--high-contrast",
+    "theme": "miami-night",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "miami-night--oled",
+    "theme": "miami-night",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "midnight--dark",
+    "theme": "midnight",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "midnight--day",
+    "theme": "midnight",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "midnight--day-high-contrast",
+    "theme": "midnight",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "midnight--high-contrast",
+    "theme": "midnight",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "midnight--oled",
+    "theme": "midnight",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "neon-tokyo--dark",
+    "theme": "neon-tokyo",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "neon-tokyo--day",
+    "theme": "neon-tokyo",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "neon-tokyo--day-high-contrast",
+    "theme": "neon-tokyo",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "neon-tokyo--high-contrast",
+    "theme": "neon-tokyo",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "neon-tokyo--oled",
+    "theme": "neon-tokyo",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "polaroid--dark",
+    "theme": "polaroid",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "polaroid--day",
+    "theme": "polaroid",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "polaroid--day-high-contrast",
+    "theme": "polaroid",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "polaroid--high-contrast",
+    "theme": "polaroid",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "polaroid--oled",
+    "theme": "polaroid",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "sakura--dark",
+    "theme": "sakura",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "sakura--day",
+    "theme": "sakura",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "sakura--day-high-contrast",
+    "theme": "sakura",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "sakura--high-contrast",
+    "theme": "sakura",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "sakura--oled",
+    "theme": "sakura",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "stealth--dark",
+    "theme": "stealth",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "stealth--day",
+    "theme": "stealth",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "stealth--day-high-contrast",
+    "theme": "stealth",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "stealth--high-contrast",
+    "theme": "stealth",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "stealth--oled",
+    "theme": "stealth",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "synthwave--dark",
+    "theme": "synthwave",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "synthwave--day",
+    "theme": "synthwave",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "synthwave--day-high-contrast",
+    "theme": "synthwave",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "synthwave--high-contrast",
+    "theme": "synthwave",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "synthwave--oled",
+    "theme": "synthwave",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "terminal-blue--dark",
+    "theme": "terminal-blue",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "terminal-blue--day",
+    "theme": "terminal-blue",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "terminal-blue--day-high-contrast",
+    "theme": "terminal-blue",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "terminal-blue--high-contrast",
+    "theme": "terminal-blue",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "terminal-blue--oled",
+    "theme": "terminal-blue",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "tundra--dark",
+    "theme": "tundra",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "tundra--day",
+    "theme": "tundra",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "tundra--day-high-contrast",
+    "theme": "tundra",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "tundra--high-contrast",
+    "theme": "tundra",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "tundra--oled",
+    "theme": "tundra",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "vaporwave--dark",
+    "theme": "vaporwave",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "vaporwave--day",
+    "theme": "vaporwave",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "vaporwave--day-high-contrast",
+    "theme": "vaporwave",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "vaporwave--high-contrast",
+    "theme": "vaporwave",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "vaporwave--oled",
+    "theme": "vaporwave",
+    "variant": "oled",
+    "mode": "dark"
+  },
+  {
+    "id": "watermelon--dark",
+    "theme": "watermelon",
+    "variant": "dark",
+    "mode": "dark"
+  },
+  {
+    "id": "watermelon--day",
+    "theme": "watermelon",
+    "variant": "day",
+    "mode": "light"
+  },
+  {
+    "id": "watermelon--day-high-contrast",
+    "theme": "watermelon",
+    "variant": "day-high-contrast",
+    "mode": "light"
+  },
+  {
+    "id": "watermelon--high-contrast",
+    "theme": "watermelon",
+    "variant": "high-contrast",
+    "mode": "dark"
+  },
+  {
+    "id": "watermelon--oled",
+    "theme": "watermelon",
+    "variant": "oled",
+    "mode": "dark"
+  }
+]

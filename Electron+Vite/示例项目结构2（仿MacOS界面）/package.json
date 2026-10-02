@@ -1,0 +1,33 @@
+{
+  "name": "macos-desktop-demo",
+  "productName": "MacOSDesktopDemo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "仿 macOS 桌面示例：菜单栏 + Dock 放大镜 + 应用窗口 + Spotlight + 启动台，接 100themes 24 套色板并随明暗翻转",
+  "main": "dist-electron/main.js",
+  "author": "local",
+  "license": "UNLICENSED",
+  "scripts": {
+    "ensure-electron": "install-electron",
+    "dev": "node bin/dev.mjs",
+    "build": "node bin/build.mjs",
+    "dist": "node bin/build.mjs && electron-builder --win",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p electron/tsconfig.json",
+    "themes": "node bin/gen-themes.mjs",
+    "themes:offline": "node bin/gen-themes.mjs --offline",
+    "themes:seed": "node bin/gen-themes.mjs --fetch-only"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "electron": "44.5.1",
+    "electron-builder": "^26.15.3",
+    "motion": "^13.5.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^5.9.0",
+    "vite": "^8.3.2"
+  }
+}

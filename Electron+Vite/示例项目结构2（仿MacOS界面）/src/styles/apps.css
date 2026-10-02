@@ -1,0 +1,507 @@
+/* 三个应用 + 主题面板 + 关于本机 */
+
+.app-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--c-line);
+  background: color-mix(in srgb, var(--c-chrome) 82%, transparent);
+  font-size: 12.5px;
+  color: var(--c-text-dim);
+}
+
+.app-toolbar .tb-spacer {
+  flex: 1 1 auto;
+}
+
+.crumb {
+  font-size: 12.5px;
+  color: var(--c-text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+/* ---------- 访达 ---------- */
+
+.finder {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.finder-side {
+  flex: 0 0 176px;
+  overflow-y: auto;
+  padding: 10px 8px;
+  background: color-mix(in srgb, var(--c-chrome) 72%, transparent);
+  border-right: 1px solid var(--c-line);
+}
+
+.fs-caption {
+  padding: 6px 8px 3px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+
+.fs-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--c-text);
+  text-align: left;
+}
+
+.fs-item span.fi-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fs-item:hover {
+  background: var(--c-hover);
+}
+
+.fs-item.is-on {
+  background: color-mix(in srgb, var(--c-accent) 88%, transparent);
+  color: var(--c-accent-fg);
+}
+
+.fs-note {
+  padding: 2px 8px 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--c-text-dim);
+}
+
+.finder-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.finder-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--c-line) 45%, transparent);
+  font-size: 13px;
+}
+
+.finder-row:hover {
+  background: var(--c-hover);
+}
+
+.finder-row.is-sel {
+  background: color-mix(in srgb, var(--c-accent) 82%, transparent);
+  color: var(--c-accent-fg);
+}
+
+.finder-row .fr-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.finder-row .fr-size {
+  flex: 0 0 84px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.finder-row.is-sel .fr-size {
+  color: color-mix(in srgb, var(--c-accent-fg) 80%, transparent);
+}
+
+.finder-row .fr-date {
+  flex: 0 0 116px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--c-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.finder-row.is-sel .fr-date {
+  color: color-mix(in srgb, var(--c-accent-fg) 80%, transparent);
+}
+
+.finder-head {
+  display: flex;
+  gap: 10px;
+  padding: 5px 14px;
+  border-bottom: 1px solid var(--c-line);
+  font-size: 11.5px;
+  color: var(--c-text-dim);
+  position: sticky;
+  top: 0;
+  background: var(--c-surface);
+  z-index: 1;
+}
+
+.finder-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--c-text-dim);
+}
+
+.plain-text {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 14px 16px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--c-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--c-surface);
+}
+
+/* ---------- 备忘录 ---------- */
+
+.notes {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.notes-list {
+  flex: 0 0 208px;
+  min-height: 0;
+  border-right: 1px solid var(--c-line);
+  background: color-mix(in srgb, var(--c-chrome) 66%, transparent);
+}
+
+.notes-list .item {
+  padding: 9px 11px;
+}
+
+.notes-editor {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  resize: none;
+  outline: none;
+  padding: 16px 18px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.notes-status {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  border-top: 1px solid var(--c-line);
+  font-size: 11.5px;
+  color: var(--c-text-dim);
+}
+
+.notes-status .st-ok {
+  color: var(--c-ok);
+}
+
+.notes-status .st-err {
+  color: var(--c-err);
+}
+
+/* ---------- 计算器 ---------- */
+
+.calc {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--c-deep);
+}
+
+.calc-display {
+  padding: 18px 18px 10px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 300;
+  color: var(--c-text-strong);
+  overflow: hidden;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-hint {
+  padding: 0 18px 8px;
+  text-align: right;
+  font-size: 11.5px;
+  color: var(--c-text-dim);
+  min-height: 18px;
+}
+
+.calc-grid {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: color-mix(in srgb, var(--c-line) 40%, transparent);
+  border-top: 1px solid var(--c-line);
+}
+
+.calc-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  background: var(--c-chrome);
+  color: var(--c-text-strong);
+  padding: 0;
+}
+
+.calc-key:hover {
+  background: var(--c-hover);
+}
+
+.calc-key:active {
+  background: var(--c-active);
+}
+
+.calc-key.op {
+  background: color-mix(in srgb, var(--c-warn) 26%, var(--c-chrome));
+}
+
+.calc-key.eq {
+  background: var(--c-accent);
+  color: var(--c-accent-fg);
+}
+
+.calc-key.fn {
+  background: color-mix(in srgb, var(--c-raised) 70%, var(--c-chrome));
+}
+
+.calc-key.is-wide {
+  grid-column: span 2;
+}
+
+.calc-key.is-on {
+  outline: 2px solid var(--c-accent);
+  outline-offset: -2px;
+}
+
+/* ---------- 主题面板 ---------- */
+
+.theme-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 18px;
+}
+
+.tp-block {
+  margin-bottom: 18px;
+}
+
+.tp-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+  font-weight: 600;
+}
+
+.tp-note {
+  font-size: 11.5px;
+  color: var(--c-text-dim);
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+
+.tp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tp-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line);
+  background: var(--c-raised);
+  font-size: 12.5px;
+  color: var(--c-text);
+}
+
+.tp-chip.is-on {
+  background: var(--c-accent);
+  border-color: transparent;
+  color: var(--c-accent-fg);
+}
+
+.tp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+.tp-card {
+  position: relative;
+  padding: 8px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-line);
+  background: var(--c-raised);
+  text-align: left;
+  overflow: hidden;
+}
+
+.tp-card:hover {
+  border-color: var(--c-line-strong);
+  background: var(--c-hover);
+}
+
+.tp-card.is-on {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 1px var(--c-accent) inset;
+}
+
+.tp-swatches {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 7px;
+}
+
+.tp-swatch {
+  flex: 1 1 0;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--c-line) 70%, transparent);
+}
+
+.tp-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tp-meta {
+  display: block;
+  font-size: 10.5px;
+  color: var(--c-text-dim);
+}
+
+.tp-card .tp-mode {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-deep) 70%, transparent);
+  color: var(--c-text-soft);
+}
+
+/* ---------- 关于本机 ---------- */
+
+.about-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.about-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+  border-radius: 20px;
+  background: var(--c-accent);
+  color: var(--c-accent-fg);
+  box-shadow: var(--shadow-pop);
+}
+
+.about-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--c-text-strong);
+}
+
+.about-dl {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 14px;
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.about-dl dt {
+  color: var(--c-text-dim);
+  text-align: right;
+}
+
+.about-dl dd {
+  margin: 0;
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+/* ---------- 图标底座 ---------- */
+
+.app-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+/* 小间距工具类：只在主题面板/控制中心里用，避免到处写 inline marginTop */
+.mt {
+  margin-top: 12px;
+}

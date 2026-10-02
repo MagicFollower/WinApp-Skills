@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-electron/
+release/
+_share/
+*.log
+*-out.txt
+*-err.txt

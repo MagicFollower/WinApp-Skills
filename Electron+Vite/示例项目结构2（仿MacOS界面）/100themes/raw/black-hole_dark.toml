@@ -1,0 +1,34 @@
+mode = "dark"
+
+accent = "#c47ce1"
+selection = "#382340"
+muted = "#6e5f63"
+
+background = "#010101"
+dark_background = "#010101"
+darker_background = "#010101"
+lighter_background = "#070707"
+
+foreground = "#efe5e7"
+dark_foreground = "#9c9597"
+light_foreground = "#d3c7ca"
+bright_foreground = "#fdf9fa"
+
+hyprland_active_border = "rgba(1be6edee) rgba(c47ce1ee) 45deg"
+hyprland_inactive_border = "rgba(6e5f63aa)"
+
+red = "#e3655b"
+yellow = "#fee88c"
+orange = "#fba658"
+green = "#74e086"
+cyan = "#1be6ed"
+blue = "#4a83e5"
+magenta = "#c47ce1"
+brown = "#7e532c"
+
+bright_red = "#f49288"
+bright_yellow = "#fff9df"
+bright_green = "#adfbb7"
+bright_cyan = "#affbfe"
+bright_blue = "#78a5f0"
+bright_magenta = "#dba6f2"

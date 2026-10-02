@@ -1,0 +1,3013 @@
+/* 由 bin/gen-themes.mjs 自动生成，数据源 bjarneo/100-themes@main，种子 100themes/raw。
+   白名单 100themes/preset.json，主题数 120，取用失败 0 个变体。不要手工编辑。 */
+
+:root {
+  --pf-radius: 8px;
+  --pf-radius-sm: 6px;
+  --pf-gap: 10px;
+  --pf-gap-sm: 6px;
+  --pf-pane-left: 200px;
+  --pf-pane-mid: 300px;
+  --pf-font: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", system-ui, sans-serif;
+  --pf-font-mono: "Cascadia Mono", Consolas, "Microsoft YaHei Mono", monospace;
+}
+
+[data-theme="abyss--dark"] {
+  --pf-bg: #000614;
+  --pf-bg-dark: #00050f;
+  --pf-bg-darker: #00030a;
+  --pf-bg-lighter: #021322;
+  --pf-fg: #e2e9f0;
+  --pf-fg-dim: #939aa3;
+  --pf-fg-soft: #c3ccd4;
+  --pf-fg-strong: #f7fafd;
+  --pf-accent: #8593fd;
+  --pf-selection: #252d55;
+  --pf-muted: #456783;
+  --pf-danger: #008380;
+  --pf-success: #05d6ad;
+  --pf-warning: #b2f1fe;
+  --pf-info: #2288e8;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(69, 103, 131, 0.38);
+  --pf-border-strong: rgba(69, 103, 131, 0.6);
+  --pf-hover: rgb(14, 20, 33);
+  --pf-active: rgb(27, 33, 46);
+  --pf-scrollbar: rgba(69, 103, 131, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="abyss--day"] {
+  --pf-bg: #f2f7fc;
+  --pf-bg-dark: #e2edf7;
+  --pf-bg-darker: #d5e0e9;
+  --pf-bg-lighter: #d7e5f2;
+  --pf-fg: #182836;
+  --pf-fg-dim: #647481;
+  --pf-fg-soft: #3a4a57;
+  --pf-fg-strong: #081520;
+  --pf-accent: #545ccb;
+  --pf-selection: #cfd5f1;
+  --pf-muted: #96a7b7;
+  --pf-danger: #047270;
+  --pf-success: #05856b;
+  --pf-warning: #009ab0;
+  --pf-info: #0064b5;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(150, 167, 183, 0.38);
+  --pf-border-strong: rgba(150, 167, 183, 0.6);
+  --pf-hover: rgb(229, 235, 240);
+  --pf-active: rgb(216, 222, 228);
+  --pf-scrollbar: rgba(150, 167, 183, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="abyss--day-high-contrast"] {
+  --pf-bg: #fefdfc;
+  --pf-bg-dark: #ebf3fa;
+  --pf-bg-darker: #dee6ec;
+  --pf-bg-lighter: #e3edf5;
+  --pf-fg: #000a16;
+  --pf-fg-dim: #4c5760;
+  --pf-fg-soft: #262f37;
+  --pf-fg-strong: #010203;
+  --pf-accent: #454ab7;
+  --pf-selection: #d0d0eb;
+  --pf-muted: #667785;
+  --pf-danger: #086260;
+  --pf-success: #066450;
+  --pf-warning: #0c606d;
+  --pf-info: #0559a0;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(102, 119, 133, 0.38);
+  --pf-border-strong: rgba(102, 119, 133, 0.6);
+  --pf-hover: rgb(239, 238, 238);
+  --pf-active: rgb(224, 224, 224);
+  --pf-scrollbar: rgba(102, 119, 133, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="abyss--high-contrast"] {
+  --pf-bg: #000208;
+  --pf-bg-dark: #000106;
+  --pf-bg-darker: #000103;
+  --pf-bg-lighter: #00182b;
+  --pf-fg: #f1f6fa;
+  --pf-fg-dim: #a6afb7;
+  --pf-fg-soft: #d8dfe6;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #8593fd;
+  --pf-selection: #333965;
+  --pf-muted: #6284a2;
+  --pf-danger: #02b5b2;
+  --pf-success: #05d6ad;
+  --pf-warning: #82e9fe;
+  --pf-info: #49a2fe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(98, 132, 162, 0.38);
+  --pf-border-strong: rgba(98, 132, 162, 0.6);
+  --pf-hover: rgb(14, 17, 23);
+  --pf-active: rgb(29, 31, 37);
+  --pf-scrollbar: rgba(98, 132, 162, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="abyss--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #000c1e;
+  --pf-fg: #e2e9f0;
+  --pf-fg-dim: #8c9095;
+  --pf-fg-soft: #c3ccd4;
+  --pf-fg-strong: #f7fafd;
+  --pf-accent: #8593fd;
+  --pf-selection: #282c4c;
+  --pf-muted: #456783;
+  --pf-danger: #008380;
+  --pf-success: #05d6ad;
+  --pf-warning: #b2f1fe;
+  --pf-info: #2288e8;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(69, 103, 131, 0.38);
+  --pf-border-strong: rgba(69, 103, 131, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(27, 28, 29);
+  --pf-scrollbar: rgba(69, 103, 131, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="ambient--dark"] {
+  --pf-bg: #0b181c;
+  --pf-bg-dark: #081215;
+  --pf-bg-darker: #060c0e;
+  --pf-bg-lighter: #19262b;
+  --pf-fg: #e0eaed;
+  --pf-fg-dim: #95a1a4;
+  --pf-fg-soft: #c0cdd1;
+  --pf-fg-strong: #f7fbfc;
+  --pf-accent: #c6b2ea;
+  --pf-selection: #3f4356;
+  --pf-muted: #496973;
+  --pf-danger: #e6a3a8;
+  --pf-success: #9cdbb9;
+  --pf-warning: #f4dca1;
+  --pf-info: #7fb9de;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(73, 105, 115, 0.38);
+  --pf-border-strong: rgba(73, 105, 115, 0.6);
+  --pf-hover: rgb(24, 37, 41);
+  --pf-active: rgb(37, 49, 53);
+  --pf-scrollbar: rgba(73, 105, 115, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="ambient--day"] {
+  --pf-bg: #edf5f8;
+  --pf-bg-dark: #e2e9ec;
+  --pf-bg-darker: #d5dcdf;
+  --pf-bg-lighter: #d8e2e5;
+  --pf-fg: #1a292e;
+  --pf-fg-dim: #667479;
+  --pf-fg-soft: #3c4a4f;
+  --pf-fg-strong: #09161a;
+  --pf-accent: #826fa3;
+  --pf-selection: #d5d8e5;
+  --pf-muted: #98a8ad;
+  --pf-danger: #a4666c;
+  --pf-success: #528f70;
+  --pf-warning: #a79057;
+  --pf-info: #3f799a;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(152, 168, 173, 0.38);
+  --pf-border-strong: rgba(152, 168, 173, 0.6);
+  --pf-hover: rgb(224, 233, 236);
+  --pf-active: rgb(212, 221, 224);
+  --pf-scrollbar: rgba(152, 168, 173, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="ambient--day-high-contrast"] {
+  --pf-bg: #fefdfd;
+  --pf-bg-dark: #eef3f5;
+  --pf-bg-darker: #e0e5e7;
+  --pf-bg-lighter: #e6ecef;
+  --pf-fg: #010b0f;
+  --pf-fg-dim: #49585d;
+  --pf-fg-soft: #233035;
+  --pf-fg-strong: #000203;
+  --pf-accent: #614f7f;
+  --pf-selection: #d7d2de;
+  --pf-muted: #68777d;
+  --pf-danger: #81474d;
+  --pf-success: #256346;
+  --pf-warning: #6b551b;
+  --pf-info: #225d7d;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(104, 119, 125, 0.38);
+  --pf-border-strong: rgba(104, 119, 125, 0.6);
+  --pf-hover: rgb(239, 238, 239);
+  --pf-active: rgb(224, 224, 224);
+  --pf-scrollbar: rgba(104, 119, 125, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="ambient--high-contrast"] {
+  --pf-bg: #000203;
+  --pf-bg-dark: #000102;
+  --pf-bg-darker: #000101;
+  --pf-bg-lighter: #04191f;
+  --pf-fg: #f0f6f9;
+  --pf-fg-dim: #a4b0b5;
+  --pf-fg-soft: #d6e0e3;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #c6b2ea;
+  --pf-selection: #4b455b;
+  --pf-muted: #668691;
+  --pf-danger: #e6a3a8;
+  --pf-success: #9cdbb9;
+  --pf-warning: #eed59b;
+  --pf-info: #7fb9de;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(102, 134, 145, 0.38);
+  --pf-border-strong: rgba(102, 134, 145, 0.6);
+  --pf-hover: rgb(14, 17, 18);
+  --pf-active: rgb(29, 31, 33);
+  --pf-scrollbar: rgba(102, 134, 145, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="ambient--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #000e14;
+  --pf-fg: #e0eaed;
+  --pf-fg-dim: #8b9193;
+  --pf-fg-soft: #c0cdd1;
+  --pf-fg-strong: #f7fbfc;
+  --pf-accent: #c6b2ea;
+  --pf-selection: #3b3546;
+  --pf-muted: #496973;
+  --pf-danger: #e6a3a8;
+  --pf-success: #9cdbb9;
+  --pf-warning: #f4dca1;
+  --pf-info: #7fb9de;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(73, 105, 115, 0.38);
+  --pf-border-strong: rgba(73, 105, 115, 0.6);
+  --pf-hover: rgb(13, 14, 14);
+  --pf-active: rgb(27, 28, 28);
+  --pf-scrollbar: rgba(73, 105, 115, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="aurora--dark"] {
+  --pf-bg: #000506;
+  --pf-bg-dark: #000405;
+  --pf-bg-darker: #000303;
+  --pf-bg-lighter: #001111;
+  --pf-fg: #dfeaea;
+  --pf-fg-dim: #919a9a;
+  --pf-fg-soft: #c0cecd;
+  --pf-fg-strong: #f6fbfb;
+  --pf-accent: #b77bfe;
+  --pf-selection: #33264b;
+  --pf-muted: #356e6e;
+  --pf-danger: #0caf4b;
+  --pf-success: #15e6a8;
+  --pf-warning: #d5fc10;
+  --pf-info: #0096af;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(53, 110, 110, 0.38);
+  --pf-border-strong: rgba(53, 110, 110, 0.6);
+  --pf-hover: rgb(13, 19, 20);
+  --pf-active: rgb(27, 32, 33);
+  --pf-scrollbar: rgba(53, 110, 110, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="aurora--day"] {
+  --pf-bg: #eafbfa;
+  --pf-bg-dark: #deefef;
+  --pf-bg-darker: #d1e2e2;
+  --pf-bg-lighter: #d2e8e8;
+  --pf-fg: #0f2c2c;
+  --pf-fg-dim: #5f7777;
+  --pf-fg-soft: #344d4d;
+  --pf-fg-strong: #021818;
+  --pf-accent: #9037e1;
+  --pf-selection: #d6d0f5;
+  --pf-muted: #90abaa;
+  --pf-danger: #048939;
+  --pf-success: #0d8963;
+  --pf-warning: #80990b;
+  --pf-info: #0e6f81;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(144, 171, 170, 0.38);
+  --pf-border-strong: rgba(144, 171, 170, 0.6);
+  --pf-hover: rgb(221, 239, 238);
+  --pf-active: rgb(208, 226, 225);
+  --pf-scrollbar: rgba(144, 171, 170, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="aurora--day-high-contrast"] {
+  --pf-bg: #fbfefe;
+  --pf-bg-dark: #e9f4f4;
+  --pf-bg-darker: #dce7e7;
+  --pf-bg-lighter: #e0efee;
+  --pf-fg: #000d0d;
+  --pf-fg-dim: #495959;
+  --pf-fg-soft: #223131;
+  --pf-fg-strong: #000202;
+  --pf-accent: #7f1bcc;
+  --pf-selection: #dcc5f2;
+  --pf-muted: #607a7a;
+  --pf-danger: #036629;
+  --pf-success: #006548;
+  --pf-warning: #4e5d05;
+  --pf-info: #026172;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(96, 122, 122, 0.38);
+  --pf-border-strong: rgba(96, 122, 122, 0.6);
+  --pf-hover: rgb(236, 240, 240);
+  --pf-active: rgb(221, 225, 225);
+  --pf-scrollbar: rgba(96, 122, 122, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="aurora--high-contrast"] {
+  --pf-bg: #000303;
+  --pf-bg-dark: #000202;
+  --pf-bg-darker: #000101;
+  --pf-bg-lighter: #001b1b;
+  --pf-fg: #eff7f7;
+  --pf-fg-dim: #a4b1b1;
+  --pf-fg-soft: #d5e1e0;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #b77bfe;
+  --pf-selection: #463162;
+  --pf-muted: #538c8b;
+  --pf-danger: #12be53;
+  --pf-success: #15e6a8;
+  --pf-warning: #c6ea00;
+  --pf-info: #19b1cd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(83, 140, 139, 0.38);
+  --pf-border-strong: rgba(83, 140, 139, 0.6);
+  --pf-hover: rgb(14, 18, 18);
+  --pf-active: rgb(29, 32, 32);
+  --pf-scrollbar: rgba(83, 140, 139, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="aurora--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #000f0f;
+  --pf-fg: #dfeaea;
+  --pf-fg-dim: #8a9191;
+  --pf-fg-soft: #c0cecd;
+  --pf-fg-strong: #f6fbfb;
+  --pf-accent: #b77bfe;
+  --pf-selection: #37254c;
+  --pf-muted: #356e6e;
+  --pf-danger: #0caf4b;
+  --pf-success: #15e6a8;
+  --pf-warning: #d5fc10;
+  --pf-info: #0096af;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(53, 110, 110, 0.38);
+  --pf-border-strong: rgba(53, 110, 110, 0.6);
+  --pf-hover: rgb(13, 14, 14);
+  --pf-active: rgb(27, 28, 28);
+  --pf-scrollbar: rgba(53, 110, 110, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="candy--dark"] {
+  --pf-bg: #1c0712;
+  --pf-bg-dark: #15050e;
+  --pf-bg-darker: #0e0409;
+  --pf-bg-lighter: #2b1520;
+  --pf-fg: #efe5e9;
+  --pf-fg-dim: #a5979e;
+  --pf-fg-soft: #d3c7cc;
+  --pf-fg-strong: #fdf9fa;
+  --pf-accent: #ff93e1;
+  --pf-selection: #5c2e4c;
+  --pf-muted: #7e5568;
+  --pf-danger: #fd93a9;
+  --pf-success: #37ef8a;
+  --pf-warning: #fedb72;
+  --pf-info: #99abfd;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(126, 85, 104, 0.38);
+  --pf-border-strong: rgba(126, 85, 104, 0.6);
+  --pf-hover: rgb(41, 20, 31);
+  --pf-active: rgb(53, 34, 44);
+  --pf-scrollbar: rgba(126, 85, 104, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="candy--day"] {
+  --pf-bg: #feeff5;
+  --pf-bg-dark: #f2e3e9;
+  --pf-bg-darker: #e5d6dc;
+  --pf-bg-lighter: #eddae2;
+  --pf-fg: #332029;
+  --pf-fg-dim: #7f6b74;
+  --pf-fg-soft: #55414a;
+  --pf-fg-strong: #1e0e16;
+  --pf-accent: #c03ca2;
+  --pf-selection: #f0c8e3;
+  --pf-muted: #b49da7;
+  --pf-danger: #d33066;
+  --pf-success: #0d9953;
+  --pf-warning: #b18e00;
+  --pf-info: #515ee3;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(180, 157, 167, 0.38);
+  --pf-border-strong: rgba(180, 157, 167, 0.6);
+  --pf-hover: rgb(242, 227, 233);
+  --pf-active: rgb(230, 214, 221);
+  --pf-scrollbar: rgba(180, 157, 167, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="candy--day-high-contrast"] {
+  --pf-bg: #fffdfe;
+  --pf-bg-dark: #f9eff3;
+  --pf-bg-darker: #ebe1e6;
+  --pf-bg-lighter: #f4e7ed;
+  --pf-fg: #13040b;
+  --pf-fg-dim: #5e5157;
+  --pf-fg-soft: #362a2f;
+  --pf-fg-strong: #030102;
+  --pf-accent: #9f1585;
+  --pf-selection: #e7c3e0;
+  --pf-muted: #846f78;
+  --pf-danger: #b0004c;
+  --pf-success: #096535;
+  --pf-warning: #6c5500;
+  --pf-info: #3f46ca;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(132, 111, 120, 0.38);
+  --pf-border-strong: rgba(132, 111, 120, 0.6);
+  --pf-hover: rgb(241, 238, 239);
+  --pf-active: rgb(227, 223, 225);
+  --pf-scrollbar: rgba(132, 111, 120, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="candy--high-contrast"] {
+  --pf-bg: #050002;
+  --pf-bg-dark: #040001;
+  --pf-bg-darker: #020001;
+  --pf-bg-lighter: #260b19;
+  --pf-fg: #faf3f6;
+  --pf-fg-dim: #b6aaaf;
+  --pf-fg-soft: #e5dbdf;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #ff93e1;
+  --pf-selection: #643857;
+  --pf-muted: #9c7285;
+  --pf-danger: #fd93a9;
+  --pf-success: #37ef8a;
+  --pf-warning: #ffd343;
+  --pf-info: #99abfd;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(156, 114, 133, 0.38);
+  --pf-border-strong: rgba(156, 114, 133, 0.6);
+  --pf-hover: rgb(20, 15, 17);
+  --pf-active: rgb(34, 29, 31);
+  --pf-scrollbar: rgba(156, 114, 133, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="candy--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #19020e;
+  --pf-fg: #efe5e9;
+  --pf-fg-dim: #948e90;
+  --pf-fg-soft: #d3c7cc;
+  --pf-fg-strong: #fdf9fa;
+  --pf-accent: #ff93e1;
+  --pf-selection: #4d2c44;
+  --pf-muted: #7e5568;
+  --pf-danger: #fd93a9;
+  --pf-success: #37ef8a;
+  --pf-warning: #fedb72;
+  --pf-info: #99abfd;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(126, 85, 104, 0.38);
+  --pf-border-strong: rgba(126, 85, 104, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(29, 27, 28);
+  --pf-scrollbar: rgba(126, 85, 104, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="coral-reef--dark"] {
+  --pf-bg: #000a0c;
+  --pf-bg-dark: #000809;
+  --pf-bg-darker: #000506;
+  --pf-bg-lighter: #00181a;
+  --pf-fg: #dfeaeb;
+  --pf-fg-dim: #919c9d;
+  --pf-fg-soft: #c0cece;
+  --pf-fg-strong: #f6fbfb;
+  --pf-accent: #fe4fb6;
+  --pf-selection: #471d3c;
+  --pf-muted: #356e71;
+  --pf-danger: #fe404c;
+  --pf-success: #01e5b0;
+  --pf-warning: #ffe4bc;
+  --pf-info: #1296ab;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(53, 110, 113, 0.38);
+  --pf-border-strong: rgba(53, 110, 113, 0.6);
+  --pf-hover: rgb(13, 23, 25);
+  --pf-active: rgb(27, 37, 39);
+  --pf-scrollbar: rgba(53, 110, 113, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="coral-reef--day"] {
+  --pf-bg: #eafbfc;
+  --pf-bg-dark: #deeff0;
+  --pf-bg-darker: #d1e2e3;
+  --pf-bg-lighter: #d2e8e9;
+  --pf-fg: #0f2b2d;
+  --pf-fg-dim: #5f7778;
+  --pf-fg-soft: #344d4e;
+  --pf-fg-strong: #021819;
+  --pf-accent: #c70288;
+  --pf-selection: #e2c4e2;
+  --pf-muted: #90abac;
+  --pf-danger: #d4052d;
+  --pf-success: #0d8969;
+  --pf-warning: #b78010;
+  --pf-info: #09707f;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(144, 171, 172, 0.38);
+  --pf-border-strong: rgba(144, 171, 172, 0.6);
+  --pf-hover: rgb(221, 239, 240);
+  --pf-active: rgb(208, 226, 227);
+  --pf-scrollbar: rgba(144, 171, 172, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="coral-reef--day-high-contrast"] {
+  --pf-bg: #fbfefe;
+  --pf-bg-dark: #e9f4f5;
+  --pf-bg-darker: #dce7e8;
+  --pf-bg-lighter: #e0efef;
+  --pf-fg: #000c0e;
+  --pf-fg-dim: #49595a;
+  --pf-fg-soft: #223132;
+  --pf-fg-strong: #000202;
+  --pf-accent: #a90072;
+  --pf-selection: #e7bfdb;
+  --pf-muted: #607a7b;
+  --pf-danger: #b30224;
+  --pf-success: #00634b;
+  --pf-warning: #765105;
+  --pf-info: #0c606d;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(96, 122, 123, 0.38);
+  --pf-border-strong: rgba(96, 122, 123, 0.6);
+  --pf-hover: rgb(236, 239, 240);
+  --pf-active: rgb(221, 225, 225);
+  --pf-scrollbar: rgba(96, 122, 123, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="coral-reef--high-contrast"] {
+  --pf-bg: #000304;
+  --pf-bg-dark: #000203;
+  --pf-bg-darker: #000102;
+  --pf-bg-lighter: #001b1c;
+  --pf-fg: #eff7f7;
+  --pf-fg-dim: #a4b1b2;
+  --pf-fg-soft: #d5e1e1;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #fe54b7;
+  --pf-selection: #612248;
+  --pf-muted: #528b8e;
+  --pf-danger: #ff6365;
+  --pf-success: #01e5b0;
+  --pf-warning: #fecf86;
+  --pf-info: #0fb1c9;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(82, 139, 142, 0.38);
+  --pf-border-strong: rgba(82, 139, 142, 0.6);
+  --pf-hover: rgb(14, 18, 19);
+  --pf-active: rgb(29, 32, 33);
+  --pf-scrollbar: rgba(82, 139, 142, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="coral-reef--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #000f10;
+  --pf-fg: #dfeaeb;
+  --pf-fg-dim: #8a9192;
+  --pf-fg-soft: #c0cece;
+  --pf-fg-strong: #f6fbfb;
+  --pf-accent: #fe4fb6;
+  --pf-selection: #4c1837;
+  --pf-muted: #356e71;
+  --pf-danger: #fe404c;
+  --pf-success: #01e5b0;
+  --pf-warning: #ffe4bc;
+  --pf-info: #1296ab;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(53, 110, 113, 0.38);
+  --pf-border-strong: rgba(53, 110, 113, 0.6);
+  --pf-hover: rgb(13, 14, 14);
+  --pf-active: rgb(27, 28, 28);
+  --pf-scrollbar: rgba(53, 110, 113, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="cotton-candy--dark"] {
+  --pf-bg: #191125;
+  --pf-bg-dark: #130d1c;
+  --pf-bg-darker: #0d0913;
+  --pf-bg-lighter: #271f35;
+  --pf-fg: #e9e6ef;
+  --pf-fg-dim: #a09ba8;
+  --pf-fg-soft: #ccc8d3;
+  --pf-fg-strong: #faf9fd;
+  --pf-accent: #e1a4ed;
+  --pf-selection: #513a5d;
+  --pf-muted: #685c81;
+  --pf-danger: #f097c5;
+  --pf-success: #58e3dc;
+  --pf-warning: #f9dd7d;
+  --pf-info: #8eaffe;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(104, 92, 129, 0.38);
+  --pf-border-strong: rgba(104, 92, 129, 0.6);
+  --pf-hover: rgb(37, 30, 49);
+  --pf-active: rgb(50, 43, 61);
+  --pf-scrollbar: rgba(104, 92, 129, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="cotton-candy--day"] {
+  --pf-bg: #f5f1fe;
+  --pf-bg-dark: #e9e5f2;
+  --pf-bg-darker: #dcd8e5;
+  --pf-bg-lighter: #e2dced;
+  --pf-fg: #292335;
+  --pf-fg-dim: #746e80;
+  --pf-fg-soft: #4a4456;
+  --pf-fg-strong: #16111f;
+  --pf-accent: #9a61a5;
+  --pf-selection: #e1d1ea;
+  --pf-muted: #a7a1b5;
+  --pf-danger: #ad5a87;
+  --pf-success: #14938e;
+  --pf-warning: #ab902b;
+  --pf-info: #516eb7;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(167, 161, 181, 0.38);
+  --pf-border-strong: rgba(167, 161, 181, 0.6);
+  --pf-hover: rgb(233, 229, 242);
+  --pf-active: rgb(221, 216, 230);
+  --pf-scrollbar: rgba(167, 161, 181, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="cotton-candy--day-high-contrast"] {
+  --pf-bg: #fdfefc;
+  --pf-bg-dark: #f3f0f9;
+  --pf-bg-darker: #e6e3ec;
+  --pf-bg-lighter: #ede9f5;
+  --pf-fg: #0b0615;
+  --pf-fg-dim: #57535f;
+  --pf-fg-soft: #2f2c37;
+  --pf-fg-strong: #020103;
+  --pf-accent: #7a4284;
+  --pf-selection: #dccfde;
+  --pf-muted: #787285;
+  --pf-danger: #8b3c68;
+  --pf-success: #09625f;
+  --pf-warning: #6a5600;
+  --pf-info: #3a559c;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(120, 114, 133, 0.38);
+  --pf-border-strong: rgba(120, 114, 133, 0.6);
+  --pf-hover: rgb(238, 239, 238);
+  --pf-active: rgb(224, 224, 224);
+  --pf-scrollbar: rgba(120, 114, 133, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="cotton-candy--high-contrast"] {
+  --pf-bg: #020107;
+  --pf-bg-dark: #010105;
+  --pf-bg-darker: #010003;
+  --pf-bg-lighter: #1a1029;
+  --pf-fg: #f6f4fa;
+  --pf-fg-dim: #afacb6;
+  --pf-fg-soft: #dfdce5;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #e1a4ed;
+  --pf-selection: #573f5e;
+  --pf-muted: #85789f;
+  --pf-danger: #f097c5;
+  --pf-success: #58e3dc;
+  --pf-warning: #f2d676;
+  --pf-info: #8eaffe;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(133, 120, 159, 0.38);
+  --pf-border-strong: rgba(133, 120, 159, 0.6);
+  --pf-hover: rgb(17, 16, 22);
+  --pf-active: rgb(31, 30, 36);
+  --pf-scrollbar: rgba(133, 120, 159, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="cotton-candy--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #0f051d;
+  --pf-fg: #e9e6ef;
+  --pf-fg-dim: #908f94;
+  --pf-fg-soft: #ccc8d3;
+  --pf-fg-strong: #faf9fd;
+  --pf-accent: #e1a4ed;
+  --pf-selection: #443147;
+  --pf-muted: #685c81;
+  --pf-danger: #f097c5;
+  --pf-success: #58e3dc;
+  --pf-warning: #f9dd7d;
+  --pf-info: #8eaffe;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(104, 92, 129, 0.38);
+  --pf-border-strong: rgba(104, 92, 129, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(28, 28, 29);
+  --pf-scrollbar: rgba(104, 92, 129, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="dawn--dark"] {
+  --pf-bg: #200e0e;
+  --pf-bg-dark: #180b0b;
+  --pf-bg-darker: #100707;
+  --pf-bg-lighter: #2f1c1c;
+  --pf-fg: #f0e5e4;
+  --pf-fg-dim: #a79a99;
+  --pf-fg-soft: #d4c7c6;
+  --pf-fg-strong: #fdf9f9;
+  --pf-accent: #fe98ca;
+  --pf-selection: #5e3543;
+  --pf-muted: #7d5857;
+  --pf-danger: #fd9598;
+  --pf-success: #7ce695;
+  --pf-warning: #ffd899;
+  --pf-info: #83b2fd;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(125, 88, 87, 0.38);
+  --pf-border-strong: rgba(125, 88, 87, 0.6);
+  --pf-hover: rgb(44, 27, 27);
+  --pf-active: rgb(57, 40, 40);
+  --pf-scrollbar: rgba(125, 88, 87, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="dawn--day"] {
+  --pf-bg: #fdf0f0;
+  --pf-bg-dark: #f1e4e4;
+  --pf-bg-darker: #e4d7d7;
+  --pf-bg-lighter: #ebdbdb;
+  --pf-fg: #332121;
+  --pf-fg-dim: #7f6c6c;
+  --pf-fg-soft: #554342;
+  --pf-fg-strong: #1e0f0f;
+  --pf-accent: #b94f87;
+  --pf-selection: #eecdd9;
+  --pf-muted: #b49f9e;
+  --pf-danger: #c34e57;
+  --pf-success: #26984c;
+  --pf-warning: #be870a;
+  --pf-info: #386fc8;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(180, 159, 158, 0.38);
+  --pf-border-strong: rgba(180, 159, 158, 0.6);
+  --pf-hover: rgb(241, 228, 228);
+  --pf-active: rgb(229, 215, 215);
+  --pf-scrollbar: rgba(180, 159, 158, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="dawn--day-high-contrast"] {
+  --pf-bg: #fefdfd;
+  --pf-bg-dark: #f8efef;
+  --pf-bg-darker: #ebe2e2;
+  --pf-bg-lighter: #f3e8e8;
+  --pf-fg: #130505;
+  --pf-fg-dim: #605151;
+  --pf-fg-soft: #372a2a;
+  --pf-fg-strong: #030101;
+  --pf-accent: #97306a;
+  --pf-selection: #e4cad8;
+  --pf-muted: #847070;
+  --pf-danger: #9f2c3a;
+  --pf-success: #06652d;
+  --pf-warning: #745001;
+  --pf-info: #1e55ab;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(132, 112, 112, 0.38);
+  --pf-border-strong: rgba(132, 112, 112, 0.6);
+  --pf-hover: rgb(240, 238, 238);
+  --pf-active: rgb(226, 223, 223);
+  --pf-scrollbar: rgba(132, 112, 112, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="dawn--high-contrast"] {
+  --pf-bg: #050001;
+  --pf-bg-dark: #040001;
+  --pf-bg-darker: #020000;
+  --pf-bg-lighter: #250e0e;
+  --pf-fg: #faf3f3;
+  --pf-fg-dim: #b7aaaa;
+  --pf-fg-soft: #e6dbdb;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #fe98ca;
+  --pf-selection: #643a4d;
+  --pf-muted: #9c7574;
+  --pf-danger: #fd9598;
+  --pf-success: #7ce695;
+  --pf-warning: #ffcf81;
+  --pf-info: #83b2fd;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(156, 117, 116, 0.38);
+  --pf-border-strong: rgba(156, 117, 116, 0.6);
+  --pf-hover: rgb(20, 15, 16);
+  --pf-active: rgb(34, 29, 30);
+  --pf-scrollbar: rgba(156, 117, 116, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="dawn--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #190405;
+  --pf-fg: #f0e5e4;
+  --pf-fg-dim: #958e8d;
+  --pf-fg-soft: #d4c7c6;
+  --pf-fg-strong: #fdf9f9;
+  --pf-accent: #fe98ca;
+  --pf-selection: #4c2e3d;
+  --pf-muted: #7d5857;
+  --pf-danger: #fd9598;
+  --pf-success: #7ce695;
+  --pf-warning: #ffd899;
+  --pf-info: #83b2fd;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(125, 88, 87, 0.38);
+  --pf-border-strong: rgba(125, 88, 87, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(29, 27, 27);
+  --pf-scrollbar: rgba(125, 88, 87, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="deep-space--dark"] {
+  --pf-bg: #000208;
+  --pf-bg-dark: #000206;
+  --pf-bg-darker: #000104;
+  --pf-bg-lighter: #020a15;
+  --pf-fg: #e2e9f0;
+  --pf-fg-dim: #93989f;
+  --pf-fg-soft: #c3cbd4;
+  --pf-fg-strong: #f8fafd;
+  --pf-accent: #a486fd;
+  --pf-selection: #2e274d;
+  --pf-muted: #4d667f;
+  --pf-danger: #f34e6e;
+  --pf-success: #17e798;
+  --pf-warning: #ffe887;
+  --pf-info: #108cdd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(77, 102, 127, 0.38);
+  --pf-border-strong: rgba(77, 102, 127, 0.6);
+  --pf-hover: rgb(14, 16, 22);
+  --pf-active: rgb(27, 30, 36);
+  --pf-scrollbar: rgba(77, 102, 127, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="deep-space--day"] {
+  --pf-bg: #f3f7fc;
+  --pf-bg-dark: #e5ecf4;
+  --pf-bg-darker: #d8dfe7;
+  --pf-bg-lighter: #dae4ee;
+  --pf-fg: #1c2834;
+  --pf-fg-dim: #68737f;
+  --pf-fg-soft: #3e4955;
+  --pf-fg-strong: #0b151f;
+  --pf-accent: #7a4fd9;
+  --pf-selection: #d8d2f4;
+  --pf-muted: #99a6b4;
+  --pf-danger: #cb234f;
+  --pf-success: #0e8a59;
+  --pf-warning: #a38b08;
+  --pf-info: #0968a5;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(153, 166, 180, 0.38);
+  --pf-border-strong: rgba(153, 166, 180, 0.6);
+  --pf-hover: rgb(230, 235, 240);
+  --pf-active: rgb(217, 222, 228);
+  --pf-scrollbar: rgba(153, 166, 180, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="deep-space--day-high-contrast"] {
+  --pf-bg: #fdfdfe;
+  --pf-bg-dark: #edf2f8;
+  --pf-bg-darker: #e0e5ea;
+  --pf-bg-lighter: #e5ecf3;
+  --pf-fg: #020a14;
+  --pf-fg-dim: #4d5660;
+  --pf-fg-soft: #262f38;
+  --pf-fg-strong: #010203;
+  --pf-accent: #6738c1;
+  --pf-selection: #d8ccef;
+  --pf-muted: #6a7683;
+  --pf-danger: #ae043d;
+  --pf-success: #06643f;
+  --pf-warning: #665600;
+  --pf-info: #045b92;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(106, 118, 131, 0.38);
+  --pf-border-strong: rgba(106, 118, 131, 0.6);
+  --pf-hover: rgb(238, 238, 240);
+  --pf-active: rgb(223, 224, 226);
+  --pf-scrollbar: rgba(106, 118, 131, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="deep-space--high-contrast"] {
+  --pf-bg: #000206;
+  --pf-bg-dark: #000104;
+  --pf-bg-darker: #000102;
+  --pf-bg-lighter: #071727;
+  --pf-fg: #f1f6fa;
+  --pf-fg-dim: #a7afb7;
+  --pf-fg-soft: #d8dfe6;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #a486fd;
+  --pf-selection: #3e3464;
+  --pf-muted: #6a839d;
+  --pf-danger: #ff5f7b;
+  --pf-success: #17e798;
+  --pf-warning: #fad60b;
+  --pf-info: #2aa5fe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(106, 131, 157, 0.38);
+  --pf-border-strong: rgba(106, 131, 157, 0.6);
+  --pf-hover: rgb(14, 17, 21);
+  --pf-active: rgb(29, 31, 35);
+  --pf-scrollbar: rgba(106, 131, 157, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="deep-space--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #010c1b;
+  --pf-fg: #e2e9f0;
+  --pf-fg-dim: #8c9095;
+  --pf-fg-soft: #c3cbd4;
+  --pf-fg-strong: #f8fafd;
+  --pf-accent: #a486fd;
+  --pf-selection: #31284c;
+  --pf-muted: #4d667f;
+  --pf-danger: #f34e6e;
+  --pf-success: #17e798;
+  --pf-warning: #ffe887;
+  --pf-info: #108cdd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(77, 102, 127, 0.38);
+  --pf-border-strong: rgba(77, 102, 127, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(27, 28, 29);
+  --pf-scrollbar: rgba(77, 102, 127, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="dusk--dark"] {
+  --pf-bg: #0e0821;
+  --pf-bg-dark: #0b0619;
+  --pf-bg-darker: #070411;
+  --pf-bg-lighter: #1b1630;
+  --pf-fg: #e7e7f0;
+  --pf-fg-dim: #9b99a8;
+  --pf-fg-soft: #cac9d4;
+  --pf-fg-strong: #fafafd;
+  --pf-accent: #c98fff;
+  --pf-selection: #422e5f;
+  --pf-muted: #625c89;
+  --pf-danger: #fe6f83;
+  --pf-success: #ff94dd;
+  --pf-warning: #ffc390;
+  --pf-info: #919afe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(98, 92, 137, 0.38);
+  --pf-border-strong: rgba(98, 92, 137, 0.6);
+  --pf-hover: rgb(27, 21, 45);
+  --pf-active: rgb(40, 35, 58);
+  --pf-scrollbar: rgba(98, 92, 137, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="dusk--day"] {
+  --pf-bg: #f3f2ff;
+  --pf-bg-dark: #e7e6f6;
+  --pf-bg-darker: #dad9e9;
+  --pf-bg-lighter: #dfddf2;
+  --pf-fg: #262339;
+  --pf-fg-dim: #716f82;
+  --pf-fg-soft: #47455a;
+  --pf-fg-strong: #141120;
+  --pf-accent: #9349ce;
+  --pf-selection: #decdf4;
+  --pf-muted: #a4a2b7;
+  --pf-danger: #cf284f;
+  --pf-success: #be379b;
+  --pf-warning: #c9740d;
+  --pf-info: #5854db;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(164, 162, 183, 0.38);
+  --pf-border-strong: rgba(164, 162, 183, 0.6);
+  --pf-hover: rgb(231, 230, 243);
+  --pf-active: rgb(218, 217, 231);
+  --pf-scrollbar: rgba(164, 162, 183, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="dusk--day-high-contrast"] {
+  --pf-bg: #fdfdfc;
+  --pf-bg-dark: #f1f1fa;
+  --pf-bg-darker: #e4e3ec;
+  --pf-bg-lighter: #eae9f8;
+  --pf-fg: #090618;
+  --pf-fg-dim: #555460;
+  --pf-fg-soft: #2d2c37;
+  --pf-fg-strong: #020103;
+  --pf-accent: #7b2eb3;
+  --pf-selection: #ddc9ea;
+  --pf-muted: #757387;
+  --pf-danger: #ae043b;
+  --pf-success: #a11281;
+  --pf-warning: #824906;
+  --pf-info: #4a42c8;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(117, 115, 135, 0.38);
+  --pf-border-strong: rgba(117, 115, 135, 0.6);
+  --pf-hover: rgb(238, 238, 238);
+  --pf-active: rgb(224, 223, 225);
+  --pf-scrollbar: rgba(117, 115, 135, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="dusk--high-contrast"] {
+  --pf-bg: #020107;
+  --pf-bg-dark: #010105;
+  --pf-bg-darker: #010003;
+  --pf-bg-lighter: #16112b;
+  --pf-fg: #f5f4fa;
+  --pf-fg-dim: #adacb7;
+  --pf-fg-soft: #dedde6;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #c98fff;
+  --pf-selection: #4e3765;
+  --pf-muted: #7f7aa2;
+  --pf-danger: #fe6f83;
+  --pf-success: #ff94dd;
+  --pf-warning: #ffc390;
+  --pf-info: #919afe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(127, 122, 162, 0.38);
+  --pf-border-strong: rgba(127, 122, 162, 0.6);
+  --pf-hover: rgb(17, 16, 22);
+  --pf-active: rgb(31, 30, 36);
+  --pf-scrollbar: rgba(127, 122, 162, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="dusk--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #0c061e;
+  --pf-fg: #e7e7f0;
+  --pf-fg-dim: #8f8f95;
+  --pf-fg-soft: #cac9d4;
+  --pf-fg-strong: #fafafd;
+  --pf-accent: #c98fff;
+  --pf-selection: #3c2b4d;
+  --pf-muted: #625c89;
+  --pf-danger: #fe6f83;
+  --pf-success: #ff94dd;
+  --pf-warning: #ffc390;
+  --pf-info: #919afe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(98, 92, 137, 0.38);
+  --pf-border-strong: rgba(98, 92, 137, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(28, 28, 29);
+  --pf-scrollbar: rgba(98, 92, 137, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="espresso--dark"] {
+  --pf-bg: #0b0402;
+  --pf-bg-dark: #080302;
+  --pf-bg-darker: #060201;
+  --pf-bg-lighter: #190f0a;
+  --pf-fg: #efe6e1;
+  --pf-fg-dim: #9f9793;
+  --pf-fg-soft: #d3c8c2;
+  --pf-fg-strong: #fdf9f7;
+  --pf-accent: #df7e81;
+  --pf-selection: #462626;
+  --pf-muted: #775d4f;
+  --pf-danger: #ac5442;
+  --pf-success: #dbb155;
+  --pf-warning: #fde0b5;
+  --pf-info: #c06d43;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(119, 93, 79, 0.38);
+  --pf-border-strong: rgba(119, 93, 79, 0.6);
+  --pf-hover: rgb(25, 18, 15);
+  --pf-active: rgb(38, 31, 29);
+  --pf-scrollbar: rgba(119, 93, 79, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="espresso--day"] {
+  --pf-bg: #fcf5f1;
+  --pf-bg-dark: #f0eae6;
+  --pf-bg-darker: #e3dcd9;
+  --pf-bg-lighter: #eae1dc;
+  --pf-fg: #2f231d;
+  --pf-fg-dim: #7b6f68;
+  --pf-fg-soft: #51453e;
+  --pf-fg-strong: #1b110c;
+  --pf-accent: #a64b50;
+  --pf-selection: #e9d0ce;
+  --pf-muted: #b0a19a;
+  --pf-danger: #9c4534;
+  --pf-success: #8f6b0a;
+  --pf-warning: #b17e22;
+  --pf-info: #99491e;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(176, 161, 154, 0.38);
+  --pf-border-strong: rgba(176, 161, 154, 0.6);
+  --pf-hover: rgb(240, 232, 228);
+  --pf-active: rgb(227, 220, 216);
+  --pf-scrollbar: rgba(176, 161, 154, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="espresso--day-high-contrast"] {
+  --pf-bg: #fdfdfe;
+  --pf-bg-dark: #f5f1ee;
+  --pf-bg-darker: #e8e3e1;
+  --pf-bg-lighter: #f0eae6;
+  --pf-fg: #100703;
+  --pf-fg-dim: #5f524c;
+  --pf-fg-soft: #362b25;
+  --pf-fg-strong: #030101;
+  --pf-accent: #923940;
+  --pf-selection: #e2cccf;
+  --pf-muted: #80736c;
+  --pf-danger: #923c2c;
+  --pf-success: #705300;
+  --pf-warning: #755003;
+  --pf-info: #8f4113;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(128, 115, 108, 0.38);
+  --pf-border-strong: rgba(128, 115, 108, 0.6);
+  --pf-hover: rgb(239, 238, 239);
+  --pf-active: rgb(225, 223, 224);
+  --pf-scrollbar: rgba(128, 115, 108, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="espresso--high-contrast"] {
+  --pf-bg: #040100;
+  --pf-bg-dark: #030100;
+  --pf-bg-darker: #020000;
+  --pf-bg-lighter: #211209;
+  --pf-fg: #faf4f0;
+  --pf-fg-dim: #b6aba6;
+  --pf-fg-soft: #e5dcd7;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #df7e81;
+  --pf-selection: #573131;
+  --pf-muted: #957a6b;
+  --pf-danger: #df816e;
+  --pf-success: #dbb155;
+  --pf-warning: #fecf86;
+  --pf-info: #db855b;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(149, 122, 107, 0.38);
+  --pf-border-strong: rgba(149, 122, 107, 0.6);
+  --pf-hover: rgb(19, 16, 14);
+  --pf-active: rgb(34, 30, 29);
+  --pf-scrollbar: rgba(149, 122, 107, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="espresso--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #150702;
+  --pf-fg: #efe6e1;
+  --pf-fg-dim: #948f8c;
+  --pf-fg-soft: #d3c8c2;
+  --pf-fg-strong: #fdf9f7;
+  --pf-accent: #df7e81;
+  --pf-selection: #432627;
+  --pf-muted: #775d4f;
+  --pf-danger: #ac5442;
+  --pf-success: #dbb155;
+  --pf-warning: #fde0b5;
+  --pf-info: #c06d43;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(119, 93, 79, 0.38);
+  --pf-border-strong: rgba(119, 93, 79, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(29, 28, 27);
+  --pf-scrollbar: rgba(119, 93, 79, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="glacier--dark"] {
+  --pf-bg: #010f18;
+  --pf-bg-dark: #010b12;
+  --pf-bg-darker: #01080c;
+  --pf-bg-lighter: #0a1d26;
+  --pf-fg: #e0eaee;
+  --pf-fg-dim: #929da3;
+  --pf-fg-soft: #c1cdd3;
+  --pf-fg-strong: #f7fbfd;
+  --pf-accent: #98bffe;
+  --pf-selection: #2b4058;
+  --pf-muted: #45697a;
+  --pf-danger: #1ecee2;
+  --pf-success: #41e5e3;
+  --pf-warning: #9eedfd;
+  --pf-info: #57bcfa;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(69, 105, 122, 0.38);
+  --pf-border-strong: rgba(69, 105, 122, 0.6);
+  --pf-hover: rgb(14, 28, 37);
+  --pf-active: rgb(28, 41, 50);
+  --pf-scrollbar: rgba(69, 105, 122, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="glacier--day"] {
+  --pf-bg: #ebf5fb;
+  --pf-bg-dark: #dfeaef;
+  --pf-bg-darker: #d2dde2;
+  --pf-bg-lighter: #d5e2e9;
+  --pf-fg: #182932;
+  --pf-fg-dim: #64747d;
+  --pf-fg-soft: #3a4a53;
+  --pf-fg-strong: #07161d;
+  --pf-accent: #4a79c6;
+  --pf-selection: #c8daef;
+  --pf-muted: #95a8b1;
+  --pf-danger: #008a99;
+  --pf-success: #109391;
+  --pf-warning: #02a4bb;
+  --pf-info: #007ab2;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(149, 168, 177, 0.38);
+  --pf-border-strong: rgba(149, 168, 177, 0.6);
+  --pf-hover: rgb(222, 233, 239);
+  --pf-active: rgb(210, 221, 227);
+  --pf-scrollbar: rgba(149, 168, 177, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="glacier--day-high-contrast"] {
+  --pf-bg: #fdfdfe;
+  --pf-bg-dark: #ecf3f7;
+  --pf-bg-darker: #dfe6e9;
+  --pf-bg-lighter: #e3edf2;
+  --pf-fg: #000b12;
+  --pf-fg-dim: #4a585e;
+  --pf-fg-soft: #243036;
+  --pf-fg-strong: #010203;
+  --pf-accent: #28559f;
+  --pf-selection: #c8d3e6;
+  --pf-muted: #667881;
+  --pf-danger: #08616b;
+  --pf-success: #076261;
+  --pf-warning: #0c606e;
+  --pf-info: #075d88;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(102, 120, 129, 0.38);
+  --pf-border-strong: rgba(102, 120, 129, 0.6);
+  --pf-hover: rgb(238, 238, 240);
+  --pf-active: rgb(223, 224, 226);
+  --pf-scrollbar: rgba(102, 120, 129, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="glacier--high-contrast"] {
+  --pf-bg: #000205;
+  --pf-bg-dark: #000104;
+  --pf-bg-darker: #000102;
+  --pf-bg-lighter: #001925;
+  --pf-fg: #f0f6f9;
+  --pf-fg-dim: #a5b0b6;
+  --pf-fg-soft: #d6e0e4;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #98bffe;
+  --pf-selection: #3a4a64;
+  --pf-muted: #618699;
+  --pf-danger: #1ecee2;
+  --pf-success: #41e5e3;
+  --pf-warning: #83e9fe;
+  --pf-info: #57bcfa;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(97, 134, 153, 0.38);
+  --pf-border-strong: rgba(97, 134, 153, 0.6);
+  --pf-hover: rgb(14, 17, 20);
+  --pf-active: rgb(29, 31, 34);
+  --pf-scrollbar: rgba(97, 134, 153, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="glacier--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #000e19;
+  --pf-fg: #e0eaee;
+  --pf-fg-dim: #8b9194;
+  --pf-fg-soft: #c1cdd3;
+  --pf-fg-strong: #f7fbfd;
+  --pf-accent: #98bffe;
+  --pf-selection: #2e394c;
+  --pf-muted: #45697a;
+  --pf-danger: #1ecee2;
+  --pf-success: #41e5e3;
+  --pf-warning: #9eedfd;
+  --pf-info: #57bcfa;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(69, 105, 122, 0.38);
+  --pf-border-strong: rgba(69, 105, 122, 0.6);
+  --pf-hover: rgb(13, 14, 14);
+  --pf-active: rgb(27, 28, 29);
+  --pf-scrollbar: rgba(69, 105, 122, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="lofi--dark"] {
+  --pf-bg: #1f160f;
+  --pf-bg-dark: #17110b;
+  --pf-bg-darker: #100b08;
+  --pf-bg-lighter: #2e241d;
+  --pf-fg: #eee6e0;
+  --pf-fg-dim: #a69d97;
+  --pf-fg-soft: #d2c8c1;
+  --pf-fg-strong: #fdf9f7;
+  --pf-accent: #d496c9;
+  --pf-selection: #523a43;
+  --pf-muted: #755e4c;
+  --pf-danger: #dc8c82;
+  --pf-success: #9dce8f;
+  --pf-warning: #f2cb83;
+  --pf-info: #72aae1;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(117, 94, 76, 0.38);
+  --pf-border-strong: rgba(117, 94, 76, 0.6);
+  --pf-hover: rgb(43, 34, 28);
+  --pf-active: rgb(56, 47, 40);
+  --pf-scrollbar: rgba(117, 94, 76, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="lofi--day"] {
+  --pf-bg: #f8f2ee;
+  --pf-bg-dark: #ede7e2;
+  --pf-bg-darker: #dfd9d5;
+  --pf-bg-lighter: #e6ded8;
+  --pf-fg: #2f241c;
+  --pf-fg-dim: #7a6f67;
+  --pf-fg-soft: #50453d;
+  --pf-fg-strong: #1b120b;
+  --pf-accent: #975d8e;
+  --pf-selection: #e3d1d9;
+  --pf-muted: #aea298;
+  --pf-danger: #a75c53;
+  --pf-success: #58854a;
+  --pf-warning: #ab863e;
+  --pf-info: #396fa3;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(174, 162, 152, 0.38);
+  --pf-border-strong: rgba(174, 162, 152, 0.6);
+  --pf-hover: rgb(236, 230, 225);
+  --pf-active: rgb(224, 217, 213);
+  --pf-scrollbar: rgba(174, 162, 152, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="lofi--day-high-contrast"] {
+  --pf-bg: #fdfdfe;
+  --pf-bg-dark: #f5f1ee;
+  --pf-bg-darker: #e8e4e1;
+  --pf-bg-lighter: #efeae6;
+  --pf-fg: #100702;
+  --pf-fg-dim: #5e534a;
+  --pf-fg-soft: #362c24;
+  --pf-fg-strong: #030101;
+  --pf-accent: #7b4473;
+  --pf-selection: #ddcfdb;
+  --pf-muted: #7f736a;
+  --pf-danger: #8a423a;
+  --pf-success: #376228;
+  --pf-warning: #725200;
+  --pf-info: #235a8c;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(127, 115, 106, 0.38);
+  --pf-border-strong: rgba(127, 115, 106, 0.6);
+  --pf-hover: rgb(239, 238, 239);
+  --pf-active: rgb(225, 223, 224);
+  --pf-scrollbar: rgba(127, 115, 106, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="lofi--high-contrast"] {
+  --pf-bg: #040100;
+  --pf-bg-dark: #030100;
+  --pf-bg-darker: #020000;
+  --pf-bg-lighter: #201308;
+  --pf-fg: #f9f4f0;
+  --pf-fg-dim: #b5aca5;
+  --pf-fg-soft: #e4dcd6;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #d496c9;
+  --pf-selection: #533a4c;
+  --pf-muted: #937b69;
+  --pf-danger: #dc8c82;
+  --pf-success: #9dce8f;
+  --pf-warning: #f2cb83;
+  --pf-info: #72aae1;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(147, 123, 105, 0.38);
+  --pf-border-strong: rgba(147, 123, 105, 0.6);
+  --pf-hover: rgb(19, 16, 14);
+  --pf-active: rgb(33, 30, 29);
+  --pf-scrollbar: rgba(147, 123, 105, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="lofi--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #140801;
+  --pf-fg: #eee6e0;
+  --pf-fg-dim: #948f8b;
+  --pf-fg-soft: #d2c8c1;
+  --pf-fg-strong: #fdf9f7;
+  --pf-accent: #d496c9;
+  --pf-selection: #402d3c;
+  --pf-muted: #755e4c;
+  --pf-danger: #dc8c82;
+  --pf-success: #9dce8f;
+  --pf-warning: #f2cb83;
+  --pf-info: #72aae1;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(117, 94, 76, 0.38);
+  --pf-border-strong: rgba(117, 94, 76, 0.6);
+  --pf-hover: rgb(14, 14, 13);
+  --pf-active: rgb(29, 28, 27);
+  --pf-scrollbar: rgba(117, 94, 76, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="matcha--dark"] {
+  --pf-bg: #050c02;
+  --pf-bg-dark: #040902;
+  --pf-bg-darker: #030601;
+  --pf-bg-lighter: #10190b;
+  --pf-fg: #e4eae2;
+  --pf-fg-dim: #969c94;
+  --pf-fg-soft: #c6cdc3;
+  --pf-fg-strong: #f9fbf7;
+  --pf-accent: #f1735a;
+  --pf-selection: #47291b;
+  --pf-muted: #576a4d;
+  --pf-danger: #a45e05;
+  --pf-success: #91cc58;
+  --pf-warning: #f1ec5f;
+  --pf-info: #009f6e;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(87, 106, 77, 0.38);
+  --pf-border-strong: rgba(87, 106, 77, 0.6);
+  --pf-hover: rgb(18, 25, 15);
+  --pf-active: rgb(32, 39, 29);
+  --pf-scrollbar: rgba(87, 106, 77, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="matcha--day"] {
+  --pf-bg: #f3f9f0;
+  --pf-bg-dark: #e7ede4;
+  --pf-bg-darker: #dae0d7;
+  --pf-bg-lighter: #dee6da;
+  --pf-fg: #212a1c;
+  --pf-fg-dim: #6c7567;
+  --pf-fg-soft: #424b3d;
+  --pf-fg-strong: #0f160b;
+  --pf-accent: #b63d27;
+  --pf-selection: #e6d0c4;
+  --pf-muted: #9ea899;
+  --pf-danger: #905100;
+  --pf-success: #4f8205;
+  --pf-warning: #938e01;
+  --pf-info: #0c7551;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(158, 168, 153, 0.38);
+  --pf-border-strong: rgba(158, 168, 153, 0.6);
+  --pf-hover: rgb(230, 237, 227);
+  --pf-active: rgb(218, 224, 215);
+  --pf-scrollbar: rgba(158, 168, 153, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="matcha--day-high-contrast"] {
+  --pf-bg: #fcfefa;
+  --pf-bg-dark: #eff3ed;
+  --pf-bg-darker: #e2e6e0;
+  --pf-bg-lighter: #e8ede5;
+  --pf-fg: #050c02;
+  --pf-fg-dim: #51584d;
+  --pf-fg-soft: #2a3026;
+  --pf-fg-strong: #010201;
+  --pf-accent: #a42c16;
+  --pf-selection: #e6cac1;
+  --pf-muted: #6e7869;
+  --pf-danger: #824a04;
+  --pf-success: #3a6200;
+  --pf-warning: #5d5a06;
+  --pf-info: #046444;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(110, 120, 105, 0.38);
+  --pf-border-strong: rgba(110, 120, 105, 0.6);
+  --pf-hover: rgb(237, 239, 235);
+  --pf-active: rgb(222, 225, 220);
+  --pf-scrollbar: rgba(110, 120, 105, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="matcha--high-contrast"] {
+  --pf-bg: #010200;
+  --pf-bg-dark: #010100;
+  --pf-bg-darker: #000100;
+  --pf-bg-lighter: #0e1a07;
+  --pf-fg: #f3f6f1;
+  --pf-fg-dim: #aab0a7;
+  --pf-fg-soft: #dbe0d8;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #f1735a;
+  --pf-selection: #5c2d22;
+  --pf-muted: #748769;
+  --pf-danger: #e38405;
+  --pf-success: #91cc58;
+  --pf-warning: #e3de4f;
+  --pf-info: #0dbb82;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(116, 135, 105, 0.38);
+  --pf-border-strong: rgba(116, 135, 105, 0.6);
+  --pf-hover: rgb(16, 17, 14);
+  --pf-active: rgb(30, 31, 29);
+  --pf-scrollbar: rgba(116, 135, 105, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="matcha--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #040f01;
+  --pf-fg: #e4eae2;
+  --pf-fg-dim: #8d918c;
+  --pf-fg-soft: #c6cdc3;
+  --pf-fg-strong: #f9fbf7;
+  --pf-accent: #f1735a;
+  --pf-selection: #48231b;
+  --pf-muted: #576a4d;
+  --pf-danger: #a45e05;
+  --pf-success: #91cc58;
+  --pf-warning: #f1ec5f;
+  --pf-info: #009f6e;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(87, 106, 77, 0.38);
+  --pf-border-strong: rgba(87, 106, 77, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(27, 28, 27);
+  --pf-scrollbar: rgba(87, 106, 77, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="miami-night--dark"] {
+  --pf-bg: #0b0113;
+  --pf-bg-dark: #08010e;
+  --pf-bg-darker: #06010a;
+  --pf-bg-lighter: #180a22;
+  --pf-fg: #eae6ee;
+  --pf-fg-dim: #9c96a1;
+  --pf-fg-soft: #cdc8d2;
+  --pf-fg-strong: #fbf9fd;
+  --pf-accent: #ec4df0;
+  --pf-selection: #4a1651;
+  --pf-muted: #705881;
+  --pf-danger: #fe1e9c;
+  --pf-success: #1ce3c0;
+  --pf-warning: #fee4b7;
+  --pf-info: #7b6bfd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(112, 88, 129, 0.38);
+  --pf-border-strong: rgba(112, 88, 129, 0.6);
+  --pf-hover: rgb(24, 15, 32);
+  --pf-active: rgb(38, 28, 45);
+  --pf-scrollbar: rgba(112, 88, 129, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="miami-night--day"] {
+  --pf-bg: #f9f5fd;
+  --pf-bg-dark: #f0e7f7;
+  --pf-bg-darker: #e2dae9;
+  --pf-bg-lighter: #e9def2;
+  --pf-fg: #2c2135;
+  --pf-fg-dim: #776d7f;
+  --pf-fg-soft: #4d4356;
+  --pf-fg-strong: #18101e;
+  --pf-accent: #b700bc;
+  --pf-selection: #eabfef;
+  --pf-muted: #aaa0b3;
+  --pf-danger: #ca047a;
+  --pf-success: #008872;
+  --pf-warning: #b38309;
+  --pf-info: #5e2ced;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(170, 160, 179, 0.38);
+  --pf-border-strong: rgba(170, 160, 179, 0.6);
+  --pf-hover: rgb(237, 232, 241);
+  --pf-active: rgb(224, 220, 229);
+  --pf-scrollbar: rgba(170, 160, 179, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="miami-night--day-high-contrast"] {
+  --pf-bg: #fefdff;
+  --pf-bg-dark: #f4f0f8;
+  --pf-bg-darker: #e7e2eb;
+  --pf-bg-lighter: #efe8f5;
+  --pf-fg: #0e0515;
+  --pf-fg-dim: #59525e;
+  --pf-fg-soft: #312b35;
+  --pf-fg-strong: #020103;
+  --pf-accent: #9c03a0;
+  --pf-selection: #e6bfe7;
+  --pf-muted: #7b7183;
+  --pf-danger: #ab0066;
+  --pf-success: #006453;
+  --pf-warning: #725200;
+  --pf-info: #5c27ea;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(123, 113, 131, 0.38);
+  --pf-border-strong: rgba(123, 113, 131, 0.6);
+  --pf-hover: rgb(240, 238, 241);
+  --pf-active: rgb(225, 223, 227);
+  --pf-scrollbar: rgba(123, 113, 131, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="miami-night--high-contrast"] {
+  --pf-bg: #030106;
+  --pf-bg-dark: #020104;
+  --pf-bg-darker: #010002;
+  --pf-bg-lighter: #1d0f27;
+  --pf-fg: #f7f4f9;
+  --pf-fg-dim: #b1abb5;
+  --pf-fg-soft: #e0dce4;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #f051f3;
+  --pf-selection: #5d1f60;
+  --pf-muted: #8b769b;
+  --pf-danger: #ff58a9;
+  --pf-success: #1ce3c0;
+  --pf-warning: #fed07c;
+  --pf-info: #938efd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(139, 118, 155, 0.38);
+  --pf-border-strong: rgba(139, 118, 155, 0.6);
+  --pf-hover: rgb(18, 16, 21);
+  --pf-active: rgb(32, 30, 35);
+  --pf-scrollbar: rgba(139, 118, 155, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="miami-night--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #12051a;
+  --pf-fg: #eae6ee;
+  --pf-fg-dim: #918f94;
+  --pf-fg-soft: #cdc8d2;
+  --pf-fg-strong: #fbf9fd;
+  --pf-accent: #ec4df0;
+  --pf-selection: #471748;
+  --pf-muted: #705881;
+  --pf-danger: #fe1e9c;
+  --pf-success: #1ce3c0;
+  --pf-warning: #fee4b7;
+  --pf-info: #7b6bfd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(112, 88, 129, 0.38);
+  --pf-border-strong: rgba(112, 88, 129, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(28, 28, 29);
+  --pf-scrollbar: rgba(112, 88, 129, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="midnight--dark"] {
+  --pf-bg: #010210;
+  --pf-bg-dark: #01020c;
+  --pf-bg-darker: #010108;
+  --pf-bg-lighter: #050c1e;
+  --pf-fg: #e4e8f0;
+  --pf-fg-dim: #9598a2;
+  --pf-fg-soft: #c6cbd5;
+  --pf-fg-strong: #f8fafe;
+  --pf-accent: #af80fd;
+  --pf-selection: #322552;
+  --pf-muted: #526386;
+  --pf-danger: #eb5968;
+  --pf-success: #13e79d;
+  --pf-warning: #fee799;
+  --pf-info: #4181f1;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(82, 99, 134, 0.38);
+  --pf-border-strong: rgba(82, 99, 134, 0.6);
+  --pf-hover: rgb(15, 16, 29);
+  --pf-active: rgb(28, 30, 43);
+  --pf-scrollbar: rgba(82, 99, 134, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="midnight--day"] {
+  --pf-bg: #f4f7fc;
+  --pf-bg-dark: #e5ebf8;
+  --pf-bg-darker: #d8deea;
+  --pf-bg-lighter: #dbe3f3;
+  --pf-fg: #1e2637;
+  --pf-fg-dim: #6a7282;
+  --pf-fg-soft: #404858;
+  --pf-fg-strong: #0d1321;
+  --pf-accent: #8251ca;
+  --pf-selection: #dbd2f1;
+  --pf-muted: #9ba5b8;
+  --pf-danger: #c43449;
+  --pf-success: #008a5c;
+  --pf-warning: #a78905;
+  --pf-info: #1d5bc7;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(155, 165, 184, 0.38);
+  --pf-border-strong: rgba(155, 165, 184, 0.6);
+  --pf-hover: rgb(231, 234, 240);
+  --pf-active: rgb(218, 222, 228);
+  --pf-scrollbar: rgba(155, 165, 184, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="midnight--day-high-contrast"] {
+  --pf-bg: #fefdfc;
+  --pf-bg-dark: #eef2fa;
+  --pf-bg-darker: #e1e5ed;
+  --pf-bg-lighter: #e6ebf6;
+  --pf-fg: #040817;
+  --pf-fg-dim: #505561;
+  --pf-fg-soft: #292e38;
+  --pf-fg-strong: #010203;
+  --pf-accent: #6e3bb2;
+  --pf-selection: #dacdea;
+  --pf-muted: #6c7587;
+  --pf-danger: #ac1635;
+  --pf-success: #006441;
+  --pf-warning: #6a5600;
+  --pf-info: #1051bc;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(108, 117, 135, 0.38);
+  --pf-border-strong: rgba(108, 117, 135, 0.6);
+  --pf-hover: rgb(239, 238, 238);
+  --pf-active: rgb(224, 224, 225);
+  --pf-scrollbar: rgba(108, 117, 135, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="midnight--high-contrast"] {
+  --pf-bg: #000108;
+  --pf-bg-dark: #000106;
+  --pf-bg-darker: #000003;
+  --pf-bg-lighter: #0b152c;
+  --pf-fg: #f2f5fb;
+  --pf-fg-dim: #a9aeb8;
+  --pf-fg-soft: #dadee6;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #af80fd;
+  --pf-selection: #433165;
+  --pf-muted: #6f80a5;
+  --pf-danger: #fa6774;
+  --pf-success: #13e79d;
+  --pf-warning: #ffd320;
+  --pf-info: #649dfe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(111, 128, 165, 0.38);
+  --pf-border-strong: rgba(111, 128, 165, 0.6);
+  --pf-hover: rgb(15, 16, 23);
+  --pf-active: rgb(29, 30, 37);
+  --pf-scrollbar: rgba(111, 128, 165, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="midnight--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #030920;
+  --pf-fg: #e4e8f0;
+  --pf-fg-dim: #8d9095;
+  --pf-fg-soft: #c6cbd5;
+  --pf-fg-strong: #f8fafe;
+  --pf-accent: #af80fd;
+  --pf-selection: #35264c;
+  --pf-muted: #526386;
+  --pf-danger: #eb5968;
+  --pf-success: #13e79d;
+  --pf-warning: #fee799;
+  --pf-info: #4181f1;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(82, 99, 134, 0.38);
+  --pf-border-strong: rgba(82, 99, 134, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(27, 28, 29);
+  --pf-scrollbar: rgba(82, 99, 134, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="neon-tokyo--dark"] {
+  --pf-bg: #0b000f;
+  --pf-bg-dark: #08000b;
+  --pf-bg-darker: #060008;
+  --pf-bg-lighter: #19071d;
+  --pf-fg: #ece5ed;
+  --pf-fg-dim: #9d959f;
+  --pf-fg-soft: #cfc8d1;
+  --pf-fg-strong: #fcf9fc;
+  --pf-accent: #f63def;
+  --pf-selection: #4d114e;
+  --pf-muted: #75567c;
+  --pf-danger: #fe3575;
+  --pf-success: #0de79e;
+  --pf-warning: #ffe795;
+  --pf-info: #0889ea;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(117, 86, 124, 0.38);
+  --pf-border-strong: rgba(117, 86, 124, 0.6);
+  --pf-hover: rgb(25, 14, 28);
+  --pf-active: rgb(38, 27, 42);
+  --pf-scrollbar: rgba(117, 86, 124, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="neon-tokyo--day"] {
+  --pf-bg: #fcf3fe;
+  --pf-bg-dark: #f2e7f5;
+  --pf-bg-darker: #e5dae7;
+  --pf-bg-lighter: #ecddef;
+  --pf-fg: #2f2033;
+  --pf-fg-dim: #7a6c7d;
+  --pf-fg-soft: #504254;
+  --pf-fg-strong: #1a0f1c;
+  --pf-accent: #b903b5;
+  --pf-selection: #edbeee;
+  --pf-muted: #ad9fb1;
+  --pf-danger: #d00158;
+  --pf-success: #108a5d;
+  --pf-warning: #a68a06;
+  --pf-info: #0765af;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(173, 159, 177, 0.38);
+  --pf-border-strong: rgba(173, 159, 177, 0.6);
+  --pf-hover: rgb(240, 230, 242);
+  --pf-active: rgb(227, 218, 230);
+  --pf-scrollbar: rgba(173, 159, 177, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="neon-tokyo--day-high-contrast"] {
+  --pf-bg: #fefdff;
+  --pf-bg-dark: #f6eff7;
+  --pf-bg-darker: #e8e2ea;
+  --pf-bg-lighter: #f1e7f4;
+  --pf-fg: #100413;
+  --pf-fg-dim: #5a525c;
+  --pf-fg-soft: #322b34;
+  --pf-fg-strong: #020103;
+  --pf-accent: #9f009b;
+  --pf-selection: #e6bee6;
+  --pf-muted: #7e7081;
+  --pf-danger: #b00049;
+  --pf-success: #0a6443;
+  --pf-warning: #6a5600;
+  --pf-info: #035a9d;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(126, 112, 129, 0.38);
+  --pf-border-strong: rgba(126, 112, 129, 0.6);
+  --pf-hover: rgb(240, 238, 241);
+  --pf-active: rgb(225, 223, 227);
+  --pf-scrollbar: rgba(126, 112, 129, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="neon-tokyo--high-contrast"] {
+  --pf-bg: #040005;
+  --pf-bg-dark: #030004;
+  --pf-bg-darker: #020002;
+  --pf-bg-lighter: #200d24;
+  --pf-fg: #f8f3f8;
+  --pf-fg-dim: #b2abb4;
+  --pf-fg-soft: #e2dce3;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #f942f2;
+  --pf-selection: #61195f;
+  --pf-muted: #917597;
+  --pf-danger: #fd5e86;
+  --pf-success: #0de79e;
+  --pf-warning: #ffd403;
+  --pf-info: #44a3fd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(145, 117, 151, 0.38);
+  --pf-border-strong: rgba(145, 117, 151, 0.6);
+  --pf-hover: rgb(19, 15, 20);
+  --pf-active: rgb(33, 29, 34);
+  --pf-scrollbar: rgba(145, 117, 151, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="neon-tokyo--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #140418;
+  --pf-fg: #ece5ed;
+  --pf-fg-dim: #928e93;
+  --pf-fg-soft: #cfc8d1;
+  --pf-fg-strong: #fcf9fc;
+  --pf-accent: #f63def;
+  --pf-selection: #4a1248;
+  --pf-muted: #75567c;
+  --pf-danger: #fe3575;
+  --pf-success: #0de79e;
+  --pf-warning: #ffe795;
+  --pf-info: #0889ea;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(117, 86, 124, 0.38);
+  --pf-border-strong: rgba(117, 86, 124, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(28, 27, 28);
+  --pf-scrollbar: rgba(117, 86, 124, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="polaroid--dark"] {
+  --pf-bg: #19120d;
+  --pf-bg-dark: #130e0a;
+  --pf-bg-darker: #0d0907;
+  --pf-bg-lighter: #27201a;
+  --pf-fg: #eee6e0;
+  --pf-fg-dim: #a39c96;
+  --pf-fg-soft: #d2c8c1;
+  --pf-fg-strong: #fdf9f7;
+  --pf-accent: #e08fc7;
+  --pf-selection: #513541;
+  --pf-muted: #735f4f;
+  --pf-danger: #e6857d;
+  --pf-success: #8bd28e;
+  --pf-warning: #f3cc6f;
+  --pf-info: #5aade9;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(115, 95, 79, 0.38);
+  --pf-border-strong: rgba(115, 95, 79, 0.6);
+  --pf-hover: rgb(38, 31, 26);
+  --pf-active: rgb(51, 43, 38);
+  --pf-scrollbar: rgba(115, 95, 79, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="polaroid--day"] {
+  --pf-bg: #f7f2ef;
+  --pf-bg-dark: #ebe7e3;
+  --pf-bg-darker: #dedad6;
+  --pf-bg-lighter: #e4deda;
+  --pf-fg: #2e241d;
+  --pf-fg-dim: #796f68;
+  --pf-fg-soft: #4f463e;
+  --pf-fg-strong: #1a120c;
+  --pf-accent: #a1568c;
+  --pf-selection: #e4d0d9;
+  --pf-muted: #ada29a;
+  --pf-danger: #b0554f;
+  --pf-success: #448a49;
+  --pf-warning: #ab8722;
+  --pf-info: #1472ab;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(173, 162, 154, 0.38);
+  --pf-border-strong: rgba(173, 162, 154, 0.6);
+  --pf-hover: rgb(235, 230, 226);
+  --pf-active: rgb(223, 217, 214);
+  --pf-scrollbar: rgba(173, 162, 154, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="polaroid--day-high-contrast"] {
+  --pf-bg: #fffdfb;
+  --pf-bg-dark: #f4f1ef;
+  --pf-bg-darker: #e7e4e2;
+  --pf-bg-lighter: #eeeae7;
+  --pf-fg: #0f0703;
+  --pf-fg-dim: #5e534a;
+  --pf-fg-soft: #362c24;
+  --pf-fg-strong: #030101;
+  --pf-accent: #863e72;
+  --pf-selection: #e1cdd9;
+  --pf-muted: #7d726a;
+  --pf-danger: #923a36;
+  --pf-success: #1b6425;
+  --pf-warning: #6f5400;
+  --pf-info: #005c8e;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(125, 114, 106, 0.38);
+  --pf-border-strong: rgba(125, 114, 106, 0.6);
+  --pf-hover: rgb(241, 238, 236);
+  --pf-active: rgb(226, 223, 221);
+  --pf-scrollbar: rgba(125, 114, 106, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="polaroid--high-contrast"] {
+  --pf-bg: #030100;
+  --pf-bg-dark: #020100;
+  --pf-bg-darker: #010000;
+  --pf-bg-lighter: #1e130a;
+  --pf-fg: #f9f4f0;
+  --pf-fg-dim: #b5aca5;
+  --pf-fg-soft: #e4dcd6;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #e08fc7;
+  --pf-selection: #57374c;
+  --pf-muted: #907c6c;
+  --pf-danger: #e6857d;
+  --pf-success: #8bd28e;
+  --pf-warning: #f3cc6f;
+  --pf-info: #5aade9;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(144, 124, 108, 0.38);
+  --pf-border-strong: rgba(144, 124, 108, 0.6);
+  --pf-hover: rgb(18, 16, 14);
+  --pf-active: rgb(33, 30, 29);
+  --pf-scrollbar: rgba(144, 124, 108, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="polaroid--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #130802;
+  --pf-fg: #eee6e0;
+  --pf-fg-dim: #948f8b;
+  --pf-fg-soft: #d2c8c1;
+  --pf-fg-strong: #fdf9f7;
+  --pf-accent: #e08fc7;
+  --pf-selection: #432b3c;
+  --pf-muted: #735f4f;
+  --pf-danger: #e6857d;
+  --pf-success: #8bd28e;
+  --pf-warning: #f3cc6f;
+  --pf-info: #5aade9;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(115, 95, 79, 0.38);
+  --pf-border-strong: rgba(115, 95, 79, 0.6);
+  --pf-hover: rgb(14, 14, 13);
+  --pf-active: rgb(29, 28, 27);
+  --pf-scrollbar: rgba(115, 95, 79, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="sakura--dark"] {
+  --pf-bg: #17080f;
+  --pf-bg-dark: #11060b;
+  --pf-bg-darker: #0c0408;
+  --pf-bg-lighter: #25151d;
+  --pf-fg: #efe5e9;
+  --pf-fg-dim: #a3989d;
+  --pf-fg-soft: #d3c7cc;
+  --pf-fg-strong: #fdf9fa;
+  --pf-accent: #fa7fb5;
+  --pf-selection: #57293d;
+  --pf-muted: #7a5867;
+  --pf-danger: #f57595;
+  --pf-success: #74d87b;
+  --pf-warning: #fdc1ae;
+  --pf-info: #d081e2;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(122, 88, 103, 0.38);
+  --pf-border-strong: rgba(122, 88, 103, 0.6);
+  --pf-hover: rgb(36, 21, 28);
+  --pf-active: rgb(49, 35, 41);
+  --pf-scrollbar: rgba(122, 88, 103, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="sakura--day"] {
+  --pf-bg: #fbf0f5;
+  --pf-bg-dark: #efe4e9;
+  --pf-bg-darker: #e2d7dc;
+  --pf-bg-lighter: #e9dbe1;
+  --pf-fg: #312128;
+  --pf-fg-dim: #7d6c73;
+  --pf-fg-soft: #53424a;
+  --pf-fg-strong: #1c0f15;
+  --pf-accent: #b8437b;
+  --pf-selection: #eccada;
+  --pf-muted: #b29fa7;
+  --pf-danger: #bd4266;
+  --pf-success: #238f34;
+  --pf-warning: #db623e;
+  --pf-info: #9346a4;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(178, 159, 167, 0.38);
+  --pf-border-strong: rgba(178, 159, 167, 0.6);
+  --pf-hover: rgb(239, 228, 233);
+  --pf-active: rgb(227, 215, 220);
+  --pf-scrollbar: rgba(178, 159, 167, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="sakura--day-high-contrast"] {
+  --pf-bg: #fefdfd;
+  --pf-bg-dark: #f7eff3;
+  --pf-bg-darker: #eae2e5;
+  --pf-bg-lighter: #f2e8ec;
+  --pf-fg: #12050b;
+  --pf-fg-dim: #5e5157;
+  --pf-fg-soft: #362a2f;
+  --pf-fg-strong: #030102;
+  --pf-accent: #9d2964;
+  --pf-selection: #e6c8d7;
+  --pf-muted: #827078;
+  --pf-danger: #a22750;
+  --pf-success: #006719;
+  --pf-warning: #a03003;
+  --pf-info: #833794;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(130, 112, 120, 0.38);
+  --pf-border-strong: rgba(130, 112, 120, 0.6);
+  --pf-hover: rgb(240, 238, 238);
+  --pf-active: rgb(226, 223, 224);
+  --pf-scrollbar: rgba(130, 112, 120, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="sakura--high-contrast"] {
+  --pf-bg: #050102;
+  --pf-bg-dark: #040101;
+  --pf-bg-darker: #020001;
+  --pf-bg-lighter: #230e19;
+  --pf-fg: #faf3f6;
+  --pf-fg-dim: #b6aaaf;
+  --pf-fg-soft: #e5dbdf;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #fa7fb5;
+  --pf-selection: #623146;
+  --pf-muted: #987484;
+  --pf-danger: #f57595;
+  --pf-success: #74d87b;
+  --pf-warning: #fdc1ae;
+  --pf-info: #d081e2;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(152, 116, 132, 0.38);
+  --pf-border-strong: rgba(152, 116, 132, 0.6);
+  --pf-hover: rgb(20, 16, 17);
+  --pf-active: rgb(34, 30, 31);
+  --pf-scrollbar: rgba(152, 116, 132, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="sakura--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #17040d;
+  --pf-fg: #efe5e9;
+  --pf-fg-dim: #948e90;
+  --pf-fg-soft: #d3c7cc;
+  --pf-fg-strong: #fdf9fa;
+  --pf-accent: #fa7fb5;
+  --pf-selection: #4b2636;
+  --pf-muted: #7a5867;
+  --pf-danger: #f57595;
+  --pf-success: #74d87b;
+  --pf-warning: #fdc1ae;
+  --pf-info: #d081e2;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(122, 88, 103, 0.38);
+  --pf-border-strong: rgba(122, 88, 103, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(29, 27, 28);
+  --pf-scrollbar: rgba(122, 88, 103, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="stealth--dark"] {
+  --pf-bg: #000405;
+  --pf-bg-dark: #000304;
+  --pf-bg-darker: #000203;
+  --pf-bg-lighter: #060f10;
+  --pf-fg: #dfeaeb;
+  --pf-fg-dim: #919a9b;
+  --pf-fg-soft: #c0cece;
+  --pf-fg-strong: #f6fbfb;
+  --pf-accent: #a88aea;
+  --pf-selection: #2f2a45;
+  --pf-muted: #4c6a6b;
+  --pf-danger: #128185;
+  --pf-success: #73d084;
+  --pf-warning: #f5e973;
+  --pf-info: #1492c0;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(76, 106, 107, 0.38);
+  --pf-border-strong: rgba(76, 106, 107, 0.6);
+  --pf-hover: rgb(13, 18, 19);
+  --pf-active: rgb(27, 32, 33);
+  --pf-scrollbar: rgba(76, 106, 107, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="stealth--day"] {
+  --pf-bg: #f2f8f8;
+  --pf-bg-dark: #e6eded;
+  --pf-bg-darker: #d9dfe0;
+  --pf-bg-lighter: #dde5e5;
+  --pf-fg: #1b292a;
+  --pf-fg-dim: #677575;
+  --pf-fg-soft: #3d4b4b;
+  --pf-fg-strong: #0a1617;
+  --pf-accent: #7557b2;
+  --pf-selection: #d7d5e9;
+  --pf-muted: #99a8a9;
+  --pf-danger: #007275;
+  --pf-success: #24873f;
+  --pf-warning: #978c0c;
+  --pf-info: #006d91;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(153, 168, 169, 0.38);
+  --pf-border-strong: rgba(153, 168, 169, 0.6);
+  --pf-hover: rgb(229, 236, 236);
+  --pf-active: rgb(216, 223, 223);
+  --pf-scrollbar: rgba(153, 168, 169, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="stealth--day-high-contrast"] {
+  --pf-bg: #fbfefe;
+  --pf-bg-dark: #eef3f3;
+  --pf-bg-darker: #e1e5e6;
+  --pf-bg-lighter: #e7eced;
+  --pf-fg: #020b0c;
+  --pf-fg-dim: #49595a;
+  --pf-fg-soft: #223132;
+  --pf-fg-strong: #000202;
+  --pf-accent: #6646a0;
+  --pf-selection: #d6d0e7;
+  --pf-muted: #697878;
+  --pf-danger: #066264;
+  --pf-success: #066628;
+  --pf-warning: #605802;
+  --pf-info: #035f7f;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(105, 120, 120, 0.38);
+  --pf-border-strong: rgba(105, 120, 120, 0.6);
+  --pf-hover: rgb(236, 239, 239);
+  --pf-active: rgb(221, 225, 225);
+  --pf-scrollbar: rgba(105, 120, 120, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="stealth--high-contrast"] {
+  --pf-bg: #000202;
+  --pf-bg-dark: #000101;
+  --pf-bg-darker: #000101;
+  --pf-bg-lighter: #07191a;
+  --pf-fg: #eff7f7;
+  --pf-fg-dim: #a4b1b2;
+  --pf-fg-soft: #d5e1e1;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #a88aea;
+  --pf-selection: #40365a;
+  --pf-muted: #688788;
+  --pf-danger: #1bb4b8;
+  --pf-success: #73d084;
+  --pf-warning: #e8dc65;
+  --pf-info: #01ade4;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(104, 135, 136, 0.38);
+  --pf-border-strong: rgba(104, 135, 136, 0.6);
+  --pf-hover: rgb(14, 17, 17);
+  --pf-active: rgb(29, 31, 31);
+  --pf-scrollbar: rgba(104, 135, 136, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="stealth--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #000e0f;
+  --pf-fg: #dfeaeb;
+  --pf-fg-dim: #8a9192;
+  --pf-fg-soft: #c0cece;
+  --pf-fg-strong: #f6fbfb;
+  --pf-accent: #a88aea;
+  --pf-selection: #322946;
+  --pf-muted: #4c6a6b;
+  --pf-danger: #128185;
+  --pf-success: #73d084;
+  --pf-warning: #f5e973;
+  --pf-info: #1492c0;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(76, 106, 107, 0.38);
+  --pf-border-strong: rgba(76, 106, 107, 0.6);
+  --pf-hover: rgb(13, 14, 14);
+  --pf-active: rgb(27, 28, 28);
+  --pf-scrollbar: rgba(76, 106, 107, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="synthwave--dark"] {
+  --pf-bg: #0c031f;
+  --pf-bg-dark: #090217;
+  --pf-bg-darker: #060210;
+  --pf-bg-lighter: #190f2e;
+  --pf-fg: #e8e6ef;
+  --pf-fg-dim: #9b97a6;
+  --pf-fg-soft: #cbc9d4;
+  --pf-fg-strong: #faf9fd;
+  --pf-accent: #d563fe;
+  --pf-selection: #441e5d;
+  --pf-muted: #665a8c;
+  --pf-danger: #fe288f;
+  --pf-success: #fc9afe;
+  --pf-warning: #fde3c9;
+  --pf-info: #766dff;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(102, 90, 140, 0.38);
+  --pf-border-strong: rgba(102, 90, 140, 0.6);
+  --pf-hover: rgb(25, 17, 43);
+  --pf-active: rgb(38, 30, 56);
+  --pf-scrollbar: rgba(102, 90, 140, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="synthwave--day"] {
+  --pf-bg: #f7f5fe;
+  --pf-bg-dark: #ece9f9;
+  --pf-bg-darker: #dfdbec;
+  --pf-bg-lighter: #e4e0f5;
+  --pf-fg: #282238;
+  --pf-fg-dim: #726e82;
+  --pf-fg-soft: #494459;
+  --pf-fg-strong: #151120;
+  --pf-accent: #a720d0;
+  --pf-selection: #e5c6f4;
+  --pf-muted: #a5a1b6;
+  --pf-danger: #cc096f;
+  --pf-success: #b915bf;
+  --pf-warning: #c47809;
+  --pf-info: #5835ea;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(165, 161, 182, 0.38);
+  --pf-border-strong: rgba(165, 161, 182, 0.6);
+  --pf-hover: rgb(235, 232, 242);
+  --pf-active: rgb(222, 220, 230);
+  --pf-scrollbar: rgba(165, 161, 182, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="synthwave--day-high-contrast"] {
+  --pf-bg: #fdfefc;
+  --pf-bg-dark: #f2f0f9;
+  --pf-bg-darker: #e5e3ec;
+  --pf-bg-lighter: #ece9f8;
+  --pf-fg: #0b0618;
+  --pf-fg-dim: #565360;
+  --pf-fg-soft: #2e2c37;
+  --pf-fg-strong: #020103;
+  --pf-accent: #9200b8;
+  --pf-selection: #e2bfeb;
+  --pf-muted: #777386;
+  --pf-danger: #ac045d;
+  --pf-success: #9c04a1;
+  --pf-warning: #7e4c07;
+  --pf-info: #552ee4;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(119, 115, 134, 0.38);
+  --pf-border-strong: rgba(119, 115, 134, 0.6);
+  --pf-hover: rgb(238, 239, 238);
+  --pf-active: rgb(224, 224, 225);
+  --pf-scrollbar: rgba(119, 115, 134, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="synthwave--high-contrast"] {
+  --pf-bg: #020107;
+  --pf-bg-dark: #010105;
+  --pf-bg-darker: #010003;
+  --pf-bg-lighter: #18102a;
+  --pf-fg: #f5f4fa;
+  --pf-fg-dim: #aeacb7;
+  --pf-fg-soft: #dedde5;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #d667fe;
+  --pf-selection: #532865;
+  --pf-muted: #8279a1;
+  --pf-danger: #fe5c9d;
+  --pf-success: #fc9afe;
+  --pf-warning: #fecd9c;
+  --pf-info: #8f8ffe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(130, 121, 161, 0.38);
+  --pf-border-strong: rgba(130, 121, 161, 0.6);
+  --pf-hover: rgb(17, 16, 22);
+  --pf-active: rgb(31, 30, 36);
+  --pf-scrollbar: rgba(130, 121, 161, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="synthwave--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #0d061e;
+  --pf-fg: #e8e6ef;
+  --pf-fg-dim: #908f94;
+  --pf-fg-soft: #cbc9d4;
+  --pf-fg-strong: #faf9fd;
+  --pf-accent: #d563fe;
+  --pf-selection: #401e4c;
+  --pf-muted: #665a8c;
+  --pf-danger: #fe288f;
+  --pf-success: #fc9afe;
+  --pf-warning: #fde3c9;
+  --pf-info: #766dff;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(102, 90, 140, 0.38);
+  --pf-border-strong: rgba(102, 90, 140, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(28, 28, 29);
+  --pf-scrollbar: rgba(102, 90, 140, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="terminal-blue--dark"] {
+  --pf-bg: #000412;
+  --pf-bg-dark: #00030e;
+  --pf-bg-darker: #000209;
+  --pf-bg-lighter: #041020;
+  --pf-fg: #e3e8f0;
+  --pf-fg-dim: #9498a2;
+  --pf-fg-soft: #c4cbd4;
+  --pf-fg-strong: #f8fafd;
+  --pf-accent: #7f95fe;
+  --pf-selection: #242d54;
+  --pf-muted: #4c6585;
+  --pf-danger: #017ca5;
+  --pf-success: #01cee7;
+  --pf-warning: #cfe8fe;
+  --pf-info: #507ef1;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(76, 101, 133, 0.38);
+  --pf-border-strong: rgba(76, 101, 133, 0.6);
+  --pf-hover: rgb(14, 18, 31);
+  --pf-active: rgb(27, 31, 45);
+  --pf-scrollbar: rgba(76, 101, 133, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="terminal-blue--day"] {
+  --pf-bg: #f3f7fc;
+  --pf-bg-dark: #e3ecf7;
+  --pf-bg-darker: #d6dfea;
+  --pf-bg-lighter: #d9e4f3;
+  --pf-fg: #1b2737;
+  --pf-fg-dim: #677382;
+  --pf-fg-soft: #3d4958;
+  --pf-fg-strong: #0a1421;
+  --pf-accent: #4c5dd2;
+  --pf-selection: #ced5f3;
+  --pf-muted: #98a6b8;
+  --pf-danger: #016d91;
+  --pf-success: #018090;
+  --pf-warning: #1190dc;
+  --pf-info: #2f58c8;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(152, 166, 184, 0.38);
+  --pf-border-strong: rgba(152, 166, 184, 0.6);
+  --pf-hover: rgb(230, 235, 240);
+  --pf-active: rgb(217, 222, 228);
+  --pf-scrollbar: rgba(152, 166, 184, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="terminal-blue--day-high-contrast"] {
+  --pf-bg: #fefdfc;
+  --pf-bg-dark: #edf2fa;
+  --pf-bg-darker: #dfe5ed;
+  --pf-bg-lighter: #e4ecf6;
+  --pf-fg: #020917;
+  --pf-fg-dim: #4e5661;
+  --pf-fg-soft: #272e38;
+  --pf-fg-strong: #010203;
+  --pf-accent: #3d4abd;
+  --pf-selection: #ced0ec;
+  --pf-muted: #697686;
+  --pf-danger: #045f7f;
+  --pf-success: #0a606c;
+  --pf-warning: #035b8f;
+  --pf-info: #274fbe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(105, 118, 134, 0.38);
+  --pf-border-strong: rgba(105, 118, 134, 0.6);
+  --pf-hover: rgb(239, 238, 238);
+  --pf-active: rgb(224, 224, 225);
+  --pf-scrollbar: rgba(105, 118, 134, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="terminal-blue--high-contrast"] {
+  --pf-bg: #000208;
+  --pf-bg-dark: #000106;
+  --pf-bg-darker: #000103;
+  --pf-bg-lighter: #05162c;
+  --pf-fg: #f2f5fb;
+  --pf-fg-dim: #a8afb8;
+  --pf-fg-soft: #d9dfe6;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #7f95fe;
+  --pf-selection: #303a65;
+  --pf-muted: #6882a4;
+  --pf-danger: #03ade5;
+  --pf-success: #01cee7;
+  --pf-warning: #b6ddfd;
+  --pf-info: #6f9afe;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(104, 130, 164, 0.38);
+  --pf-border-strong: rgba(104, 130, 164, 0.6);
+  --pf-hover: rgb(15, 17, 23);
+  --pf-active: rgb(29, 31, 37);
+  --pf-scrollbar: rgba(104, 130, 164, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="terminal-blue--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #000b1f;
+  --pf-fg: #e3e8f0;
+  --pf-fg-dim: #8d9095;
+  --pf-fg-soft: #c4cbd4;
+  --pf-fg-strong: #f8fafd;
+  --pf-accent: #7f95fe;
+  --pf-selection: #262d4c;
+  --pf-muted: #4c6585;
+  --pf-danger: #017ca5;
+  --pf-success: #01cee7;
+  --pf-warning: #cfe8fe;
+  --pf-info: #507ef1;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(76, 101, 133, 0.38);
+  --pf-border-strong: rgba(76, 101, 133, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(27, 28, 29);
+  --pf-scrollbar: rgba(76, 101, 133, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="tundra--dark"] {
+  --pf-bg: #0a1316;
+  --pf-bg-dark: #080e11;
+  --pf-bg-darker: #050a0b;
+  --pf-bg-lighter: #172124;
+  --pf-fg: #e0eaed;
+  --pf-fg-dim: #959fa2;
+  --pf-fg-soft: #c0cdd1;
+  --pf-fg-strong: #f7fbfc;
+  --pf-accent: #cbaef3;
+  --pf-selection: #403e54;
+  --pf-muted: #4d6871;
+  --pf-danger: #f09da2;
+  --pf-success: #7ce0ca;
+  --pf-warning: #f4dd90;
+  --pf-info: #6cbce7;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(77, 104, 113, 0.38);
+  --pf-border-strong: rgba(77, 104, 113, 0.6);
+  --pf-hover: rgb(23, 32, 35);
+  --pf-active: rgb(36, 45, 48);
+  --pf-scrollbar: rgba(77, 104, 113, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="tundra--day"] {
+  --pf-bg: #eff5f7;
+  --pf-bg-dark: #e3e9eb;
+  --pf-bg-darker: #d6dcde;
+  --pf-bg-lighter: #dae1e4;
+  --pf-fg: #1c292d;
+  --pf-fg-dim: #677478;
+  --pf-fg-soft: #3e4a4e;
+  --pf-fg-strong: #0b1619;
+  --pf-accent: #876bab;
+  --pf-selection: #d8d7e6;
+  --pf-muted: #99a7ac;
+  --pf-danger: #ad6066;
+  --pf-success: #269380;
+  --pf-warning: #a79144;
+  --pf-info: #277aa3;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(153, 167, 172, 0.38);
+  --pf-border-strong: rgba(153, 167, 172, 0.6);
+  --pf-hover: rgb(226, 233, 235);
+  --pf-active: rgb(214, 221, 223);
+  --pf-scrollbar: rgba(153, 167, 172, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="tundra--day-high-contrast"] {
+  --pf-bg: #fbfeff;
+  --pf-bg-dark: #eff2f4;
+  --pf-bg-darker: #e1e5e7;
+  --pf-bg-lighter: #e7ecee;
+  --pf-fg: #020b0e;
+  --pf-fg-dim: #49585d;
+  --pf-fg-soft: #233035;
+  --pf-fg-strong: #000203;
+  --pf-accent: #674b88;
+  --pf-selection: #d6d1e1;
+  --pf-muted: #6a777c;
+  --pf-danger: #8a4147;
+  --pf-success: #0a6355;
+  --pf-warning: #6a5600;
+  --pf-info: #015e83;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(106, 119, 124, 0.38);
+  --pf-border-strong: rgba(106, 119, 124, 0.6);
+  --pf-hover: rgb(236, 239, 241);
+  --pf-active: rgb(221, 225, 226);
+  --pf-scrollbar: rgba(106, 119, 124, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="tundra--high-contrast"] {
+  --pf-bg: #000203;
+  --pf-bg-dark: #000102;
+  --pf-bg-darker: #000101;
+  --pf-bg-lighter: #08191e;
+  --pf-fg: #f0f6f9;
+  --pf-fg-dim: #a4b0b5;
+  --pf-fg-soft: #d6e0e3;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #cbaef3;
+  --pf-selection: #4d435e;
+  --pf-muted: #69868f;
+  --pf-danger: #f09da2;
+  --pf-success: #7ce0ca;
+  --pf-warning: #edd789;
+  --pf-info: #6cbce7;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(105, 134, 143, 0.38);
+  --pf-border-strong: rgba(105, 134, 143, 0.6);
+  --pf-hover: rgb(14, 17, 18);
+  --pf-active: rgb(29, 31, 33);
+  --pf-scrollbar: rgba(105, 134, 143, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="tundra--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #010d12;
+  --pf-fg: #e0eaed;
+  --pf-fg-dim: #8b9193;
+  --pf-fg-soft: #c0cdd1;
+  --pf-fg-strong: #f7fbfc;
+  --pf-accent: #cbaef3;
+  --pf-selection: #3d3449;
+  --pf-muted: #4d6871;
+  --pf-danger: #f09da2;
+  --pf-success: #7ce0ca;
+  --pf-warning: #f4dd90;
+  --pf-info: #6cbce7;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(77, 104, 113, 0.38);
+  --pf-border-strong: rgba(77, 104, 113, 0.6);
+  --pf-hover: rgb(13, 14, 14);
+  --pf-active: rgb(27, 28, 28);
+  --pf-scrollbar: rgba(77, 104, 113, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="vaporwave--dark"] {
+  --pf-bg: #150b24;
+  --pf-bg-dark: #10081b;
+  --pf-bg-darker: #0b0612;
+  --pf-bg-lighter: #231933;
+  --pf-fg: #e9e6ef;
+  --pf-fg-dim: #9f99a8;
+  --pf-fg-soft: #ccc8d3;
+  --pf-fg-strong: #faf9fd;
+  --pf-accent: #ec9dee;
+  --pf-selection: #51345d;
+  --pf-muted: #695a85;
+  --pf-danger: #fb90bf;
+  --pf-success: #44e8c8;
+  --pf-warning: #fedc67;
+  --pf-info: #aea3ff;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(105, 90, 133, 0.38);
+  --pf-border-strong: rgba(105, 90, 133, 0.6);
+  --pf-hover: rgb(34, 24, 48);
+  --pf-active: rgb(46, 37, 60);
+  --pf-scrollbar: rgba(105, 90, 133, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="vaporwave--day"] {
+  --pf-bg: #f5f1fe;
+  --pf-bg-dark: #eae5f5;
+  --pf-bg-darker: #ddd8e8;
+  --pf-bg-lighter: #e2dcf0;
+  --pf-fg: #292237;
+  --pf-fg-dim: #746e81;
+  --pf-fg-soft: #4a4458;
+  --pf-fg-strong: #16111f;
+  --pf-accent: #a459a6;
+  --pf-selection: #e3d0eb;
+  --pf-muted: #a7a1b5;
+  --pf-danger: #b75282;
+  --pf-success: #09957f;
+  --pf-warning: #af8f01;
+  --pf-info: #7061bd;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(167, 161, 181, 0.38);
+  --pf-border-strong: rgba(167, 161, 181, 0.6);
+  --pf-hover: rgb(233, 229, 242);
+  --pf-active: rgb(221, 216, 230);
+  --pf-scrollbar: rgba(167, 161, 181, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="vaporwave--day-high-contrast"] {
+  --pf-bg: #fdfefc;
+  --pf-bg-dark: #f3f0f9;
+  --pf-bg-darker: #e6e3ec;
+  --pf-bg-lighter: #ede8f7;
+  --pf-fg: #0c0517;
+  --pf-fg-dim: #57535f;
+  --pf-fg-soft: #2f2c37;
+  --pf-fg-strong: #020103;
+  --pf-accent: #833a85;
+  --pf-selection: #dfcdde;
+  --pf-muted: #787285;
+  --pf-danger: #943363;
+  --pf-success: #0c6354;
+  --pf-warning: #6a5600;
+  --pf-info: #5a49a3;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(120, 114, 133, 0.38);
+  --pf-border-strong: rgba(120, 114, 133, 0.6);
+  --pf-hover: rgb(239, 239, 238);
+  --pf-active: rgb(224, 224, 225);
+  --pf-scrollbar: rgba(120, 114, 133, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="vaporwave--high-contrast"] {
+  --pf-bg: #020107;
+  --pf-bg-dark: #010105;
+  --pf-bg-darker: #010003;
+  --pf-bg-lighter: #1a1029;
+  --pf-fg: #f6f4fa;
+  --pf-fg-dim: #afacb6;
+  --pf-fg-soft: #dfdce5;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #ec9dee;
+  --pf-selection: #5b3c5f;
+  --pf-muted: #85789f;
+  --pf-danger: #fb90bf;
+  --pf-success: #44e8c8;
+  --pf-warning: #f7d560;
+  --pf-info: #aea3ff;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(133, 120, 159, 0.38);
+  --pf-border-strong: rgba(133, 120, 159, 0.6);
+  --pf-hover: rgb(17, 16, 22);
+  --pf-active: rgb(31, 30, 36);
+  --pf-scrollbar: rgba(133, 120, 159, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="vaporwave--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #0f051d;
+  --pf-fg: #e9e6ef;
+  --pf-fg-dim: #908f94;
+  --pf-fg-soft: #ccc8d3;
+  --pf-fg-strong: #faf9fd;
+  --pf-accent: #ec9dee;
+  --pf-selection: #472f47;
+  --pf-muted: #695a85;
+  --pf-danger: #fb90bf;
+  --pf-success: #44e8c8;
+  --pf-warning: #fedc67;
+  --pf-info: #aea3ff;
+  --pf-accent-fg: #111111;
+  --pf-border: rgba(105, 90, 133, 0.38);
+  --pf-border-strong: rgba(105, 90, 133, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(28, 28, 29);
+  --pf-scrollbar: rgba(105, 90, 133, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="watermelon--dark"] {
+  --pf-bg: #010a03;
+  --pf-bg-dark: #010802;
+  --pf-bg-darker: #010502;
+  --pf-bg-lighter: #09180c;
+  --pf-fg: #e3eae4;
+  --pf-fg-dim: #949c95;
+  --pf-fg-soft: #c4cdc5;
+  --pf-fg-strong: #f8fbf8;
+  --pf-accent: #ff53a8;
+  --pf-selection: #481e31;
+  --pf-muted: #4f6c54;
+  --pf-danger: #fe396b;
+  --pf-success: #2aea56;
+  --pf-warning: #dafa18;
+  --pf-info: #109d75;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(79, 108, 84, 0.38);
+  --pf-border-strong: rgba(79, 108, 84, 0.6);
+  --pf-hover: rgb(15, 23, 17);
+  --pf-active: rgb(28, 37, 30);
+  --pf-scrollbar: rgba(79, 108, 84, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="watermelon--day"] {
+  --pf-bg: #f1faf2;
+  --pf-bg-dark: #e5eee6;
+  --pf-bg-darker: #d8e1d9;
+  --pf-bg-lighter: #dbe6dd;
+  --pf-fg: #1d2a1f;
+  --pf-fg-dim: #68766a;
+  --pf-fg-soft: #3e4c41;
+  --pf-fg-strong: #0b170e;
+  --pf-accent: #ca047b;
+  --pf-selection: #e8c4d8;
+  --pf-muted: #9aa99c;
+  --pf-danger: #d2004d;
+  --pf-success: #058d2c;
+  --pf-warning: #839801;
+  --pf-info: #0c7556;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(154, 169, 156, 0.38);
+  --pf-border-strong: rgba(154, 169, 156, 0.6);
+  --pf-hover: rgb(228, 238, 229);
+  --pf-active: rgb(216, 225, 217);
+  --pf-scrollbar: rgba(154, 169, 156, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="watermelon--day-high-contrast"] {
+  --pf-bg: #fbfffb;
+  --pf-bg-dark: #eef4ef;
+  --pf-bg-darker: #e1e6e1;
+  --pf-bg-lighter: #e6eee7;
+  --pf-fg: #020c04;
+  --pf-fg-dim: #4e594f;
+  --pf-fg-soft: #273129;
+  --pf-fg-strong: #010201;
+  --pf-accent: #ab0067;
+  --pf-selection: #e7bfd6;
+  --pf-muted: #6b796d;
+  --pf-danger: #b20040;
+  --pf-success: #03661d;
+  --pf-warning: #515e04;
+  --pf-info: #056349;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(107, 121, 109, 0.38);
+  --pf-border-strong: rgba(107, 121, 109, 0.6);
+  --pf-hover: rgb(236, 240, 236);
+  --pf-active: rgb(221, 226, 221);
+  --pf-scrollbar: rgba(107, 121, 109, 0.5);
+  --pf-mode: light;
+}
+
+[data-theme="watermelon--high-contrast"] {
+  --pf-bg: #000300;
+  --pf-bg-dark: #000200;
+  --pf-bg-darker: #000100;
+  --pf-bg-lighter: #071b0c;
+  --pf-fg: #f1f7f2;
+  --pf-fg-dim: #a8b1a9;
+  --pf-fg-soft: #d9e0da;
+  --pf-fg-strong: #ffffff;
+  --pf-accent: #ff58a9;
+  --pf-selection: #612340;
+  --pf-muted: #6b8971;
+  --pf-danger: #ff5f7d;
+  --pf-success: #2aea56;
+  --pf-warning: #cae90d;
+  --pf-info: #1ab98b;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(107, 137, 113, 0.38);
+  --pf-border-strong: rgba(107, 137, 113, 0.6);
+  --pf-hover: rgb(14, 18, 15);
+  --pf-active: rgb(29, 32, 29);
+  --pf-scrollbar: rgba(107, 137, 113, 0.5);
+  --pf-mode: dark;
+}
+
+[data-theme="watermelon--oled"] {
+  --pf-bg: #000000;
+  --pf-bg-dark: #000000;
+  --pf-bg-darker: #000000;
+  --pf-bg-lighter: #001003;
+  --pf-fg: #e3eae4;
+  --pf-fg-dim: #8d918d;
+  --pf-fg-soft: #c4cdc5;
+  --pf-fg-strong: #f8fbf8;
+  --pf-accent: #ff53a8;
+  --pf-selection: #4d1932;
+  --pf-muted: #4f6c54;
+  --pf-danger: #fe396b;
+  --pf-success: #2aea56;
+  --pf-warning: #dafa18;
+  --pf-info: #109d75;
+  --pf-accent-fg: #ffffff;
+  --pf-border: rgba(79, 108, 84, 0.38);
+  --pf-border-strong: rgba(79, 108, 84, 0.6);
+  --pf-hover: rgb(14, 14, 14);
+  --pf-active: rgb(27, 28, 27);
+  --pf-scrollbar: rgba(79, 108, 84, 0.5);
+  --pf-mode: dark;
+}

@@ -1,0 +1,142 @@
+/* 应用窗口：无边框单进程窗口里的"桌面内窗口"，流量灯 + 拖拽 + 缩放 + genie 式最小化 */
+
+.app-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+  min-height: 200px;
+  border-radius: var(--r-win);
+  overflow: hidden;
+  background: var(--c-surface);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-win);
+  transform-origin: bottom center;
+}
+
+.app-window.is-front {
+  border-color: color-mix(in srgb, var(--c-line-strong) 70%, transparent);
+}
+
+.app-window.is-inactive .win-bar {
+  opacity: 0.72;
+}
+
+.app-window.is-inactive {
+  box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--c-deep) 80%, transparent);
+}
+
+.app-window.is-maximized {
+  border-radius: 0;
+}
+
+.win-bar {
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--c-chrome);
+  border-bottom: 1px solid var(--c-line);
+  cursor: default;
+}
+
+.win-bar.is-dragging {
+  cursor: grabbing;
+}
+
+.win-lights {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.win-btn {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--c-deep) 40%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.win-btn.close {
+  background: var(--mac-close);
+}
+
+.win-btn.minimize {
+  background: var(--mac-min);
+}
+
+.win-btn.maximize {
+  background: var(--mac-max);
+}
+
+.win-btn svg {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.win-lights:hover .win-btn svg {
+  opacity: 1;
+}
+
+.win-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.win-tools {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 62px;
+  justify-content: flex-end;
+}
+
+.win-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.win-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  z-index: 2;
+}
+
+.win-resize::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--c-line-strong);
+  border-bottom: 1.5px solid var(--c-line-strong);
+  opacity: 0.7;
+}
+
+/* 最大化时隐藏缩放手柄 */
+.app-window.is-maximized .win-resize {
+  display: none;
+}
