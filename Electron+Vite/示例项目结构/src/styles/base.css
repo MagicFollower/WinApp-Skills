@@ -1,0 +1,69 @@
+:root {
+  color-scheme: dark;
+  --bg: #0c0a10;
+  --panel: #120f17;
+  --raised: #1a1622;
+  --line: #241f2c;
+  --line-soft: #1b1722;
+  --text: #e9e6f0;
+  --text-dim: #a09aab;
+  --text-faint: #736d80;
+  --accent: #a78bfa;
+  --accent-ink: #c4b5fd;
+  --ok: #6ee7b7;
+  --err: #fca5a5;
+  --mono: 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  /* 基准字号交给用户缩放（Ctrl +/−）与系统 DPI，页面整体走 zoomFactor 等比放大；
+     所以这里只保证不写死根字号，布局尺寸仍按 px 维护。 */
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei', -apple-system, sans-serif;
+  font-size: 0.875rem;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+textarea,
+.md-preview {
+  user-select: text;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2432;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3346;
+}
+
+button {
+  font-family: inherit;
+}

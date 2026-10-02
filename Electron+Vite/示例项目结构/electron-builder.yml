@@ -1,0 +1,33 @@
+appId: com.local.linux-command-manual
+productName: LinuxCmdManual
+
+directories:
+  output: release
+
+files:
+  - dist/**
+  - dist-electron/**
+  - package.json
+
+asar: true
+compression: normal
+electronVersion: 44.5.1
+
+win:
+  icon: electron/icon.ico
+  target:
+    - portable
+    - nsis
+    - dir
+  artifactName: ${productName}_${arch}.${ext}
+
+portable:
+  artifactName: ${productName}_portable.${ext}
+
+nsis:
+  artifactName: ${productName}_setup.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: false
+  createStartMenuShortcut: false

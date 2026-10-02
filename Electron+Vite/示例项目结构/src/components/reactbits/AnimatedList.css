@@ -1,0 +1,102 @@
+/* Forked from reactbits AnimatedList (ts-default):
+   items carry a title + subtitle line, and the upstream window-level
+   ArrowUp/ArrowDown/Tab/Enter handler is removed so the markdown
+   textarea keeps those keys. */
+
+.scroll-list-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.scroll-list {
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.scroll-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-list::-webkit-scrollbar-track {
+  background: #060606;
+}
+
+.scroll-list::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 4px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.al-item {
+  cursor: pointer;
+}
+
+.item {
+  padding: 12px 14px;
+  background-color: #111;
+  border: 1px solid #1d1d1f;
+  border-radius: 8px;
+  margin-bottom: 0.65rem;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.item.hovered {
+  background-color: #191919;
+}
+
+.item.selected {
+  background-color: #222;
+  border-color: #3a3a3d;
+}
+
+.item-title {
+  color: #fff;
+  margin: 0;
+  font-family: 'Cascadia Mono', 'Consolas', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.item-subtitle {
+  color: #9a9aa3;
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.top-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(to bottom, #120f17, transparent);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.bottom-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to top, #120f17, transparent);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}

@@ -1,0 +1,133 @@
+.md-preview {
+  max-width: 920px;
+  padding: 22px 26px 60px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: #ddd8e6;
+}
+
+.md-preview > :first-child {
+  margin-top: 0;
+}
+
+.md-preview h1 {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.42rem;
+  font-weight: 650;
+  color: #fff;
+}
+
+.md-preview h2 {
+  margin: 30px 0 10px;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--accent-ink);
+  letter-spacing: 0.02em;
+}
+
+.md-preview h3 {
+  margin: 20px 0 8px;
+  font-size: 0.93rem;
+  color: #efeaf7;
+}
+
+.md-preview p {
+  margin: 10px 0;
+}
+
+.md-preview a {
+  color: var(--accent-ink);
+  text-decoration: none;
+  border-bottom: 1px solid #372c4d;
+}
+
+.md-preview code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #1d1826;
+  color: #e6dcf5;
+  font-family: var(--mono);
+  font-size: 12.7px;
+  overflow-wrap: anywhere;
+}
+
+.md-preview pre {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #14111b;
+  overflow-x: auto;
+}
+
+.md-preview pre code {
+  display: block;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: #d5e4dd;
+  font-size: 12.9px;
+  line-height: 1.7;
+  white-space: pre;
+}
+
+.md-preview blockquote {
+  margin: 12px 0;
+  padding: 9px 15px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: #16121e;
+  color: var(--text-dim);
+}
+
+.md-preview blockquote p {
+  margin: 0;
+}
+
+.md-preview ul,
+.md-preview ol {
+  margin: 10px 0;
+  padding-left: 24px;
+}
+
+.md-preview li {
+  margin: 5px 0;
+}
+
+.md-preview table {
+  width: 100%;
+  margin: 14px 0;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: auto;
+}
+
+.md-preview th,
+.md-preview td {
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.md-preview th {
+  background: #191521;
+  color: #efeaf7;
+  font-weight: 600;
+}
+
+.md-preview td:first-child code {
+  white-space: nowrap;
+}
+
+.md-preview tbody tr:nth-child(even) {
+  background: #100d15;
+}
+
+.md-preview hr {
+  margin: 22px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-electron/
+release/
+_share/
+*.log
+selftest-out.txt
+selftest-err.txt
+geometry-out.txt
