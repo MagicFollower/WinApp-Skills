@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- 解除语言上限，但本轮不回写现代语法：与 net48 基线保持逐行可比，回归 FAIL 才能归因于运行时差异 -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <RootNamespace>StartUI4Controls</RootNamespace>
+    <AssemblyName>StartUI4Controls</AssemblyName>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- 打包改成显式 dotnet pack：GeneratePackageOnBuild=true 时 dotnet build 会走 pack 目标，
+         一旦许可证文件解析失败就报 NU5019，把整条构建链一起拖红 -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>StartUI4.WPF</PackageId>
+    <Title>StartUI4.WPF</Title>
+    <Authors>KS.STUDIO</Authors>
+    <Description>StartUI4 WPF control library for .NET 10 (LTS), ported from the .NET Framework 4.8 edition.</Description>
+    <FileVersion>3.0.0</FileVersion>
+    <AssemblyVersion>3.0.0</AssemblyVersion>
+    <Version>3.0.0</Version>
+    <PackageProjectUrl>https://github.com/KSSTU/StartUI4.WPF</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="./LICENSE.txt" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- net48 版这里有 <Reference Include="System.Drawing" />：.NET 10 下 System.Drawing.Common 与
+         Microsoft.Win32.SystemEvents 都由 Microsoft.WindowsDesktop.App 框架引用提供，无需显式引用（探针 P01/P12 实测） -->
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+    <!-- 移除 System.Data.SQLite 2.0.3：唯一使用者 UI4DataGrid 是 internal 死代码，且该包的 netstandard 资产不带原生
+         SQLite.Interop.dll（见 PORTING-NET10.md 依赖决策） -->
+  </ItemGroup>
+
+</Project>
