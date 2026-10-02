@@ -1,0 +1,97 @@
+<Window x:Class="PromptFavorites.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+        xmlns:views="clr-namespace:PromptFavorites.Views"
+        xmlns:h="clr-namespace:PromptFavorites.Helpers"
+        Title="收藏夹"
+        Icon="AppIcon.ico"
+        Width="1200" Height="750"
+        MinWidth="900" MinHeight="500"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource UI4.Brush.Background}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部搜索栏 -->
+        <Border Grid.Row="0" Padding="12,8"
+                Background="{DynamicResource UI4.Brush.Surface}"
+                BorderBrush="{DynamicResource UI4.Brush.BorderNormal}"
+                BorderThickness="0,0,0,1">
+            <DockPanel>
+                <ui:UI4Button DockPanel.Dock="Left"
+                              x:Name="FolderBtn"
+                              Content="&#xE8B7;"
+                              FontFamily="Segoe MDL2 Assets"
+                              Width="36" Height="36"
+                              Padding="0"
+                              CornerRadius="6"
+                              FontSize="16"
+                              Margin="0,0,8,0"
+                              GradientStart="{x:Static h:Theme.Accent}"
+                              GradientEnd="{x:Static h:Theme.Accent}"
+                              HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                              ToolTip="打开/切换根目录"
+                              Click="FolderBtn_Click"/>
+                <ui:UI4TextBox x:Name="SearchBox"
+                               PlaceholderText="搜索标题和正文..."
+                               ShowClearButton="True"
+                               Height="36"
+                               Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                               TextChanged="SearchBox_TextChanged"/>
+            </DockPanel>
+        </Border>
+
+        <!-- 三栏布局 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <views:ModuleListView Grid.Column="0"
+                                  DataContext="{Binding Modules}"/>
+
+            <GridSplitter Grid.Column="1" Width="4"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource UI4.Brush.BorderNormal}"/>
+
+            <views:EntryListView Grid.Column="2"
+                                 DataContext="{Binding Entries}"/>
+
+            <GridSplitter Grid.Column="3" Width="4"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource UI4.Brush.BorderNormal}"/>
+
+            <views:EntryDetailView Grid.Column="4"
+                                   DataContext="{Binding Detail}"/>
+        </Grid>
+
+        <!-- 顶部 Toast 提示 -->
+        <Border x:Name="ToastBorder" Grid.Row="0" Grid.RowSpan="2"
+                Visibility="Collapsed"
+                HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,16,0,0" Panel.ZIndex="100"
+                Background="#E632323D"
+                CornerRadius="8"
+                Padding="20,10"
+                IsHitTestVisible="False">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.3"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="ToastTextBlock"
+                           Text="已复制"
+                           Foreground="White"
+                           FontSize="14"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

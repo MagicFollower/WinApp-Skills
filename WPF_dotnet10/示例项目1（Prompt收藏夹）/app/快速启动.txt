@@ -1,0 +1,19 @@
+开发构建（需要本机装有 .NET 10 SDK）
+  dotnet build .\PromptFavorites.csproj
+
+直接运行
+  dotnet run --project .\PromptFavorites.csproj
+
+一键打包单 exe（上级目录两个脚本，产物文件名带模式后缀）
+  publish.cmd            → ..\publish\PromptFavorites_self_contained.exe  约 67 MB，运行时在包里，目标机免装 .NET
+  publish_no_runtime.cmd → ..\publish_no_runtime\PromptFavorites_no_runtime.exe  约 2.4 MB，
+                           但目标机必须先装 .NET 10 Desktop Runtime（dotnet --list-runtimes 看得到
+                           Microsoft.WindowsDesktop.App 10.x 就行）
+
+设置自测（退出码 = 失败断言数，0 为全通过）
+  PromptFavorites_self_contained.exe --selftest
+  报告写到 %APPDATA%\PromptFavorites\selftest.txt
+
+应用图标（改设计就改 tools\make-icon.ps1 里的坐标常量，然后重跑）
+  powershell -ExecutionPolicy Bypass -File ..\tools\make-icon.ps1
+  详见上级目录的《标题与图标设置教程.md》

@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- 目录选择改用 WPF 原生的 Microsoft.Win32.OpenFolderDialog（.NET 8+），不再需要 WinForms -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>PromptFavorites</RootNamespace>
+    <AssemblyName>PromptFavorites</AssemblyName>
+    <!-- net10 的 WPF 仍按清单取 DPI 感知级别，PerMonitorV2 声明照旧生效 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- ApplicationIcon 管 exe 文件本身的图标（编译期烤进 apphost 的 RT_GROUP_ICON）。
+         实测 Window.Icon 不设时 WPF 会回落到这个 exe 图标，所以两处都配不是为了"补齐"，
+         而是不把窗口外观挂在回落行为上；理由与代价见《标题与图标设置教程.md》 -->
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Window.Icon="AppIcon.ico" 是 pack URI，必须作为 Resource 嵌进程序集才取得到 -->
+    <Resource Include="AppIcon.ico" />
+  </ItemGroup>
+
+  <!-- 打包开关只在真正 publish 单文件时生效：dotnet build 因此保持轻量，
+       也不会因为本机没装 win-x64 桌面运行时包而连开发构建都做不了 -->
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
+    <!-- pdb 内嵌进 dll：单文件目录里不留散落文件，同时保住崩溃堆栈的行号 -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <!-- 单文件压缩只对"自带运行时"合法，框架依赖发布会 NETSDK1176，所以按 SelfContained 分档 -->
+    <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
+    <!-- WPF 的 PresentationNative_* / wpfgfx_* / D3DCompiler_47_* 没法从 bundle 里直接加载，
+         必须让运行期解到 %TEMP%\.net\<程序集名>\ 再 LoadLibrary（自带运行时时才用得上；
+         框架依赖发布时这些原生库本来就在共享运行时目录里，没有可解的东西） -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <!-- 两种发布各给产物一个文件名后缀，互不覆盖，也一眼分得清：
+       publish.cmd -> -p:ArtifactLabel=self_contained
+       publish_no_runtime.cmd -> -p:ArtifactLabel=no_runtime
+       动的是 AssemblyName（apphost 必须与它配对的托管 dll 同名，框架依赖产物尤其如此）。
+       数据根与设置目录用的是字面量 "PromptFavorites"，不跟着这个名字变。 -->
+  <PropertyGroup Condition="'$(ArtifactLabel)' != ''">
+    <AssemblyName>PromptFavorites_$(ArtifactLabel)</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../lib/StartUI4Controls.csproj" />
+  </ItemGroup>
+</Project>

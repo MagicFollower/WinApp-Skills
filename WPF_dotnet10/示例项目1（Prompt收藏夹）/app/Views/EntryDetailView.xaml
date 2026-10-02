@@ -1,0 +1,126 @@
+<UserControl x:Class="PromptFavorites.Views.EntryDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+             xmlns:h="clr-namespace:PromptFavorites.Helpers"
+             Background="{DynamicResource UI4.Brush.Background}">
+    <UserControl.InputBindings>
+        <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveCommand}"/>
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 元数据区 -->
+        <Border Grid.Row="0" Padding="16,12"
+                Visibility="{Binding HasEntry, Converter={StaticResource BoolToVis}}"
+                BorderBrush="{DynamicResource UI4.Brush.BorderNormal}"
+                BorderThickness="0,0,0,1">
+            <StackPanel>
+                <!-- 折叠摘要 -->
+                <StackPanel x:Name="CollapsedSummary" Orientation="Horizontal"
+                            Cursor="Hand" MouseLeftButtonUp="ToggleMetadata_Click">
+                    <TextBlock Text="{Binding MetadataSummary}"
+                               Foreground="{DynamicResource UI4.Brush.Text}"
+                               FontSize="13" VerticalAlignment="Center"/>
+                    <TextBlock Text=" [展开]" Foreground="{DynamicResource UI4.Brush.Accent}"
+                               FontSize="12" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                </StackPanel>
+
+                <!-- 展开详情 -->
+                <StackPanel x:Name="MetadataPanel" Visibility="Collapsed">
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock DockPanel.Dock="Left" Text="标题" Width="70"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <ui:UI4Button DockPanel.Dock="Right" Content="[收起]"
+                                      Height="24" Padding="6,0" CornerRadius="12" FontSize="11"
+                                      GradientStart="{x:Static h:Theme.Neutral}"
+                                      GradientEnd="{x:Static h:Theme.Neutral}"
+                                      HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                                      Click="ToggleMetadata_Click"/>
+                        <ui:UI4TextBox x:Name="TitleEdit" Height="30"
+                                       Text="{Binding EditTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock Text="模块" Width="70"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <ui:UI4ComboBox x:Name="ModuleCombo" Height="30"
+                                        ItemsSource="{Binding ModuleOptions}"
+                                        SelectedItem="{Binding EditModule}"/>
+                    </DockPanel>
+
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock Text="收藏" Width="70"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <ui:UI4Button x:Name="FavBtn" Height="28" Padding="10,0"
+                                      IsEnabled="{Binding HasEntry}"
+                                      HoverBackground="{DynamicResource App.Brush.FavoriteHover}"
+                                      Click="ToggleFavorite_Click"/>
+                    </DockPanel>
+
+                    <DockPanel Margin="0,0,0,4">
+                        <TextBlock Text="使用次数" Width="70"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"/>
+                        <TextBlock Text="{Binding UseCount}"
+                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="12"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,4">
+                        <TextBlock Text="创建时间" Width="70"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"/>
+                        <TextBlock Text="{Binding CreatedAt, Converter={StaticResource DateTimeFormat}}"
+                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="12"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,0,0,4">
+                        <TextBlock Text="修改时间" Width="70"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"/>
+                        <TextBlock Text="{Binding UpdatedAt, Converter={StaticResource DateTimeFormat}}"
+                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="12"/>
+                    </DockPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 正文编辑区 -->
+        <ui:UI4CodeEditor x:Name="BodyEditor"
+                          Grid.Row="1"
+                          Margin="16,8,16,8"
+                          FontSize="14"
+                          WordWrap="True"/>
+
+        <!-- 未选中条目时的空态提示（盖在编辑区上，不吃鼠标事件） -->
+        <TextBlock Grid.Row="1"
+                   Text="从左侧选择一个条目"
+                   Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}"
+                   Foreground="{DynamicResource UI4.Brush.Icon}"
+                   FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   IsHitTestVisible="False"/>
+
+        <!-- 底部按钮 -->
+        <Border Grid.Row="2" Padding="16,8"
+                BorderBrush="{DynamicResource UI4.Brush.BorderNormal}"
+                BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:UI4Button x:Name="CopyBtn" Content="复制"
+                              Width="80" Height="34" Margin="0,0,8,0"
+                              GradientStart="{x:Static h:Theme.Accent}"
+                              GradientEnd="{x:Static h:Theme.Accent}"
+                              HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                              Command="{Binding CopyCommand}"/>
+                <ui:UI4Button x:Name="SaveBtn" Content="保存"
+                              Width="80" Height="34"
+                              GradientStart="{x:Static h:Theme.Accent}"
+                              GradientEnd="{x:Static h:Theme.Accent}"
+                              HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                              Command="{Binding SaveCommand}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,87 @@
+<UserControl x:Class="PromptFavorites.Views.ModuleListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+             xmlns:h="clr-namespace:PromptFavorites.Helpers"
+             Background="{DynamicResource UI4.Brush.Surface}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏 -->
+        <Border Grid.Row="0" Padding="12,10,12,6">
+            <StackPanel>
+                <DockPanel>
+                    <ui:UI4Button DockPanel.Dock="Right"
+                                  Content="+" Width="28" Height="28"
+                                  Margin="4,0,0,0"
+                                  CornerRadius="14"
+                                  FontSize="16" FontWeight="Bold"
+                                  GradientStart="{x:Static h:Theme.Accent}"
+                                  GradientEnd="{x:Static h:Theme.Accent}"
+                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                                  Command="{Binding AddModuleCommand}"
+                                  ToolTip="新建模块"/>
+                    <TextBlock Text="模块" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource UI4.Brush.Text}"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
+
+                <!-- 排序：与中栏排序条同款胶囊 -->
+                <WrapPanel Margin="0,4,0,0">
+                    <ui:UI4Button x:Name="SortCreatedAtBtn" Content="创建日期"
+                                  Height="24" Padding="8,0" CornerRadius="12"
+                                  FontSize="11" Margin="0,4,4,0"
+                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                                  Click="SortCreatedAt_Click"/>
+                    <ui:UI4Button x:Name="SortNameBtn" Content="名称"
+                                  Height="24" Padding="8,0" CornerRadius="12"
+                                  FontSize="11" Margin="0,4,4,0"
+                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                                  Click="SortName_Click"/>
+                    <ui:UI4Button x:Name="SortCustomBtn" Content="自定义"
+                                  Height="24" Padding="8,0" CornerRadius="12"
+                                  FontSize="11" Margin="0,4,4,0"
+                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                                  Click="SortCustom_Click"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 模块列表 -->
+        <ui:UI4ListBox x:Name="ModuleList"
+                       Grid.Row="1"
+                       Margin="8,0"
+                       ListStyleType="None"
+                       PressedBackground="{DynamicResource UI4.Color.RowSelectedBackground}"
+                       PressedForeground="{DynamicResource UI4.Color.TextForeground}"
+                       ItemsSource="{Binding Modules}"
+                       SelectedItem="{Binding SelectedModule}"
+                       h:ReorderBehavior.Enabled="{Binding CanReorder}"
+                       h:ReorderBehavior.CommitCommand="{Binding ReorderCommand}">
+            <ui:UI4ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="4,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Name}"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding EntryCount}"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"/>
+                    </Grid>
+                </DataTemplate>
+            </ui:UI4ListBox.ItemTemplate>
+        </ui:UI4ListBox>
+    </Grid>
+</UserControl>
