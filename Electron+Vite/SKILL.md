@@ -1,6 +1,6 @@
 ---
 name: windows-electron-scaffold
-description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面应用的可复现流程——显式获取 Electron 二进制、默认注入下载镜像、主进程与 preload 走 CJS + sandbox、Vite 用 .mts 配置与相对 base、electron-builder 同时产出 portable/nsis/dir、按 src/ + electron/ + bin/ + doc/ 的目录约定收敛工程、把窗口尺寸与字体明暗自适应当编码期约束、交付 doc/运行与构建（T0Level）.md。当出现 npm install 退出码 0 但 node_modules/electron/dist/electron.exe 缺失、Electron 或 electron-builder 从 GitHub Releases 下载失败、需要配置 Windows 打包目标、打包产物秒退需要排查、要把既有 Electron 工程按目录约定重新整理、要写运行与构建/发布文档、或要判定桌面端自适应是否达标时使用。不用于普通 Web/React 页面开发。
+description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面应用的可复现流程——显式获取 Electron 二进制、默认注入下载镜像、主进程与 preload 走 CJS + sandbox、Vite 用 .mts 配置与相对 base、electron-builder 同时产出 portable/nsis/dir、按 src/ + electron/ + bin/ + doc/（用外部色板时再加 100themes/）的目录约定收敛工程、把窗口尺寸与字体明暗自适应当编码期约束、交付 doc/运行与构建（T0Level）.md。当出现 npm install 退出码 0 但 node_modules/electron/dist/electron.exe 缺失、Electron 或 electron-builder 从 GitHub Releases 下载失败、需要配置 Windows 打包目标、打包产物秒退需要排查、要把既有 Electron 工程按目录约定重新整理、要写运行与构建/发布文档、要判定桌面端自适应是否达标、或要把外部色板库（如 100-themes）离线固化进工程时使用。不用于普通 Web/React 页面开发。
 ---
 
 # Windows Electron 工程搭建与打包
@@ -20,6 +20,7 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 - 要写 `doc/运行与构建（T0Level）.md`：启动、本地调试、打包启动、改标题、改图标、发布分发六类命令逐条带判据。
 - 打包后要把目录收敛到“删干净仍能一把重建”的最小清单。
 - 桌面端要窗口尺寸/字体/明暗自适应——这属于写代码前的口径决定，不是收尾补丁。
+- 要把外部主题/色板库（例：`bjarneo/100-themes`，100 主题 × 5 变体 = 500 个 `colors.toml`）离线固化进工程，别让每次生成都去仓库拉几百个小文件。
 
 ## 目录布局（新建工程先定）
 
@@ -33,6 +34,7 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 ├── src/                      渲染层：组件、样式、lib、内容
 ├── electron/                 主进程 + preload + tsconfig.json + icon.ico
 ├── bin/                      脚本：dev.mjs、build.mjs、*.ps1
+├── 100themes/                可选：外部色板种子（manifest.json + raw/），见 Step 7b
 ├── doc/                      运行与构建（T0Level）.md（必交）+ README、设计方案
 └── dist/  dist-electron/  release/   产物；node_modules/ 保留
 ```
@@ -169,13 +171,40 @@ nsis:
 
 **标题只有一个真源**：`new BrowserWindow({ title: APP_TITLE })` 再加 `win.on('page-title-updated', (e) => e.preventDefault())`。不 preventDefault 时 `index.html` 的 `<title>` 或渲染层的 `document.title` 会盖掉主进程设定（实测）。
 
+## Step 7b — 外部色板库：工程内种子优先，仓库兜底
+
+要用第三方色板库（例：`bjarneo/100-themes`，100 个主题 × 5 个变体 = 500 个 `colors.toml`）时，别把仓库当运行时依赖：原始文件当种子落进工程，日常生成完全离线，`100themes/` 不存在或不全才回源取。
+
+```text
+<proj>/100themes/
+├── manifest.json              source + hosts + variants + themes[100] + tokenMap + seed{themes,variantsPerTheme,files,bytes,capturedAt} + generatedBy
+├── raw/<主题>_<变体>.toml      种子原文
+├── gen-themes.mjs             可选：整目录当模板拷进新工程时自带脚本，否则放 bin/（见下段）
+└── README.md                  本节口径在本工程的落地记录 + 完整字段与 token 清单
+产物（不进种子目录）：src/styles/themes.css 的 [data-theme="<主题>--<变体>"] + --pf-* token、src/styles/themes.index.json
+```
+
+生成脚本有两种位置，各有代价：放 `bin/gen-themes.mjs` 时，种子目录被删（或被 Step 8 当残留清掉）兜底逻辑仍可达；放 `100themes/gen-themes.mjs` 时，整个目录就是可直接拷进新工程的自包含模板，代价是目录没了脚本也没了。脚本按 `basename(脚本所在目录) === '100themes'` 判断种子在哪，两种位置都能跑——但只认真源一处，别两边各留一份副本。工程外的种子用 `--root <工程目录>` 指过去（省略时取脚本上级目录），根目录没有 `package.json` 就退出码 1 并提示，免得把产物写成仓库外层的孤儿 `src/styles/`。主题清单钉在 `manifest.json` 里而不是运行时枚举——`data.jsdelivr.com` 与 CDN 的目录列表接口实测 403，只有单文件 GET 能用。
+
+三种口径（缺文件时按 jsDelivr 三个镜像 → `raw.githubusercontent.com` 的顺序试，取回的内容一律写回 `raw/`，下次就离线）：
+
+- 默认：本地命中就零联网。实测 `本地命中 500/500，未联网`；种子在工程外时加 `--root <工程目录>` 指过去，实测两种跑法的产物按行排序 md5 相同（`bin/` 与 `100themes/` 两种脚本位置也都验过）。
+- `--offline`：禁网，有缺口就退出码 1 并列出缺口名。既是 CI 口径，也是「这个目录真能替代仓库」的判据。
+- `--fetch-only`：只补种子不写产物。带主题名跑子集（`node bin/gen-themes.mjs watermelon`）会把 `themes.css` 整个覆写成只含那 5 块（实测），所以补种子必须走这条，收尾再跑全量。
+
+拼 URL 的必踩坑：jsDelivr 需要 `/gh/` 段——`https://cdn.jsdelivr.net/gh/<repo>@<ref>/<主题>/<变体>/colors.toml`。漏成 `https://cdn.jsdelivr.net/<repo>@<ref>/...` 时三个镜像全 404，脚本却把它报成「所有源都不可用」，看着像断网（实测踩过）。先直接 GET 一个已知文件看真实状态码，再决定怀疑网络。
+
+等价性验法（别只比体积）：去掉生成物头部几行后按行排序取 md5，离线版与联网版同为 `c3f633b3c399a1d9ef4cd8fcc3d0109f`（12,513 行、500 个选择器、500 条索引全等），剩下只有头部文案与 `arcade`/`arcade-carpet` 先后变字典序这两处。再删一个种子文件走一遍 `--offline` → `--fetch-only`，取回内容 md5 与删除前一致，兜底路径才算通。
+
+体积按实测记：500 个文件表观 343 KB、落盘 2.3 MB，代价主要在 4 KB 簇与 500 次目录项，不在字节。只要产物不要再生能力时，留 `themes.css`（324,785 字节）+ `themes.index.json`（56,002 字节）就能跑，但换 token 映射或补变体就得回源。
+
 ## Step 8 — 打包后把目录收敛到最小清单
 
 `release/` 出完后，工程目录应当只剩“代码 + 文档 + 脚本 + 配置 + 产物”，其余删掉。
 
 删：`dist/`、`dist-electron/`（`npm run build` 能重建的中间物），以及自证产生的 `*.log`、`*-out.txt`、`*-err.txt` 和临时分发目录（本地当共享盘用的 `_share/` 之类）。
 
-留：`src/`、`electron/`、`bin/`、`doc/`、根上的 `index.html`+`package.json`+`package-lock.json`+`tsconfig.json`+`vite.config.mts`+`electron-builder.yml`+`.gitignore`，以及 `node_modules/` 与 `release/`。
+留：`src/`、`electron/`、`bin/`、`doc/`、根上的 `index.html`+`package.json`+`package-lock.json`+`tsconfig.json`+`vite.config.mts`+`electron-builder.yml`+`.gitignore`，以及 `node_modules/` 与 `release/`。用过外部色板库的工程里 `100themes/` 也归进这一类：它是源数据不是中间物（Step 7b），删了就只能联网重建；而 `.theme-cache/`、`*.log` 这类生成物副本归不进五类，属可删。
 
 两条判据（均实测）：
 
@@ -204,6 +233,8 @@ nsis:
 | `ConvertFrom-Json` 报错、package.json 里的中文显示成乱码 | PS 5.1 的 `Get-Content` 默认按 ANSI 读 UTF-8，收尾引号被吞 | 读 package.json 一律 `-Encoding UTF8` |
 | `npm warn install-scripts … electron-winstaller` | npm 11 的 allowScripts 默认跳过带 install 脚本的依赖 | 无害，实测不影响 dir/portable/nsis 三口径出包；别误读成 Electron 没装好 |
 | 只跑 dir 口径后 `release/` 里仍有上轮的 portable/setup exe | electron-builder 只覆盖本次构建的 target，不清空 output 目录 | 验收前先删空 `release/`，否则会被上轮产物蒙过 |
+| 取主题种子报「所有源都不可用」，但同机其他站点能访问 | jsDelivr 的 URL 漏了 `/gh/` 段，三个镜像全 404；404 被当成了“源不可用”，而不是超时 | 先直接 GET 一个已知文件看真实状态码；`raw.githubusercontent.com` 的 URL 形状不同，可当对照组 |
+| `themes.css` 整份变成只含一个主题 | 带主题名跑了子集，产物被覆写 | 补种子用 `--fetch-only`，收尾再跑一次全量 |
 
 ## 验收清单
 
@@ -216,6 +247,7 @@ nsis:
 7. 便携版单独验：stdout 不冒泡，改用标记文件（`window-shown` / `probed` / `checks-done` 三段），并记下从 `Start-Process` 到首段标记的耗时——实测便携 6561ms vs `win-unpacked` 533ms。
 8. 发布守门：产物的 `VersionInfo.FileVersion` 必须等于 `package.json` 的 version 才允许拷贝（实测能抓到“版本号已 bump 但 `release/` 里仍是旧构建”这种情形）。
 9. 按 Step 8 收敛目录：删掉 `dist/`、`dist-electron/` 与临时输出后，已打好的包仍能自证通过，再用 `-SkipInstall` 重建能全部产出；`ls` 清单里每一项都归得了类。
+10. 用了外部色板库的工程（Step 7b）：`--offline` 生成零联网全绿，产物与联网版按行排序 md5 相同；`100themes/raw/` 文件数等于 manifest 里的 themes × variants（实测 500）；再删一个种子文件验证兜底能取回并写回，md5 与删除前一致。
 
 ## doc/运行与构建（T0Level）.md（新工程必交）
 
@@ -223,7 +255,7 @@ nsis:
 
 模板里的 `bin/dev.mjs`、`bin/smoke.ps1`、`bin/smoke-marked.ps1`、`bin/verify-icon.ps1`、`bin/verify-geometry.ps1`、`bin/publish.ps1` 都是新工程自己落地的脚本（本文 Resources 只附了打包主脚本），落的时候照本文各自的判据写；文件名不必完全一致，但六节与“每条命令带判据”不能缩。
 
-六节之外再附一小节「交付前精简」：按 Step 8 删完中间目录与临时输出后，把 `ls` 清单与“删完仍能一把重建”的结果写进去。
+六节之外再附一小节「交付前精简」：按 Step 8 删完中间目录与临时输出后，把 `ls` 清单与“删完仍能一把重建”的结果写进去。用了外部色板库的工程（Step 7b）再加一小节「换主题 / 补色板」，写清三条命令与离线判据。
 
 ```markdown
 # <项目名> 零基础上手
@@ -271,6 +303,13 @@ nsis:
 判据：`<Share>\<Name>\<version>\` 下两个 exe 加两个 .sha256，末尾 `retained-versions=2`。
 版本发布流程：改 package.json 的 version → 重新打包 → publish（守门比对产物 FileVersion）→ 旧版按 KeepVersions 淘汰。
 坑：只 bump 版本号不重打包会被拒（实测），因为 `release/` 里仍坐着旧构建。
+
+## 7. 换主题 / 补色板（用了外部色板库才需要，见 Step 7b）
+    npm run themes:offline
+判据：打 `本地命中 500/500，未联网` 且退出码 0——这一步同时证明 100themes/ 真能替代仓库。
+    npm run themes:seed
+只补缺口进 100themes/raw，不写产物。换 token 映射或补变体时先 :seed 再跑全量；
+带主题名的子集运行会把 themes.css 覆写成只含那几块，别拿它补种子。
 ```
 
 ## Resources
