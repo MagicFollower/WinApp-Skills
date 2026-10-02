@@ -1,0 +1,11 @@
+<Application x:Class="__APPNAME__.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+             ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <!-- 宿主自己的固定色（不随 UI4Theme 切换）。接主题的色请写 {DynamicResource UI4.Brush.*}，
+             不要把同一份色在这里再抄一遍。 -->
+        <SolidColorBrush x:Key="App.Brush.Accent" Color="#4F6BE8"/>
+    </Application.Resources>
+</Application>

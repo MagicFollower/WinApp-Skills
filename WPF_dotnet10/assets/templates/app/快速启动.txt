@@ -1,0 +1,22 @@
+开发构建（需要本机装有 .NET 10 SDK，dotnet --list-sdks 能看到 10.x）
+  dotnet build .\__APPNAME__.csproj
+
+直接运行
+  dotnet run --project .\__APPNAME__.csproj
+
+一键打包单 exe（上级目录两个脚本，产物文件名带模式后缀）
+  publish.cmd            → ..\publish\__APPNAME___self_contained.exe  约 60+ MB，运行时在包里，目标机免装 .NET
+  publish_no_runtime.cmd → ..\publish_no_runtime\__APPNAME___no_runtime.exe  约 2-3 MB，
+                           但目标机必须先装 .NET 10 Desktop Runtime（dotnet --list-runtimes 看得到
+                           Microsoft.WindowsDesktop.App 10.x 就行）
+
+设置自测（退出码 = 失败断言数，0 为全通过）
+  __APPNAME___self_contained.exe --selftest
+  报告写到 %APPDATA%\__APPNAME__\selftest.txt
+
+换应用图标
+  覆盖 app\AppIcon.ico 即可（csproj 的 ApplicationIcon 与 Resource 两处都指它）；
+  要按矢量图重生成，用 ImageMagick：magick 源.png -define icon:auto-resize=256,64,48,32,16 AppIcon.ico
+
+改观感配色
+  只改 app\Helpers\Theme.cs 的常量，然后跑 --selftest 看对比度断言有没有红

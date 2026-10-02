@@ -1,0 +1,277 @@
+{
+    "schema":  1,
+    "fetchedFrom":  {
+                        "repo":  "MagicFollower/WinApp-Skills",
+                        "branch":  "main",
+                        "commit":  "5d96442af3ca16917f95b42b4f29019b0dc6252c",
+                        "pathPrefix":  "WPF_dotnet10/componentSourceCode/StartUI4Controls",
+                        "tree":  "https://github.com/MagicFollower/WinApp-Skills/tree/main/WPF_dotnet10/componentSourceCode/StartUI4Controls",
+                        "tarball":  "https://codeload.github.com/MagicFollower/WinApp-Skills/tar.gz/refs/heads/main",
+                        "tarballByCommit":  "https://codeload.github.com/MagicFollower/WinApp-Skills/tar.gz/5d96442af3ca16917f95b42b4f29019b0dc6252c",
+                        "rawByPath":  "https://raw.githubusercontent.com/MagicFollower/WinApp-Skills/5d96442af3ca16917f95b42b4f29019b0dc6252c/WPF_dotnet10/componentSourceCode/StartUI4Controls/{0}",
+                        "gitClone":  "https://github.com/MagicFollower/WinApp-Skills.git",
+                        "usageDoc":  "README.md"
+                    },
+    "mirrorNote":  "-Mirror takes a GitHub reverse-proxy prefix; it is prepended to the full tarball URL. No default is hardcoded because reachability is network-dependent: probe it with a GET on the real download URL, never a HEAD.",
+    "upstream":  {
+                     "repo":  "MagicFollower/StartUI4.WPF",
+                     "branch":  "dotnet_10",
+                     "commit":  "269189eea711f844c52a5610fe285a5f0b176913",
+                     "version":  "3.0.0",
+                     "tfm":  "net10.0-windows"
+                 },
+    "generated":  {
+                      "atUtc":  "2026-10-02T16:09:07Z",
+                      "by":  "make-manifest.ps1",
+                      "note":  "blobSha 是 LF 归一后的 git blob sha，与 GitHub contents API 的 sha 同口径；size 同样是 LF 后的字节数。"
+                  },
+    "expected":  {
+                     "totalFiles":  48,
+                     "csFiles":  44,
+                     "themeTokens":  38,
+                     "dpDeclarations":  235,
+                     "dpNote":  "public static readonly DependencyProperty 声明数，含别名（如 UI4CheckBox.BoxCornerRadiusProperty = CornerRadiusProperty）。文本扫 DependencyProperty.Register( 会漏，因为本库把声明与注册调用写在相邻两行。"
+                 },
+    "files":  [
+                  {
+                      "path":  "AssemblyInfo.cs",
+                      "blobSha":  "f771ecadaea5777209b609c1d4df5b7af2625290",
+                      "size":  136
+                  },
+                  {
+                      "path":  "Internal/ClipboardCommandTakeover.cs",
+                      "blobSha":  "d480a20e2de900d82db7cedee30a2ab5e529e4b2",
+                      "size":  7227
+                  },
+                  {
+                      "path":  "Internal/ColorToBrushConverter.cs",
+                      "blobSha":  "ee128aa7a9d21a3ee981c1ee05094940899847af",
+                      "size":  990
+                  },
+                  {
+                      "path":  "Internal/ScrollBarResources.cs",
+                      "blobSha":  "47ac21bf3689f70c64322ce560eb20d2f7e94628",
+                      "size":  30058
+                  },
+                  {
+                      "path":  "Internal/ThemeSync.cs",
+                      "blobSha":  "7d976f1df2b857a982085572d8c247aab1a3e2e9",
+                      "size":  1173
+                  },
+                  {
+                      "path":  "Internal/WindowAnimationHelper.cs",
+                      "blobSha":  "c9fce2da010869986011b55ff7bbd2e2c68c5ae1",
+                      "size":  5335
+                  },
+                  {
+                      "path":  "Internal/WindowResizeBehavior.cs",
+                      "blobSha":  "3097491a6bc22d5b3ef5ee23f4e4993f4fe295e2",
+                      "size":  6601
+                  },
+                  {
+                      "path":  "LICENSE.txt",
+                      "blobSha":  "8aa26455d23acf904be3ed9dfb3a3efe3e49245a",
+                      "size":  1069
+                  },
+                  {
+                      "path":  "README.md",
+                      "blobSha":  "bf9da41cce6456fd4a19180cb8ff74812cd4a118",
+                      "size":  130729
+                  },
+                  {
+                      "path":  "StartUI4Controls.csproj",
+                      "blobSha":  "1a6d8f8cbf85dd28cab4c438df9d5cae7da1cd22",
+                      "size":  2079
+                  },
+                  {
+                      "path":  "UI4Button.cs",
+                      "blobSha":  "d19d3e60460bbbb02a64f81750f349ee4c95ee2b",
+                      "size":  13427
+                  },
+                  {
+                      "path":  "UI4CheckBox.cs",
+                      "blobSha":  "5f5f326db366fb547d8700abc8485b29b5cb9e0c",
+                      "size":  11039
+                  },
+                  {
+                      "path":  "UI4CircleSlider.cs",
+                      "blobSha":  "e46b19ed63e147650f43cd65335cf95e36761692",
+                      "size":  16714
+                  },
+                  {
+                      "path":  "UI4Clipboard.cs",
+                      "blobSha":  "659a57147bad8308a061050d53a88ff59e2115ca",
+                      "size":  6774
+                  },
+                  {
+                      "path":  "UI4CodeEditor.cs",
+                      "blobSha":  "74d492320f7a9ab08a69228f3656ea8b5a209764",
+                      "size":  3874
+                  },
+                  {
+                      "path":  "UI4ColorPicker.cs",
+                      "blobSha":  "fbd1da1c7ff05238e5c15660335043041b92b5b0",
+                      "size":  30791
+                  },
+                  {
+                      "path":  "UI4ComboBox.cs",
+                      "blobSha":  "adbc883c4a77a8538b4ff32d8f2622d3c4c0f7b0",
+                      "size":  30125
+                  },
+                  {
+                      "path":  "UI4ContextMenu.cs",
+                      "blobSha":  "c9aa6077f074309764c17d6541c11c533214f4f5",
+                      "size":  18366
+                  },
+                  {
+                      "path":  "UI4FlipTextBlock.cs",
+                      "blobSha":  "1ef11b3363dc5e8f586d41ca114a70c4a48c0eb7",
+                      "size":  20495
+                  },
+                  {
+                      "path":  "UI4Grid.cs",
+                      "blobSha":  "0881e4fb74f9203f0709b52033b9d038a8ab134b",
+                      "size":  2072
+                  },
+                  {
+                      "path":  "UI4GridView.cs",
+                      "blobSha":  "9a673bf3bc41ca097e17b6621c1163a62b78df2e",
+                      "size":  33752
+                  },
+                  {
+                      "path":  "UI4ListBox.cs",
+                      "blobSha":  "d9947460b376c6fdeb42d74ab7398a68eec32f06",
+                      "size":  20169
+                  },
+                  {
+                      "path":  "UI4ListView.cs",
+                      "blobSha":  "7fa8f61a76c286642d998d0b749d935667434eed",
+                      "size":  30565
+                  },
+                  {
+                      "path":  "UI4Menu.cs",
+                      "blobSha":  "c6a916f2c1c6db1a4444bd84f0eb1901e1b500db",
+                      "size":  17742
+                  },
+                  {
+                      "path":  "UI4MessageBox.cs",
+                      "blobSha":  "f99a3076a9551b8ead25dbab80d455743e554267",
+                      "size":  10785
+                  },
+                  {
+                      "path":  "UI4MultiLanguage.cs",
+                      "blobSha":  "af4b8b619294d2d578dd7c3e49b14bd14715780c",
+                      "size":  8703
+                  },
+                  {
+                      "path":  "UI4NavigationView.cs",
+                      "blobSha":  "f840dd24ad1af2ebee782d815abfdd2065c53afb",
+                      "size":  41239
+                  },
+                  {
+                      "path":  "UI4NotifyIcon.cs",
+                      "blobSha":  "37bdb2dae6b32fedfb404e56963f2f7b42daf164",
+                      "size":  25642
+                  },
+                  {
+                      "path":  "UI4Panel.cs",
+                      "blobSha":  "77eb5f40c37e206d06d861e80a690eff8005b825",
+                      "size":  13687
+                  },
+                  {
+                      "path":  "UI4PasswordBox.cs",
+                      "blobSha":  "f5c27b7995722697f255a9a7f6e4f99022eb68b2",
+                      "size":  36971
+                  },
+                  {
+                      "path":  "UI4Pivot.cs",
+                      "blobSha":  "f9dadfa8d9f332f550a3535cdc8abfa2f930192b",
+                      "size":  17582
+                  },
+                  {
+                      "path":  "UI4ProgressBar.cs",
+                      "blobSha":  "6d28981f432371a8990192c653aa5682db6399c2",
+                      "size":  12810
+                  },
+                  {
+                      "path":  "UI4ProgressRing.cs",
+                      "blobSha":  "7e1a3b293c29883610fca03d5e3a93a021330fa9",
+                      "size":  18468
+                  },
+                  {
+                      "path":  "UI4Radio.cs",
+                      "blobSha":  "32e764e92477e7219e54430d35bac18036790b9e",
+                      "size":  9168
+                  },
+                  {
+                      "path":  "UI4ScrollViewer.cs",
+                      "blobSha":  "358abaf7e37bd0be7151abe57b13d75c3c803ac2",
+                      "size":  5295
+                  },
+                  {
+                      "path":  "UI4Slider.cs",
+                      "blobSha":  "c3b9b7ad8dba48ac48a0850ba1c7d1c11ae9e4c9",
+                      "size":  13161
+                  },
+                  {
+                      "path":  "UI4Switch.cs",
+                      "blobSha":  "bb4b3493d49d8e15ca07b0f2b78b3771fffe9002",
+                      "size":  11827
+                  },
+                  {
+                      "path":  "UI4TabControl.cs",
+                      "blobSha":  "fd085242671e6462b97c2cfae587d3702bc6f54c",
+                      "size":  34145
+                  },
+                  {
+                      "path":  "UI4TextBlock.cs",
+                      "blobSha":  "e4b9742145a05b8266c71460642fc9540c393e65",
+                      "size":  12462
+                  },
+                  {
+                      "path":  "UI4TextBox.cs",
+                      "blobSha":  "ae2808b5870dd433cd18c932dde41f2203ffc51f",
+                      "size":  24960
+                  },
+                  {
+                      "path":  "UI4Theme.cs",
+                      "blobSha":  "bb4ca083496138bdb7e9a902b03b8ce3055f986b",
+                      "size":  24482
+                  },
+                  {
+                      "path":  "UI4ThemeDefinition.cs",
+                      "blobSha":  "5ad5bafea0758ba8219494a62b34ccfb9df5cb2f",
+                      "size":  12098
+                  },
+                  {
+                      "path":  "UI4ThemePacks.cs",
+                      "blobSha":  "15894fe7a8261cd6b6c80a0223c720c6b9ab5028",
+                      "size":  36053
+                  },
+                  {
+                      "path":  "UI4ThemePersistence.cs",
+                      "blobSha":  "3b927d1609da3fb958914ede5b940a62a1f9df98",
+                      "size":  2976
+                  },
+                  {
+                      "path":  "UI4ThemeScope.cs",
+                      "blobSha":  "221e7f54c336f58a52e913a770895611af4a045c",
+                      "size":  8025
+                  },
+                  {
+                      "path":  "UI4ThemeToken.cs",
+                      "blobSha":  "5d06b68f9eb5ed3b04dbc696521f2d04922d560a",
+                      "size":  2096
+                  },
+                  {
+                      "path":  "UI4WindowTitleBar.cs",
+                      "blobSha":  "413b55a28c22b285978e4d44cab7c35f91435b3f",
+                      "size":  9683
+                  },
+                  {
+                      "path":  "架构审计报告-3.0.0主题机制评审.md",
+                      "blobSha":  "5e467ffbb19c70c6a43df49a67f6f997f7af97f5",
+                      "size":  50399
+                  }
+              ]
+}
