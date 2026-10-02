@@ -68,6 +68,10 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 
 不要加 `"type": "module"`：主进程与 preload 要保持 CJS（Step 3），Vite 的 ESM 需求改用 `.mts` 后缀解决（Step 4）。
 
+**依赖分栏是打包口径，不是代码风格。** 这条路径上 `dependencies` 应当尽量空：渲染层的 react 与组件库由 Vite 打进 `dist/`，主进程与 preload 由 tsc 打进 `dist-electron/`，运行时真正 `require` 的只有 `electron` 与 `node:*` 内置模块。而 electron-builder 会把 `dependencies` 对应的 `node_modules` 无条件附带进 `app.asar`——Step 5 的 `files` 白名单管不住它。所以写反的两个方向都是静默故障：dev 工具错登进 `dependencies`，构建机上 `npm ci --omit=dev` 照样把它装上、包体还白胖一层；运行时真要的库错登进 `devDependencies`，`npm run dev` 一切正常（本地 `node_modules` 是全的），装出来的包才报 `Cannot find module`。反面样本实测：某工程把五个纯渲染层包（`motion`/`react`/`react-dom`/`react-markdown`/`remark-gfm`，磁盘 9.2 MB）登在 `dependencies`，结果 21,725,609 字节的 `app.asar` 里 2276 条条目有 2267 条是 `node_modules`，而主进程一个都没用上。
+
+自查两条：`npm ls --omit=dev --depth=0` 剩下的必须都是交付物真需要的运行时包（这类工程通常输出为空）；`app.asar` 的顶层族只能有 `dist`、`dist-electron`、`package.json`（核对法见 Step 5）。确实需要主进程运行时依赖时，它的 `node_modules` 族**应当**出现在 asar 里——那时判据按包名放行，别当残留删掉，并用 `--selftest` 断言它 require 得到。
+
 ## Step 2 — 让 Electron 二进制真的落地
 
 新版 Electron（实测 44.5.1）的 `node_modules/electron/package.json` 里没有 `scripts` 字段，即没有 postinstall；下载逻辑被改成了 `bin` 里的 `install-electron`（指向 `install.js`）。所以 `npm install` 只装下 `index.js`、`cli.js`、`install.js`，`dist/` 是空的，而且不报错，等到第一次构建或启动才暴露。
@@ -137,7 +141,7 @@ nsis:
 
 `files` 必须显式列白名单。不写时源码目录、脚本与工具链产物会一起进 asar，包体膨胀，还把构建机路径信息带进交付物。`electronVersion` 建议写定并与 `node_modules/electron` 的实际版本一致，否则 builder 会自己去下载另一份 Electron（受限网络上直接失败）。
 
-有了那三行白名单，`src/`、`electron/`、`bin/`、`doc/` 天然不进包，不需要再写 exclude；新增目录时只往白名单里加项，不要用 `!` 反向排除。核对口径：`require('@electron/asar').listPackage('release/win-unpacked/resources/app.asar')` 应当只列出 `\dist\...`、`\dist-electron\...`、`\package.json` 三族条目（分隔符是反斜杠）。
+有了那三行白名单，`src/`、`electron/`、`bin/`、`doc/` 天然不进包，不需要再写 exclude；新增目录时只往白名单里加项，不要用 `!` 反向排除。核对口径：`require('@electron/asar').listPackage('release/win-unpacked/resources/app.asar')` 应当只列出 `\dist\...`、`\dist-electron\...`、`\package.json` 三族条目（分隔符是反斜杠）。多出第四族 `node_modules` 不是白名单失效，而是 builder 按 `dependencies` 自动附带——分栏口径与自查见 Step 1。
 
 图标靠 `win.icon` 指到具体文件（`electron/icon.ico`），`win.icon` 是文件路径不是目录约定，写错会静默回落默认图标：缺合法 ico 时 builder 只打 `default Electron icon is used` 并继续打包，是告警不是失败。多尺寸 ico（16/24/32/48/64/128 经典 BMP + 256 PNG）可以用 `bin/make-icon.ps1` 这类纯 System.Drawing 脚本生成，不依赖 ImageMagick/Python；判据不靠肉眼，而是把 exe 内嵌图标取回来逐像素比（`[System.Drawing.Icon]::ExtractAssociatedIcon($exe)`）。
 
@@ -235,6 +239,8 @@ nsis:
 | 只跑 dir 口径后 `release/` 里仍有上轮的 portable/setup exe | electron-builder 只覆盖本次构建的 target，不清空 output 目录 | 验收前先删空 `release/`，否则会被上轮产物蒙过 |
 | 取主题种子报「所有源都不可用」，但同机其他站点能访问 | jsDelivr 的 URL 漏了 `/gh/` 段，三个镜像全 404；404 被当成了“源不可用”，而不是超时 | 先直接 GET 一个已知文件看真实状态码；`raw.githubusercontent.com` 的 URL 形状不同，可当对照组 |
 | `themes.css` 整份变成只含一个主题 | 带主题名跑了子集，产物被覆写 | 补种子用 `--fetch-only`，收尾再跑一次全量 |
+| 包体多出十几 MB，`listPackage` 的顶层族多了 `node_modules` | dev 依赖被错登进 `dependencies`，builder 按生产依赖自动附带 | 移回 `devDependencies`，删空 `release/` 重打包，族数回到三族 |
+| `npm run dev` 正常，装出来的包报 `Cannot find module 'x'` | x 是主进程运行时依赖，却被放进 `devDependencies`，builder 不附带 | 移到 `dependencies`，再用 `--selftest` 断言它真能 require 到 |
 
 ## 验收清单
 
@@ -248,6 +254,7 @@ nsis:
 8. 发布守门：产物的 `VersionInfo.FileVersion` 必须等于 `package.json` 的 version 才允许拷贝（实测能抓到“版本号已 bump 但 `release/` 里仍是旧构建”这种情形）。
 9. 按 Step 8 收敛目录：删掉 `dist/`、`dist-electron/` 与临时输出后，已打好的包仍能自证通过，再用 `-SkipInstall` 重建能全部产出；`ls` 清单里每一项都归得了类。
 10. 用了外部色板库的工程（Step 7b）：`--offline` 生成零联网全绿，产物与联网版按行排序 md5 相同；`100themes/raw/` 文件数等于 manifest 里的 themes × variants（实测 500）；再删一个种子文件验证兜底能取回并写回，md5 与删除前一致。
+11. 依赖分栏核对：`npm ls --omit=dev --depth=0` 只剩交付物真需要的运行时包（Vite + tsc 这条路径上通常为空），且 `app.asar` 的顶层族没有多余的 `node_modules`；有则顺着 `dependencies` 找错栏的那个包（成因见 Step 1）。
 
 ## doc/运行与构建（T0Level）.md（新工程必交）
 
