@@ -21,6 +21,7 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 - 打包后要把目录收敛到“删干净仍能一把重建”的最小清单。
 - 桌面端要窗口尺寸/字体/明暗自适应——这属于写代码前的口径决定，不是收尾补丁。
 - 要把外部主题/色板库（例：`bjarneo/100-themes`，100 主题 × 5 变体 = 500 个 `colors.toml`）离线固化进工程，别让每次生成都去仓库拉几百个小文件。
+- 给桌面端定 `.ico` 图标：默认本地生成像素风字母 monogram（不联网、不依赖 ImageMagick/Python），只有要品牌 logo 时才查 selfh.st/icons——见 Step 5。
 
 ## 目录布局（新建工程先定）
 
@@ -145,6 +146,20 @@ nsis:
 
 图标靠 `win.icon` 指到具体文件（`electron/icon.ico`），`win.icon` 是文件路径不是目录约定，写错会静默回落默认图标：缺合法 ico 时 builder 只打 `default Electron icon is used` 并继续打包，是告警不是失败。多尺寸 ico（16/24/32/48/64/128 经典 BMP + 256 PNG）可以用 `bin/make-icon.ps1` 这类纯 System.Drawing 脚本生成，不依赖 ImageMagick/Python；判据不靠肉眼，而是把 exe 内嵌图标取回来逐像素比（`[System.Drawing.Icon]::ExtractAssociatedIcon($exe)`）。
 
+**图标默认本地生成，不联网**：一个像素风字母 monogram 就够交付——取 App 名首字母（A–Z / 0–9），用 5×7 点阵落在 11 格逻辑网格里，每格按 `floor(Size / 11)` 取整数倍像素，所以任何一挡都是硬边、无重采样无抗锯齿，这正是像素风的关键。实测判据（`_icon-probe/make-icon-pixel.ps1 -Letter L`）：七层 `16/24/32/48/64/128` BMP + `256` PNG，`cell=1/2/2/4/5/11/23px`、`glyph=5x7 … 115x161px`，`icon-loaded size=32x32`，16px 挡字母仍可读。
+
+配套的三条口径：像素规则**只写一处**，BMP 层与 PNG 层共用同一个 argb buffer（旧脚本规则写两遍，改一处漏一处必然漂移）；`-Letter` 表外字符要直接报错退出，别画个空方块糊过去；字母色省略时按背景相对亮度自动选 `#111`/`#fff`——与主题 token 的 `--pf-accent-fg` 是同一条规则，底色默认取工程自己的 accent。
+
+PowerShell 5.1 侧实测踩到的三个坑：变量名不区分大小写，`$bg = Parse-HexColor $Bg` 会把自己的参数覆盖掉（症状是汇总行打出数组而不是 hex）；函数返回数组要 `return , $arr`，否则被管道枚举展开；`[int[]]` 形参接 `UInt32[]` 实参会报"字符串格式不正确"，直接 `New-Object int[] 4` 构造最省事。
+
+**（可选）要品牌 logo 才查 selfh.st/icons**（目录 `https://selfh.st/icons/`，源 `github.com/selfhst/icons`）。它按品牌/产品收录 logo：实测 2,951 个唯一图标、7,741 个 `.ico`（每个最多 standard/`-dark`/`-light` 三份），`ICO` 是 16/32/48/64/128 **五帧、没有 256**；自绘的 `bin/make-icon.ps1` 出的是含 256 的七帧。拿现成 ico 当 `win.icon` 合法也省事，但资源管理器大图标与任务栏缩放时 Windows 得放大 128 那帧——要么接受，要么自绘补 256。
+
+**它是品牌 logo 库，不是泛用图标库**：`terminal`/`console`/`book`/`doc`/`man`/`bash` 的精确匹配实测全是 0（`man` 那 84 条含词都是 `caddymanager`、`cert-manager` 这类）。App 代表某个具体产品或技术栈时才优先取品牌位（Linux 命令手册这种就落在 `linux.ico`/`debian.ico`/`ubuntu.ico`），纯概念图标直接回自绘，别在这儿耗时间。
+
+仓库约 378 MB（API `size_kb` 386,890），**别 clone**，取单文件：`https://cdn.jsdelivr.net/gh/selfhst/icons@main/ico/<slug>.ico`（实测 200，9,117–19,800 字节）。slug 先核对再定：`https://api.github.com/repos/selfhst/icons/git/trees/main?recursive=1`（实测 200、`truncated:false`、7,741 条 `.ico`）。
+
+**许可证实测 `CC-BY-4.0`，交付物必须署名**：在 `doc/` 里记下来源 URL、图标 slug 与取用日期（或写进关于对话框），换图标时同步改这行。这条最容易漏，后果是把带署名义务的 logo 静默打进 exe。
+
 ## Step 6 — 三口径的语义差别
 
 | 口径 | 形态 | 代价 |
@@ -238,6 +253,8 @@ nsis:
 | `npm warn install-scripts … electron-winstaller` | npm 11 的 allowScripts 默认跳过带 install 脚本的依赖 | 无害，实测不影响 dir/portable/nsis 三口径出包；别误读成 Electron 没装好 |
 | 只跑 dir 口径后 `release/` 里仍有上轮的 portable/setup exe | electron-builder 只覆盖本次构建的 target，不清空 output 目录 | 验收前先删空 `release/`，否则会被上轮产物蒙过 |
 | 取主题种子报「所有源都不可用」，但同机其他站点能访问 | jsDelivr 的 URL 漏了 `/gh/` 段，三个镜像全 404；404 被当成了“源不可用”，而不是超时 | 先直接 GET 一个已知文件看真实状态码；`raw.githubusercontent.com` 的 URL 形状不同，可当对照组 |
+| 从 selfh.st/icons 取 `ico/<slug>.ico` 返回 404 | slug 猜错，或那库里根本没有这个概念（它只收品牌 logo） | 先用 GitHub tree API 列名字再定，不要改镜像 |
+| 传了 `-Bg` 却打出数组、颜色不对 | PowerShell 变量名不区分大小写，局部 `$bg` 把参数 `$Bg` 覆盖了 | 局部变量换名（如 `$bgArgb`），别与 param 同名 |
 | `themes.css` 整份变成只含一个主题 | 带主题名跑了子集，产物被覆写 | 补种子用 `--fetch-only`，收尾再跑一次全量 |
 | 包体多出十几 MB，`listPackage` 的顶层族多了 `node_modules` | dev 依赖被错登进 `dependencies`，builder 按生产依赖自动附带 | 移回 `devDependencies`，删空 `release/` 重打包，族数回到三族 |
 | `npm run dev` 正常，装出来的包报 `Cannot find module 'x'` | x 是主进程运行时依赖，却被放进 `devDependencies`，builder 不附带 | 移到 `dependencies`，再用 `--selftest` 断言它真能 require 到 |
@@ -299,7 +316,7 @@ nsis:
 判据：smoke 输出 `title=<新标题>`。
 
 ## 5. 修改图标
-放多尺寸 `electron/icon.ico`（16/24/32/48/64/128 经典 BMP + 256 PNG），用 `bin/make-icon.ps1` 这类纯 System.Drawing 脚本生成，`electron-builder.yml` 里 `win.icon: electron/icon.ico` 指到这个文件。
+图标默认本地生成：`bin\make-icon.ps1 -Letter <App名首字母>` 出像素字母 monogram（5×7 点阵落进 11 格逻辑网格、整数倍格、无抗锯齿），判据看各层 `cell=Npx` 与末行 `icon-loaded size=32x32`。要品牌 logo 才从 selfh.st/icons 取现成 ico（`https://cdn.jsdelivr.net/gh/selfhst/icons@main/ico/<slug>.ico`，slug 先用 GitHub tree API 核对）拷成 `electron/icon.ico`，并在 `doc/` 记下来源 URL + 图标 slug + 取用日期——该库 CC-BY-4.0，署名算交付项，且它的 ico 只有 16–128 五帧、没有 256。两种方式最后都要把 `electron-builder.yml` 的 `win.icon` 指到这个文件。
 判据不靠肉眼，而是把 exe 内嵌图标取回来逐像素比：
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File bin\verify-icon.ps1
 实测输出：`extracted=32x32`，条纹/内块/外圈三个取样点颜色全部命中，`outer-blue-fraction=60.9%`。
