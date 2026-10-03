@@ -1,0 +1,260 @@
+<UserControl x:Class="MemoTask.Views.TodosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+             xmlns:h="clr-namespace:MemoTask.Helpers">
+    <!-- 待办页纵向堆叠，任何窗口宽度都成立；卡片外边距 24 同样给投影留了 ≥ 24 的外溢。 -->
+    <Grid Margin="20,20,20,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 快速添加 -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ui:UI4TextBox x:Name="AddBox" Grid.Column="0" Height="36" InnerPadding="12"
+                           PlaceholderText="要做什么？回车即添加，可写「明天」「10-20」「+3」"
+                           Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <ui:UI4ComboBox Grid.Column="1" Width="104" Height="36" Margin="12,0,0,0"
+                            ItemsSource="{Binding PriorityOptions}" DisplayMemberPath="Label"
+                            SelectedValuePath="Key" SelectedValue="{Binding NewPriorityKey, Mode=TwoWay}"/>
+
+            <ui:UI4TextBox Grid.Column="2" Width="132" Height="36" Margin="12,0,0,0" InnerPadding="12"
+                           PlaceholderText="截止（选填）"
+                           Text="{Binding NewDueText, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <ui:UI4Button Grid.Column="3" Content="添加" Width="80" Height="36" Margin="12,0,0,0"
+                          Command="{Binding AddCommand}"/>
+        </Grid>
+
+        <!-- 筛选 / 排序 -->
+        <Grid Grid.Row="1" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{Binding StatusText}" FontSize="12"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Foreground="{DynamicResource UI4.Brush.Icon}"/>
+            <ui:UI4ComboBox Grid.Column="1" Width="116" Height="32" Margin="0,0,12,0"
+                            FontSize="13"
+                            ItemsSource="{Binding FilterOptions}" DisplayMemberPath="Label"
+                            SelectedValuePath="Key" SelectedValue="{Binding FilterKey, Mode=TwoWay}"/>
+            <ui:UI4ComboBox Grid.Column="2" Width="116" Height="32"
+                            FontSize="13"
+                            ItemsSource="{Binding SortOptions}" DisplayMemberPath="Label"
+                            SelectedValuePath="Key" SelectedValue="{Binding SortKey, Mode=TwoWay}"/>
+        </Grid>
+
+        <!-- 完成度 -->
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{Binding ProgressText}" FontSize="12" Margin="0,0,0,8"
+                           Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                <ui:UI4ProgressBar Value="{Binding Percent}" Maximum="100" Height="6"/>
+            </StackPanel>
+            <Border Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Bottom"
+                    CornerRadius="4" Padding="8,4,8,4"
+                    BorderBrush="{x:Static h:Theme.DangerBrush}" BorderThickness="1"
+                    Visibility="{Binding HasOverdue, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding OverdueCount, StringFormat=逾期 {0} 项}" FontSize="12"
+                           Foreground="{x:Static h:Theme.DangerBrush}"/>
+            </Border>
+        </Grid>
+
+        <!-- 选中项编辑面板 -->
+        <ui:UI4Panel Grid.Row="3" Margin="0,16,0,0" CornerRadius="12"
+                     ShadowDepth="0" ShadowBlurRadius="15" ShadowOpacity="0"
+                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
+            <Grid Margin="20,16,20,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ui:UI4TextBox Grid.Column="0" Height="36" InnerPadding="12"
+                                   PlaceholderText="待办标题"
+                                   Text="{Binding EditTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                    <ui:UI4ComboBox Grid.Column="1" Width="104" Height="36" Margin="12,0,0,0"
+                                    ItemsSource="{Binding PriorityOptions}" DisplayMemberPath="Label"
+                                    SelectedValuePath="Key" SelectedValue="{Binding EditPriorityKey, Mode=TwoWay}"/>
+                    <ui:UI4TextBox Grid.Column="2" Width="132" Height="36" Margin="12,0,0,0" InnerPadding="12"
+                                   PlaceholderText="截止日期"
+                                   Text="{Binding EditDueText, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+
+                <ui:UI4TextBox Grid.Row="1" Margin="0,12,0,0" Height="36" InnerPadding="12"
+                               PlaceholderText="备注（选填）"
+                               Text="{Binding EditDetail, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <Grid Grid.Row="2" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:UI4Button Content="今天" Width="64" Height="28" Margin="0,0,8,0"
+                                      FontSize="12" CornerRadius="6"
+                                      Command="{Binding SetQuickDueCommand}" CommandParameter="0"/>
+                        <ui:UI4Button Content="明天" Width="64" Height="28" Margin="0,0,8,0"
+                                      FontSize="12" CornerRadius="6"
+                                      Command="{Binding SetQuickDueCommand}" CommandParameter="1"/>
+                        <ui:UI4Button Content="7 天后" Width="72" Height="28" Margin="0,0,8,0"
+                                      FontSize="12" CornerRadius="6"
+                                      Command="{Binding SetQuickDueCommand}" CommandParameter="7"/>
+                        <ui:UI4Button Content="无期限" Width="72" Height="28"
+                                      FontSize="12" CornerRadius="6"
+                                      Command="{Binding ClearDueCommand}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:UI4Button Content="标记完成/取消" Width="116" Height="32" Margin="0,0,8,0"
+                                      FontSize="13" CornerRadius="6"
+                                      Command="{Binding ToggleSelectedCommand}"/>
+                        <ui:UI4Button Content="保存" Width="72" Height="32" Margin="0,0,8,0"
+                                      FontSize="13" CornerRadius="6"
+                                      Command="{Binding SaveEditCommand}"/>
+                        <ui:UI4Button Content="取消" Width="72" Height="32" Margin="0,0,8,0"
+                                      FontSize="13" CornerRadius="6"
+                                      Command="{Binding CancelEditCommand}"/>
+                        <ui:UI4Button Content="删除" Width="72" Height="32"
+                                      FontSize="13" CornerRadius="6"
+                                      GradientStart="{x:Static h:Theme.Danger}"
+                                      GradientEnd="{x:Static h:Theme.Danger}"
+                                      Command="{Binding DeleteSelectedCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </ui:UI4Panel>
+
+        <!-- 列表 -->
+        <Grid Grid.Row="4" Margin="0,8,0,0">
+            <ui:UI4ListView x:Name="TodoList"
+                            ItemsSource="{Binding Rows}"
+                            SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                            IsSynchronizedWithCurrentItem="False"
+                            ItemMargin="24" ItemCornerRadius="12"
+                            ShadowDepth="12" ShadowBlurRadius="12" ShadowOpacity="0.16"
+                            HoverScale="1.01"
+                            Background="Transparent">
+                <ui:UI4ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="20,16,20,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ui:UI4CheckBox Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0"
+                                            IsChecked="{Binding IsDone, Mode=OneWay}"
+                                            Command="{Binding ToggleCommand}"/>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}" FontSize="15" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource UI4.Brush.Text}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource UI4.Brush.TextMuted}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap"
+                                           Text="{Binding Detail}"
+                                           Visibility="{Binding HasDetail, Converter={StaticResource BoolToVis}}"
+                                           Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                                        Margin="12,0,0,0">
+                                <Border CornerRadius="4" Padding="8,4,8,4" Margin="0,0,8,0"
+                                        BorderThickness="1" BorderBrush="{DynamicResource UI4.Brush.BorderWeak}"
+                                        Visibility="{Binding HasPriorityTag, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding PriorityLabel}" FontSize="11">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource UI4.Brush.TextMuted}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PriorityKey}" Value="High">
+                                                        <Setter Property="Foreground" Value="{x:Static h:Theme.DangerBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+
+                                <TextBlock Text="{Binding DueLabel}" FontSize="12" Margin="0,0,12,0"
+                                           VerticalAlignment="Center"
+                                           Visibility="{Binding HasDue, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource UI4.Brush.Icon}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                    <Setter Property="Foreground" Value="{x:Static h:Theme.DangerBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDueToday}" Value="True">
+                                                    <Setter Property="Foreground" Value="{x:Static h:Theme.WarningBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <ui:UI4Button Content="删除" Width="56" Height="28" FontSize="12"
+                                              CornerRadius="6" Padding="4,0,4,0"
+                                              Command="{Binding DeleteCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ui:UI4ListView.ItemTemplate>
+            </ui:UI4ListView>
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="今天没有要处理的事" FontSize="16" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                <TextBlock Margin="0,8,0,0" FontSize="13" TextWrapping="Wrap" MaxWidth="300"
+                           TextAlignment="Center" HorizontalAlignment="Center"
+                           Text="在最上面的输入框写下第一件事，回车就加上。"
+                           Foreground="{DynamicResource UI4.Brush.Placeholder}"/>
+            </StackPanel>
+
+            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24"
+                       TextWrapping="Wrap" MaxWidth="320" TextAlignment="Center"
+                       Visibility="{Binding NoMatch, Converter={StaticResource BoolToVis}}"
+                       Text="这个筛选条件下没有待办。换个筛选，或把「全部」调出来看看已完成的事。"
+                       Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+        </Grid>
+    </Grid>
+</UserControl>

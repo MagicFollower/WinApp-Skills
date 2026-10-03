@@ -1,0 +1,40 @@
+开发构建（需要本机装有 .NET 10 SDK，dotnet --list-sdks 能看到 10.x）
+  dotnet build .\MemoTask.csproj
+
+直接运行
+  dotnet run --project .\MemoTask.csproj
+
+一键打包单 exe（上级目录两个脚本，产物文件名带模式后缀）
+  publish.cmd            → ..\publish\MemoTask_self_contained.exe  约 60+ MB，运行时在包里，目标机免装 .NET
+  publish_no_runtime.cmd → ..\publish_no_runtime\MemoTask_no_runtime.exe  约 2-3 MB，
+                           但目标机必须先装 .NET 10 Desktop Runtime（dotnet --list-runtimes 看得到
+                           Microsoft.WindowsDesktop.App 10.x 就行）
+
+设置自测（退出码 = 失败断言数，0 为全通过，本机 28 条全 PASS）
+  MemoTask_self_contained.exe --selftest
+  报告写到 %APPDATA%\MemoTask\selftest.txt
+  注意：旧产物也是退 0，只是少一条断言。判"是不是本轮产物"用 SHA256 或 LastWriteTime，别用字节数。
+
+上级目录三个自查脚本（都存成 BOM + CRLF，中文注释才不会把下一行吞掉）
+  ..\verify-window.ps1 -Exe ..\publish\MemoTask_self_contained.exe
+      起进程 → 轮询主窗口 → 回读 title → 只关自己起的 pid；别用点鼠标敲键盘的自动化（输入法会吃字）
+  ..\scan-spacing.ps1
+      Margin/Padding 必须在 4 的倍数刻度上，判据是 off_scale_count=0
+  ..\icon-check.ps1 -Exe ..\publish\MemoTask_self_contained.exe
+      取回 exe 内嵌图标与 app\AppIcon.ico 逐像素比；换图标后字节数一样是正常的，体积不是判据
+
+窗口一片白（标题栏在、内容不出画）时
+  设置页 → 外观 → 渲染档位 改成「软件渲染」，重启应用。本机硬件加速态下截屏通路取不到帧。
+
+换应用图标
+  覆盖 app\AppIcon.ico 即可（csproj 的 ApplicationIcon 与 Resource 两处都指它）；
+  当前图标是本地生成的字母像素图标（16×16 网格上的 5×7 点阵 M，蓝底 #4F6BE8 + 奶白字形 #F7F9FB），
+  换字母或配色重跑 Skill 的生成器覆盖回去，不联网、不要 ImageMagick：
+    powershell -NoProfile -ExecutionPolicy Bypass -File "<skill>\scripts\make-icon.ps1" -Name MemoTask -Out app\AppIcon.ico
+  嫌包体大可以收窄帧表：-Sizes 16,32,48,256（七帧 105 KB 的 ico 让框架依赖包 +303 KB）
+  换完必须重新构建，再 .\icon-check.ps1 -Exe <产物> 整幅逐像素比（体积不是判据）
+
+改观感配色
+  只改 app\Helpers\Theme.cs 的常量，然后跑 --selftest 看对比度断言有没有红
+
+更多判据与逐条实测输出见 ..\doc\运行与构建（T0Level）.md

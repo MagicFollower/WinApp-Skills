@@ -1,0 +1,270 @@
+<UserControl x:Class="MemoTask.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+             xmlns:h="clr-namespace:MemoTask.Helpers">
+    <!-- 设置页是一列卡片：卡片之间 16，卡片内部行距 12，行标签列固定 152 让控件左边缘对齐。 -->
+    <ui:UI4ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20,20,20,12">
+
+            <!-- 应用信息 -->
+            <ui:UI4Panel CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+                <StackPanel Margin="20,16,20,20">
+                    <TextBlock Text="应用信息" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{DynamicResource UI4.Brush.Text}"/>
+                    <TextBlock Margin="0,4,0,16" Text="{Binding AppDescription}" FontSize="13"
+                               Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="152"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="名称" FontSize="13" Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AppName}" FontSize="13"
+                                   Margin="0,0,0,12" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="版本" FontSize="13" Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding VersionText}" FontSize="13"
+                                   Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="组件库" FontSize="13" Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ComponentText}" FontSize="13"
+                                   Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="运行时" FontSize="13" Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding FrameworkText}" FontSize="13"
+                                   Margin="0,0,0,12" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="系统" FontSize="13" Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding OsText}" FontSize="13"
+                                   Margin="0,0,0,12" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"/>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="数据" FontSize="13" Margin="0,0,0,12"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding StatsText}" FontSize="13"
+                                   Margin="0,0,0,12" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"/>
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="运行" FontSize="13"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <TextBlock Grid.Row="6" Grid.Column="1" FontSize="13" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource UI4.Brush.Text}">
+                            <Run Text="启动于 "/><Run Text="{Binding StartedText, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding UpTimeText, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Grid>
+
+                    <TextBlock Margin="0,16,0,0" FontSize="12" TextWrapping="Wrap"
+                               Text="{Binding DataDirText}"
+                               Foreground="{DynamicResource UI4.Brush.Icon}"/>
+                </StackPanel>
+            </ui:UI4Panel>
+
+            <!-- 外观 -->
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+                <StackPanel Margin="20,16,20,20">
+                    <TextBlock Text="外观" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{DynamicResource UI4.Brush.Text}"/>
+                    <TextBlock Margin="0,4,0,16" FontSize="13"
+                               Text="改完立即生效，并写进 settings.json。"
+                               Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="152"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="明暗模式" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <ui:UI4ComboBox Width="160" Height="36"
+                                            ItemsSource="{Binding ThemeOptions}" DisplayMemberPath="Label"
+                                            SelectedValuePath="Key" SelectedValue="{Binding ThemeKey, Mode=TwoWay}"/>
+                            <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" FontSize="12"
+                                       Text="{Binding ThemeLabel}"
+                                       Foreground="{DynamicResource UI4.Brush.Icon}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="152"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="渲染档位" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <ui:UI4ComboBox Width="160" Height="36"
+                                            ItemsSource="{Binding RenderModeOptions}" DisplayMemberPath="Label"
+                                            SelectedValuePath="Key" SelectedValue="{Binding RenderModeKey, Mode=TwoWay}"/>
+                            <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap"
+                                       MaxWidth="320"
+                                       Text="若窗口标题栏在、内容却整片发白，切到「软件渲染」并重启。"
+                                       Foreground="{DynamicResource UI4.Brush.Placeholder}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="152"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="强调色" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <StackPanel Grid.Column="1">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="36" Height="24" CornerRadius="6" VerticalAlignment="Center"
+                                        Background="{Binding AccentBrush}"
+                                        BorderThickness="1" BorderBrush="{DynamicResource UI4.Brush.BorderWeak}"/>
+                                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"
+                                           Text="{Binding AccentHex}"
+                                           Foreground="{DynamicResource UI4.Brush.Text}"/>
+                                <ui:UI4Button Margin="16,0,0,0" Content="自定义…" Width="88" Height="30"
+                                              FontSize="13" CornerRadius="6"
+                                              Command="{Binding PickAccentCommand}"/>
+                                <ui:UI4Button Margin="8,0,0,0" Content="恢复默认" Width="88" Height="30"
+                                              FontSize="13" CornerRadius="6"
+                                              Visibility="{Binding IsCustomAccent, Converter={StaticResource BoolToVis}}"
+                                              Command="{Binding ResetAccentCommand}"/>
+                            </StackPanel>
+
+                            <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding AccentSwatches}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <ui:UI4Button Width="44" Height="30" Margin="0,0,8,0"
+                                                      CornerRadius="6"
+                                                      GradientStart="{Binding Color}" GradientEnd="{Binding Color}"
+                                                      Command="{Binding DataContext.SetAccentCommand,
+                                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                      CommandParameter="{Binding Key}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Margin="0,12,0,0" FontSize="12" Text="{Binding ResolvedModeLabel}"
+                               Foreground="{DynamicResource UI4.Brush.Icon}"/>
+                </StackPanel>
+            </ui:UI4Panel>
+
+            <!-- 行为 -->
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+                <StackPanel Margin="20,16,20,20">
+                    <TextBlock Text="行为" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{DynamicResource UI4.Brush.Text}"/>
+                    <TextBlock Margin="0,4,0,16" FontSize="13"
+                               Text="这些偏好只影响本应用，不动系统设置。"
+                               Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="152"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="启动页" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <ui:UI4ComboBox Grid.Column="1" Width="180" Height="36" HorizontalAlignment="Left"
+                                        ItemsSource="{Binding StartPageOptions}" DisplayMemberPath="Label"
+                                        SelectedValuePath="Key" SelectedValue="{Binding StartPageKey, Mode=TwoWay}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="152"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="备忘自动保存" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <ui:UI4ComboBox Grid.Column="1" Width="200" Height="36" HorizontalAlignment="Left"
+                                        ItemsSource="{Binding AutoSaveOptions}" DisplayMemberPath="Label"
+                                        SelectedValuePath="Key" SelectedValue="{Binding AutoSaveKey, Mode=TwoWay}"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="152"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="待办默认优先级" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+                        <ui:UI4ComboBox Grid.Column="1" Width="140" Height="36" HorizontalAlignment="Left"
+                                        ItemsSource="{Binding PriorityOptions}" DisplayMemberPath="Label"
+                                        SelectedValuePath="Key" SelectedValue="{Binding DefaultPriorityKey, Mode=TwoWay}"/>
+                    </Grid>
+                </StackPanel>
+            </ui:UI4Panel>
+
+            <!-- 数据 -->
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+                <StackPanel Margin="20,16,20,20">
+                    <TextBlock Text="数据" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{DynamicResource UI4.Brush.Text}"/>
+                    <TextBlock Margin="0,4,0,16" FontSize="13" TextWrapping="Wrap"
+                               Text="全部数据只存在本机这个目录，应用不联网：导出得到的是一份可读的 JSON 快照。"
+                               Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
+
+                    <StackPanel Orientation="Horizontal">
+                        <ui:UI4Button Content="打开数据目录" Width="120" Height="34" Margin="0,0,12,0"
+                                      Command="{Binding OpenDataFolderCommand}"/>
+                        <ui:UI4Button Content="导出备份" Width="104" Height="34" Margin="0,0,12,0"
+                                      Command="{Binding ExportBackupCommand}"/>
+                        <ui:UI4Button Content="刷新信息" Width="104" Height="34" Margin="0,0,12,0"
+                                      Command="{Binding RefreshInfoCommand}"/>
+                        <ui:UI4Button Content="清空全部数据" Width="128" Height="34"
+                                      GradientStart="{x:Static h:Theme.Danger}"
+                                      GradientEnd="{x:Static h:Theme.Danger}"
+                                      Command="{Binding ClearDataCommand}"/>
+                    </StackPanel>
+
+                    <TextBlock Margin="0,16,0,0" FontSize="12" TextWrapping="Wrap"
+                               Text="{Binding RuntimeModeText}"
+                               Foreground="{DynamicResource UI4.Brush.Icon}"/>
+                    <TextBlock Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap"
+                               Text="{Binding StatusText}"
+                               Foreground="{DynamicResource UI4.Brush.Accent}"/>
+                </StackPanel>
+            </ui:UI4Panel>
+
+            <!-- 快捷键 -->
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+                <StackPanel Margin="20,16,20,20">
+                    <TextBlock Text="快捷键" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{DynamicResource UI4.Brush.Text}"/>
+                    <TextBlock Margin="0,12,0,0" FontSize="13" TextWrapping="Wrap" LineHeight="24"
+                               Foreground="{DynamicResource UI4.Brush.TextMuted}">
+                        Ctrl+N 新建备忘　·　Ctrl+F 搜索备忘　·　Ctrl+S 立即保存<LineBreak/>
+                        Ctrl+D 勾选/取消当前待办　·　Ctrl+1 / 2 / 3 切换页面<LineBreak/>
+                        Esc 退出编辑　·　待办输入框回车即添加
+                    </TextBlock>
+                </StackPanel>
+            </ui:UI4Panel>
+
+        </StackPanel>
+    </ui:UI4ScrollViewer>
+</UserControl>
