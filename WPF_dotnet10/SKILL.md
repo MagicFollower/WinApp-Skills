@@ -1,6 +1,6 @@
 ---
 name: startui4-wpf
-description: 用 StartUI4Controls（StartUI4.WPF v3.0.0，net10.0-windows 纯 C# 模板 WPF 组件库）搭工程、改界面与发版本的可复现流程——app/+lib/ 源码自包含骨架（lib 种子本地优先，缺失或不完整时按 manifest 从上游 WinApp-Skills 仓库的 componentSourceCode 自动回源并写回）、UI4Theme 38 令牌与 UI4.Brush.*/UI4.Color.* 资源键契约、开工前必问的三挡决策（明暗策略/两档分发口径/要不要套装与 UI4ThemeScope 局部换肤）、启动顺序（base.OnStartup 之后才 Register/SetTheme）、DWM 标题栏、UI4MessageBox/UI4ColorPicker/UI4NotifyIcon/UI4CodeEditor/UI4GridView 用法、界面自适应当编码期约束、间距刻度与阴影/悬浮外溢余量（组件之间不贴边、投影不被切平）、单文件两档发布（self_contained / no_runtime）与 --selftest 门禁、FileVersion 守门、交付 doc/运行与构建（T0Level）.md 八节（每条命令本机跑过贴真实输出，没跑过标未验证）与交付前目录收敛。当需要新建 .NET 10 WPF 桌面应用、要写或改 UI4* 控件的 XAML/C#、切主题后某处颜色不动、{DynamicResource UI4.*} 解析不到、找不到 StartUI4Controls 的类型或属性、组件源码目录是空目录或缺文件、UI4 控件在深色下对比度不对、要打包 WPF 单 exe、要补零基础上手文档或把既有 StartUI4 工程按示例项目结构收敛时使用。不用于 WinForms、UWP/WinUI、.NET Framework 48 版 StartUI4，也不用于不含该库的普通 WPF 页面。
+description: 用 StartUI4Controls（StartUI4.WPF v3.0.0，net10.0-windows 纯 C# 模板 WPF 组件库）搭工程、改界面与发版本的可复现流程——app/+lib/ 源码自包含骨架（lib 种子本地优先，缺失或不完整时按 manifest 从上游 WinApp-Skills 仓库的 componentSourceCode 自动回源并写回）、UI4Theme 38 令牌与 UI4.Brush.*/UI4.Color.* 资源键契约、开工前必问的三挡决策（明暗策略/两档分发口径/要不要套装与 UI4ThemeScope 局部换肤）、启动顺序（base.OnStartup 之后才 Register/SetTheme）、DWM 标题栏、UI4MessageBox/UI4ColorPicker/UI4NotifyIcon/UI4CodeEditor/UI4GridView 用法、界面自适应当编码期约束、间距刻度与阴影/悬浮外溢余量（组件之间不贴边、投影不被切平）、单文件两档发布（self_contained / no_runtime）与 --selftest 门禁、FileVersion 守门、应用图标默认本地生成（make-icon.ps1 出字母像素多尺寸 ico，不联网不依赖 ImageMagick）、交付 doc/运行与构建（T0Level）.md 八节（每条命令本机跑过贴真实输出，没跑过标未验证）与交付前目录收敛。当需要新建 .NET 10 WPF 桌面应用、要写或改 UI4* 控件的 XAML/C#、切主题后某处颜色不动、{DynamicResource UI4.*} 解析不到、找不到 StartUI4Controls 的类型或属性、组件源码目录是空目录或缺文件、UI4 控件在深色下对比度不对、要打包 WPF 单 exe、要补零基础上手文档或把既有 StartUI4 工程按示例项目结构收敛时使用。不用于 WinForms、UWP/WinUI、.NET Framework 48 版 StartUI4，也不用于不含该库的普通 WPF 页面。
 ---
 
 # StartUI4.WPF 桌面应用搭建与组件使用
@@ -35,7 +35,7 @@ StartUI4Controls 是**零 XAML** 的 WPF 组件库：39 个 `UI4*` 控件的模�
 │   ├── MainWindow.xaml  .xaml.cs
 │   ├── <AppName>.csproj               ProjectReference ../lib/StartUI4Controls.csproj
 │   ├── app.manifest                   PerMonitorV2 DPI
-│   ├── AppIcon.ico                    ApplicationIcon + Resource 两处都指它
+│   ├── AppIcon.ico                    ApplicationIcon + Resource 两处都指它（默认由 scripts/make-icon.ps1 本地生成）
 │   ├── Models/ ViewModels/ Views/ Services/ Helpers/ Converters/
 │   ├── Helpers/Theme.cs               宿主配色单源（常量）
 │   ├── Services/SelfTest.cs           --selftest，退出码 = 失败断言数
@@ -93,10 +93,10 @@ powershell -NoProfile -ExecutionPolicy Bypass \
   -File "<skill>/scripts/scaffold.ps1" -Name MyNote -Path "D:\work\MyNote"
 ```
 
-`-Name` 会同时当 `RootNamespace` / `AssemblyName` / 数据目录字面量，要求字母开头、仅字母数字。产物是上面那棵树 + 一个占位 `AppIcon.ico`（32bpp 手写 ICO）。
+`-Name` 会同时当 `RootNamespace` / `AssemblyName` / 数据目录字面量，要求字母开头、仅字母数字。产物是上面那棵树 + `app/AppIcon.ico`——**默认本地生成，不联网**：`scripts/make-icon.ps1` 用应用名首字母画一张像素点阵图标（16×16 逻辑网格上的 5×7 点阵字母，底色 `#4F6BE8`、字形 `#F7F9FB`，四角削成圆角），一次写出 16/24/32/48/64/128/256 七档 32bpp 帧（256 帧内嵌 PNG）。
 种子完整时全程不联网；种子缺失/不完整时它会先调 `fetch-source.ps1` 回源补齐再建工程（离线机器/CI 上想禁止联网就加 `-Offline`，直连抖动时加 `-Mirror <反代前缀>`）。
 
-判据：stdout 首行 `OK`，并回报 `lib/ 48 个文件`、`占位符替换 13 个文件`；走过回源会先打 `SEED 已补齐并写回，下次零联网`。非 0 退出码含义：2 名字非法、3 Skill 目录不完整、4 种子有缺口（`-Offline` 下）或回源后仍不完整、5 目标已有 C# 源码（要 `-Force`）、6 产物缺文件、7 占位符没替换干净；回源自身的失败码（2/3/4/5）在它自己的输出里，全败时会把三条通路的失败原因都打出来。
+判据：stdout 首行 `OK`，并回报 `lib/ 48 个文件`、`占位符替换 13 个文件`、图标那一段 `OK AppIcon.ico letter=<首字母> ... frames=7`；走过回源会先打 `SEED 已补齐并写回，下次零联网`。非 0 退出码含义：2 名字非法、3 Skill 目录不完整、4 种子有缺口（`-Offline` 下）或回源后仍不完整、5 目标已有 C# 源码（要 `-Force`）、6 产物缺文件、7 占位符没替换干净、8 图标生成失败（`make-icon.ps1` 的自证没过）；回源自身的失败码（2/3/4/5）在它自己的输出里，全败时会把三条通路的失败原因都打出来。
 
 生成后立刻编译一次，把 restore 与工具链问题在写业务代码前清掉：
 
@@ -208,6 +208,14 @@ if (picked.HasValue) UI4Theme.SetAccent(picked.Value);
 - **字体**：族用系统栈（从 `SystemFonts.MessageFontFamily` 起步，通常是 `Segoe UI Variable Text` / `Segoe UI`），字号别硬编码到 12 px 以下；要跟系统字号走就用 `SystemFonts`/`DynamicResource`，不要手写常数覆盖全局。判据：把系统字号调到 125% 后正文可见且不溢出按钮。
 - **窗口几何持久化要回正**：存过 `Left/Top/Width/Height` 的工程，恢复时用 `SystemParameters.WorkArea` 判定是否仍在某块屏内，不在就回正中。判据：把窗口挪到 -24000,-24000 存下、拔掉外接屏再起，窗口必须可见（这条最容易在换显示器后炸）。
 - **标题与图标各只有一个真源**：标题 = `MainWindow.xaml` 的 `Title`（别自绘标题栏）；图标 = `app/AppIcon.ico`，csproj 的 `<ApplicationIcon>` 与 `<Resource>` 两处都指它，`Window.Icon` 也指同一个文件。判据见 Step 10 第 6/7 条。
+- **图标默认本地生成**（不联网、不要 ImageMagick）：换字母或配色只需重跑生成器，它自带自证（目录条目连续、末帧落在文件尾、GDI+ 回取 16/32 两档验圆角透明与取色）：
+
+  ```bash
+  powershell -NoProfile -ExecutionPolicy Bypass -File "<skill>/scripts/make-icon.ps1" \
+    -Name MyNote -Out "D:\work\MyNote\app\AppIcon.ico" -Back "#4F6BE8" -Fore "#F7F9FB"
+  ```
+
+  `-Glyph` 可显式指定首字母（只支持 A–Z 点阵），`-Sizes` 换尺寸集。帧表越大 exe 越大，本机实测：单帧 4,286 B → 七帧 105,414 B 的 ico，让框架依赖单文件包从 `1,393,834 B` 涨到 `1,696,938 B`（未压缩档里 ico 会同时进 apphost 与 WPF 资源两处），自带运行时档只涨 `+105,567 B`（整包压缩过）。只要日常观感就 `-Sizes 16,32,48,256`。要改用外部图（例如 `selfh.st/icons` / `github.com/selfhst/icons` 的 `ico/` 现成多尺寸 ico）就**直接覆盖** `app/AppIcon.ico`，同时把来源 URL、图标 ref、许可（那份仓库是 CC-BY-4.0，要署名并注明修改）记进 `doc/` 第 5 节——署名不能只写在聊天里。
 - **间距与外溢余量见 Step 3「间距与留白」**：刻度只用 4 的倍数，同排 ≥ 8、分组之间 ≥ 16、内容到窗口边缘 ≥ 16；卡片外边距 ≥ `ShadowDepth + ShadowBlurRadius`（≈13~27），`ItemMargin` 左右 ≥ 10 才留得住悬浮放大的预算。窗口收窄时先让**分档**改列数，不要靠压掉 margin 来腾地方——margin 被压成 0 的那一刻，投影切边与"悬浮没反应"就会同时出现。
 
 ## Step 8 — `doc/运行与构建（T0Level）.md`（新工程必交）
@@ -222,7 +230,7 @@ if (picked.HasValue) UI4Theme.SetAccent(picked.Value);
 2. 没跑或跑不了的行，显式写 `未验证` ＋ 原因（缺工具/缺权限/离线机器），并在第 7 节末尾的"未验证项汇总"里列全。
 3. 不许出现想象中的命令与想象中的输出；交付前 `【模板】` 残留数必须为 0（`Select-String -Path doc\运行与构建（T0Level）.md -Pattern '【模板】' -SimpleMatch`）。
 
-模板里已经写好判据的点：9 条上游警告（非增量口径）、`--selftest` 退出码 = 失败断言数、两档产物各自只有 1 个 exe、`FileVersion` 守门、图标要取回内嵌位图逐像素比（体积相同完全正常，4286 B 对 4286 B 实测过）、以及"拿上一轮产物验本轮改动 = 假红"。ImageMagick 生成多尺寸 ico 那行在没装 `magick` 的机器上必须保持 `未验证`。
+模板里已经写好判据的点：9 条上游警告（非增量口径）、`--selftest` 退出码 = 失败断言数、两档产物各自只有 1 个 exe、`FileVersion` 守门、图标要取回内嵌位图逐像素比（体积相同完全正常，4286 B 对 4286 B 实测过）、以及"拿上一轮产物验本轮改动 = 假红"。第 5 节的图标命令写 `<skill>/scripts/make-icon.ps1`（本地生成、自带自证，输出那七行 `frame …` 就是实测输出）；`magick -define icon:auto-resize=…` 只在装了 ImageMagick 的机器上才写，没装就保持 `未验证` 并给原因，别照抄成已验证。
 
 ## Step 9 — 交付前把目录收敛到最小清单
 
@@ -272,7 +280,7 @@ if (picked.HasValue) UI4Theme.SetAccent(picked.Value);
 4. 先删空 `publish\` 与 `publish_no_runtime\`，再跑两档 → 产物目录各自**只有一个 exe**，脚本内 `selftest exit code: 0`。
 5. 守门：`(Get-Item <exe>).VersionInfo.FileVersion` 等于 csproj 的 `<Version>`（`0.1.0` → `0.1.0.0`）。不等就是在交旧构建。
 6. 起**本轮**产物、按自己起的 pid 读 `MainWindowTitle` = 源码里的 `Title`，四个主题按钮都改观感、原生 `TextBlock` 那行也要变（它证明宿主 `{DynamicResource}` 通路接通）、右下生效键从 `light` 变到 `dark`/`paper-grey`；收尾 `Stop-Process -Id`，残留 `Get-Process -Name <App>*` 数为 0。
-7. 图标：`[System.Drawing.Icon]::ExtractAssociatedIcon(<exe>)` 取回内嵌位图，按自绘图样的特征取色点逐像素命中（字节数与旧图标相同是正常的，体积不是判据）。
+7. 图标：`[System.Drawing.Icon]::ExtractAssociatedIcon(<exe>)` 取回内嵌位图，按图样的特征取色点逐像素命中（字节数与旧图标相同是正常的，体积不是判据）；生成式图标还要看 `make-icon.ps1` 自己那两条自证——目录帧数与 `frames=7` 对上、16/32 两档 `corner.alpha=0`（圆角透明没被 `<ApplicationIcon>` 吃掉）。
 8. 标题栏底色/文字色随深浅变（Win10 只认深/浅标志，Win11 才染三色，属系统能力差异）。
 9. 按 Step 9 收敛目录后，两条判据都过（删完中间物仍能一把重建、已打包 exe 不依赖它们）。
 10. `doc/运行与构建（T0Level）.md` 八节齐全、`【模板】` 残留为 0、每条命令都贴了真实输出、未验证项都有原因（Step 8）。
@@ -310,6 +318,7 @@ if (picked.HasValue) UI4Theme.SetAccent(picked.Value);
 - `assets/seed/manifest.json` — 上述 48 条 `path + blobSha + size` 与内容计数基线，回源与校验都以它为准；上游改版后要重新生成（见"源码来源与升级"）。
 - `assets/templates/app/`、`assets/templates/root/` — 工程模板，`__APPNAME__` 为占位符（`.md` 也参与替换）。含 `Helpers/Theme.cs`（配色单源 + **必须显式决策的 `Policy`**）、`Services/SelfTest.cs`（8 组断言，含资源键完整性与字典同源）、app csproj（`<Version>0.1.0</Version>` 是 FileVersion 守门的基准）、`root/doc/运行与构建（T0Level）.md`（Step 8 的八节骨架，随 scaffold 落进工程，`【模板】` 标记为待填位）。
 - `scripts/scaffold.ps1` — Step 1 的生成器（已实测：空种子 → 自动回源 → 生成 → `dotnet build` 0 错误 9 条上游警告 → `--selftest` 退 0；种子完整时加 `-Offline` 零联网）。
+- `scripts/make-icon.ps1` — 应用图标生成器（Step 7）。`-Name` 取首字母、`-Glyph` 显式指定，`-Back`/`-Fore` 换色，`-Sizes` 换尺寸集；输出 16/24/32/48/64/128/256 七帧 32bpp ICO（<256 走 DIB + AND 掩码，256 走内嵌 PNG），写完自己回读目录与 16/32 两档像素做自证。已实测：脚手架产出的工程 `dotnet build` 后 `ExtractAssociatedIcon` 取回 32×32，圆角 `alpha=0`、字形与底色取色命中。
 - `scripts/fetch-source.ps1` — 种子的取源器（三挡 + 四条通路 + blob sha 校验，已实测 A 通路 3.2 s 取齐 48 个文件、第二次跑命中本地不发请求）。
 
 ## 源码来源与升级

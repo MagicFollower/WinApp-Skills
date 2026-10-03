@@ -130,26 +130,37 @@
 
 一个文件三处引用：`app\AppIcon.ico` → csproj 的 `<ApplicationIcon>`（exe 内嵌图标）＋ `<Resource>`（窗口/任务栏图标，`Window.Icon="AppIcon.ico"` 走它）。覆盖文件即可，不用改 csproj。
 
-    dotnet build app\__APPNAME__.csproj
-    Add-Type -AssemblyName System.Drawing
-    $ic = [System.Drawing.Icon]::ExtractAssociatedIcon("app\bin\Debug\net10.0-windows\__APPNAME__.exe")
-    $bmp = $ic.ToBitmap()
-    $bmp.Width; $bmp.Height
-    # 按自己画的取景点逐像素比，别用体积当判据
-    $bmp.GetPixel(2, 16); $bmp.GetPixel(29, 16); $bmp.GetPixel(16, 16)
+**默认图标是本地生成的字母像素图标**（不联网、不要 ImageMagick）：`make-icon.ps1` 在 16×16 逻辑网格上画应用名首字母的 5×7 点阵（底色 `#4F6BE8`、字形 `#F7F9FB`、四角削成圆角），一次写全 16/24/32/48/64/128/256 七帧 32bpp ICO。换字母、配色或尺寸集，重跑一次覆盖回去即可：
 
-判据：**取回内嵌图标逐像素比**。实测教训——换掉 `AppIcon.ico` 后文件字节数完全可以一样（4286 B 对 4286 B，同尺寸同深度），体积判据会漏判；像素点命中才算过。
+    powershell -NoProfile -ExecutionPolicy Bypass -File "<skill>\scripts\make-icon.ps1" `
+      -Name __APPNAME__ -Out app\AppIcon.ico -Back "#4F6BE8" -Fore "#F7F9FB"
 
-- 脚手架自带的占位图标是"奶白底 + 珊瑚圆"，任何自绘图样都应与它不同，所以取色点要选在自己图样的特征位置上。
-- `ExtractAssociatedIcon` 只回 32×32；要验其它尺寸得读 ico 的帧表。
-- 多尺寸 ico（16/24/32/48/64/128 + 256）可用 ImageMagick 生成：
-  `magick 源.png -define icon:auto-resize=256,64,48,32,16 app\AppIcon.ico` —— **未验证**：本机没有 `magick`（实测 `Get-Command magick` 为空）。装了再跑，把输出贴这里；没装就别把这行当已验证引用。
+判据三条，缺一不可：
+
+1. 生成器自己的输出末尾是 `OK AppIcon.ico letter=<首字母> … frames=7`。它内部已断言"目录条目连续无缝 + 末帧正好落到文件尾 + 每帧字节数等于算式值"，任一条不过就抛错退出，不会留下半截 ico。
+2. 同一段里的 `probe 16 -> …` / `probe 32 -> …` 两行要报 `corner.alpha=0`——证明圆角透明能活着过 `<ApplicationIcon>` 这条烤进 exe 的通路。
+3. 构建后取回内嵌位图逐像素比：
+
+       dotnet build app\__APPNAME__.csproj
+       Add-Type -AssemblyName System.Drawing
+       $ic = [System.Drawing.Icon]::ExtractAssociatedIcon("app\bin\Debug\net10.0-windows\__APPNAME__.exe")
+       $bmp = $ic.ToBitmap()
+       $bmp.Width; $bmp.Height
+       $bmp.GetPixel(0, 0).A     # 圆角，应为 0
+       $bmp.GetPixel(2, 16)      # 左边缘，应为底色
+       $bmp.GetPixel(16, 16)     # 中心，字形色或底色取决于字母
+
+实测教训——换掉 `AppIcon.ico` 后文件字节数完全可以一样（4286 B 对 4286 B，同尺寸同深度），体积判据会漏判；像素点命中才算过。
+
+- 要改用外部图（例如 `selfh.st/icons` / `github.com/selfhst/icons` 的 `ico/` 现成多尺寸 ico）就直接覆盖 `app\AppIcon.ico`，并把来源 URL、图标 ref、许可与"是否改过"记进本节——那份仓库是 **CC-BY-4.0，要署名**。取源用 CDN 直链 `https://cdn.jsdelivr.net/gh/selfhst/icons@main/ico/<ref>.ico`；判可达性要真 GET 拿到字节数，别拿 HEAD 的状态码当依据。
+- `ExtractAssociatedIcon` 只回 32×32；要验其它尺寸得读 ico 的帧表（`make-icon.ps1` 的自证读的就是帧表）。
+- 装了 ImageMagick 也可以用 `magick 源.png -define icon:auto-resize=256,64,48,32,16 app\AppIcon.ico`；没装就显式标 `未验证` + 原因（本机 `Get-Command magick` 为空），别照抄成已验证。
 - 图标文件缺失时构建会失败：先删掉 `<ApplicationIcon>` 与 `<Resource>` 两行，或补一个文件。
 
 实测输出：
 
 ```
-【模板】extracted 尺寸 + 三个取样点的 #RRGGBB + 与源图样的比对结论
+【模板】make-icon.ps1 的 probe/frame/OK 行 + ExtractAssociatedIcon 回读的 alpha 与取色
 ```
 
 ---

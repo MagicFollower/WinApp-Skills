@@ -179,3 +179,7 @@ if (picked.HasValue) UI4Theme.SetAccent(picked.Value);
 窗口几何恢复：`Width/Height/MinWidth/MinHeight` 存设置，恢复时把 `Left/Top` 对 `SystemParameters.VirtualScreen*` 做夹取（防插拔副屏后窗口跑到屏外），`Maximized` 状态在 `SourceInitialized` 里还原。
 
 图标三处配齐、各有各的通路：`<ApplicationIcon>`（烤进 apphost 的 `RT_GROUP_ICON`，管 exe 文件图标）、`<Resource Include>`（管 `Window.Icon` 的 pack URI）、`UI4NotifyIcon.IconSource`（管托盘）。`Window.Icon` 不设时 WPF 会回落到 exe 图标——两处都配不是补齐，而是不把窗口外观挂在回落行为上。
+
+图标文件本身默认由 `scripts/make-icon.ps1` **本地生成**（不联网）：16×16 逻辑网格上画应用名首字母的 5×7 点阵，格点按整数倍放大成方块（像素风，无抗锯齿），四角各削 2 格成圆角，底色 `#4F6BE8` / 字形 `#F7F9FB`（与 `Theme.Accent`、`Theme.LightBackground` 同值，改配色时两处一起想）。帧表固定 16/24/32/48/64/128/256：小于 256 的帧是 32bpp BGRA DIB（`biHeight = 2*size`，AND 掩码按 `alpha==0` 置 1，让只认掩码的旧渲染器也当透明），256 帧是内嵌 PNG。写完它自己回读一遍：目录条目必须连续无缝、末帧长度正好落到文件尾、`ExtractAssociatedIcon` 语义下 16/32 两档圆角 `alpha=0`——所以"半截 ico"不会静默交付。
+
+外部图（例如 `selfhst/icons` 的 `ico/` 现成多尺寸 ico，CDN 直链 `https://cdn.jsdelivr.net/gh/selfhst/icons@main/ico/<ref>.ico`）走"直接覆盖 `app/AppIcon.ico`"这条路即可，csproj 不用动；那份仓库是 CC-BY-4.0，**用了要在 `doc/` 第 5 节记来源、ref、许可与是否改过**。判可达性要真 GET 拿字节数（HEAD 200 证不住下载）。

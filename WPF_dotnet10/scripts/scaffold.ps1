@@ -5,7 +5,8 @@
     模板在本 Skill 目录内；组件源码种子默认也在（assets/seed/lib，48 个文件）。
     种子完整 → 全程不联网；种子缺失/不完整 → 自动调 fetch-source.ps1 按 manifest 从 GitHub 回源补齐再往下走，
     取回的内容写回种子目录，下次就是本地命中。-Offline 则禁网，有缺口直接失败。
-    占位符 __APPNAME__ 替换成 -Name 传入的应用名。产出的工程可直接 dotnet build；app/AppIcon.ico 由本脚本生成占位图标（不满意再覆盖）。
+    占位符 __APPNAME__ 替换成 -Name 传入的应用名。产出的工程可直接 dotnet build；
+    app/AppIcon.ico 由 make-icon.ps1 本地生成（应用名首字母的像素点阵图标，不联网、不要 ImageMagick），不满意再覆盖。
 .PARAMETER Name
     应用名，同时用作 RootNamespace / AssemblyName / 数据目录字面量。字母开头，仅字母与数字。
 .PARAMETER Path
@@ -54,43 +55,16 @@ function Copy-Tree([string]$Src, [string]$Dst) {
     }
 }
 
-# 手写单幅 32bpp ICO：Header(6) + Entry(16) + BITMAPINFOHEADER(40) + XOR(size*size*4) + AND(每行按 4 字节对齐)
-function New-PlaceholderIcon([string]$OutPath, [int]$Size) {
-    $rowBytes = ((($Size + 31) -shr 5) * 4)
-    $xorLen = $Size * $Size * 4
-    $andLen = $rowBytes * $Size
-    $imgLen = 40 + $xorLen + $andLen
-
-    $ms = New-Object System.IO.MemoryStream
-    $w = New-Object System.IO.BinaryWriter($ms)
-    $w.Write([UInt16]0); $w.Write([UInt16]1); $w.Write([UInt16]1)
-    $w.Write([Byte]($Size -band 0xFF)); $w.Write([Byte]($Size -band 0xFF))
-    $w.Write([Byte]0); $w.Write([Byte]0); $w.Write([UInt16]1); $w.Write([UInt16]32)
-    $w.Write([UInt32]$imgLen); $w.Write([UInt32]22)
-    $w.Write([UInt32]40); $w.Write([Int32]$Size); $w.Write([Int32]($Size * 2))
-    $w.Write([UInt16]1); $w.Write([UInt16]32); $w.Write([UInt32]0)
-    $w.Write([UInt32]($xorLen + $andLen)); $w.Write([Int32]0); $w.Write([Int32]0)
-    $w.Write([UInt32]0); $w.Write([UInt32]0)
-
-    $cx = $Size / 2.0
-    $radius = $Size * 0.34
-    for ($y = 0; $y -lt $Size; $y++) {
-        for ($x = 0; $x -lt $Size; $x++) {
-            $dx = $x + 0.5 - $cx
-            $dy = $y + 0.5 - $cx
-            $dist = [Math]::Sqrt(($dx * $dx) + ($dy * $dy))
-            if ($dist -le $radius) {
-                $w.Write([Byte]0xE8); $w.Write([Byte]0x6B); $w.Write([Byte]0x4F); $w.Write([Byte]0xFF)
-            } else {
-                $w.Write([Byte]0xFB); $w.Write([Byte]0xF9); $w.Write([Byte]0xF7); $w.Write([Byte]0xFF)
-            }
-        }
+# 图标交给 make-icon.ps1（本地生成字母像素图标，不联网、不要 ImageMagick）；
+# 这里只保留"生成失败就按码退出"的包装。
+function New-AppIcon([string]$IconScript, [string]$OutPath, [string]$AppName) {
+    if (-not (Test-Path -LiteralPath $IconScript)) { Fail "Skill 目录不完整，缺少 $IconScript" 3 }
+    try {
+        & $IconScript -Name $AppName -Out $OutPath
+    } catch {
+        Fail ("字母像素图标生成失败：" + $_.Exception.Message) 8
     }
-    for ($i = 0; $i -lt $andLen; $i++) { $w.Write([Byte]0) }
-
-    $w.Flush()
-    Set-Bytes $OutPath $ms.ToArray()
-    $w.Dispose(); $ms.Dispose()
+    if (-not (Test-Path -LiteralPath $OutPath)) { Fail "图标没落盘：$OutPath" 8 }
 }
 
 # ---- 0. 入参与 Skill 目录 --------------------------------------------------
@@ -209,8 +183,9 @@ if (Test-Path -LiteralPath $tokenCsproj) {
     Move-Item -LiteralPath $tokenCsproj -Destination (Join-Path $appDir ($Name + '.csproj')) -Force
 }
 
-# ---- 5. 占位图标（ApplicationIcon 与 Resource 两处都指它，缺了构建就红）---
-New-PlaceholderIcon (Join-Path $appDir 'AppIcon.ico') 32
+# ---- 5. 图标（ApplicationIcon 与 Resource 两处都指它，缺了构建就红）------
+$iconScript = Join-Path $PSScriptRoot 'make-icon.ps1'
+New-AppIcon $iconScript (Join-Path $appDir 'AppIcon.ico') $Name
 
 # ---- 6. 产物自检 + 交付信息 ----------------------------------------------
 $appCsproj = Join-Path $appDir ($Name + '.csproj')
@@ -238,7 +213,7 @@ $todoCount = @(Select-String -LiteralPath $docPath -Pattern '【模板】' -Simp
 Write-Output "OK   工程已生成：$Path"
 Write-Output ("     lib/   {0} 个文件（StartUI4Controls v3.0.0 源码自包含，含组件手册 README.md）" -f $libCount)
 Write-Output "     属性名/默认值/枚举/事件查 lib/README.md；主题实测数据查 lib/架构审计报告-3.0.0主题机制评审.md"
-Write-Output ("     app/   占位符替换 {0} 个文件；RootNamespace/AssemblyName = {1}；AppIcon.ico {2} 字节" -f $touched, $Name, $icoSize)
+Write-Output ("     app/   占位符替换 {0} 个文件；RootNamespace/AssemblyName = {1}；AppIcon.ico {2} 字节（字母「{3}」像素图标，7 档尺寸）" -f $touched, $Name, $icoSize, $Name.Substring(0,1).ToUpperInvariant())
 Write-Output "     下一步：dotnet build `"$appCsproj`""
 Write-Output "     跑起来验收主题接线：窗口上「暗 / 跟随系统 / 灰纸套装」都要改观感，"
 Write-Output "     右下状态行生效键应从 light 变成 dark / paper-grey。只有局部在变 = 那处写了字面色。"

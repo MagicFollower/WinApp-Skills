@@ -16,7 +16,10 @@
 
 换应用图标
   覆盖 app\AppIcon.ico 即可（csproj 的 ApplicationIcon 与 Resource 两处都指它）；
-  要按矢量图重生成，用 ImageMagick：magick 源.png -define icon:auto-resize=256,64,48,32,16 AppIcon.ico
+  默认图标是本地生成的首字母像素图标，换字母或配色重跑 Skill 的 make-icon.ps1：
+    powershell -NoProfile -ExecutionPolicy Bypass -File "<skill>\scripts\make-icon.ps1" -Name __APPNAME__ -Out app\AppIcon.ico
+  有 ImageMagick 也可以：magick 源.png -define icon:auto-resize=256,64,48,32,16 AppIcon.ico
+  换完要重新构建，并用 ExtractAssociatedIcon 取回内嵌位图逐像素比（体积不是判据）
 
 改观感配色
   只改 app\Helpers\Theme.cs 的常量，然后跑 --selftest 看对比度断言有没有红
