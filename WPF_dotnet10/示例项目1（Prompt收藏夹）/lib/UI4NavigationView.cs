@@ -92,16 +92,6 @@ namespace StartUI4Controls
             get { return (FontFamily)GetValue(TextIconFontFamilyProperty); }
             set { SetValue(TextIconFontFamilyProperty, value); }
         }
-
-        public static readonly DependencyProperty ItemFontSizeProperty =
-    DependencyProperty.Register("ItemFontSize", typeof(double), typeof(UI4NavigationView),
-        new FrameworkPropertyMetadata(10.0, FrameworkPropertyMetadataOptions.AffectsMeasure));
-
-        public double ItemFontSize
-        {
-            get { return (double)GetValue(ItemFontSizeProperty); }
-            set { SetValue(ItemFontSizeProperty, value); }
-        }
     }
 
     public class UI4NavigationViewBottomItem : UI4NavigationViewItem
@@ -351,6 +341,21 @@ namespace StartUI4Controls
             set { SetValue(SelectionIndicatorBrushProperty, value); }
         }
 
+        // ItemFontSize 的 DP 登记在本控件上（ownerType = UI4NavigationView），左栏模板里
+        // 也是按 FindAncestor(UI4NavigationView) 取它，所以 CLR 包装必须待在这个类里；
+        // 它原先被写在 UI4NavigationViewItem 内，导致 <ui:UI4NavigationView ItemFontSize="…">
+        // 在编译期报 MC3072「属性不存在」。
+        public static readonly DependencyProperty ItemFontSizeProperty =
+            DependencyProperty.Register("ItemFontSize", typeof(double), typeof(UI4NavigationView),
+                new FrameworkPropertyMetadata(10.0, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+        /// <summary>左栏项标题字号，默认 10。</summary>
+        public double ItemFontSize
+        {
+            get { return (double)GetValue(ItemFontSizeProperty); }
+            set { SetValue(ItemFontSizeProperty, value); }
+        }
+
         public static readonly DependencyProperty SelectedItemProperty =
             DependencyProperty.Register("SelectedItem", typeof(UI4NavigationViewItem), typeof(UI4NavigationView),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnSelectedItemChanged));
@@ -465,8 +470,11 @@ namespace StartUI4Controls
             var dataTemplate = new DataTemplate();
             var stackPanel = new FrameworkElementFactory(typeof(StackPanel));
             stackPanel.SetValue(StackPanel.OrientationProperty, Orientation.Vertical);
-            stackPanel.SetValue(FrameworkElement.WidthProperty, 60.0);
-            stackPanel.SetValue(FrameworkElement.HeightProperty, 60.0);
+            // 60×60 是"项标题字号 = 默认 10"时量出来的尺寸，写成 Width/Height 就成了钉死值：
+            // 宿主把 ItemFontSize 调大后，标签会被挤成一个字、图标行高也不够。
+            // 改成 MinWidth/MinHeight 既保住默认观感，又允许随字号长。
+            stackPanel.SetValue(FrameworkElement.MinWidthProperty, 60.0);
+            stackPanel.SetValue(FrameworkElement.MinHeightProperty, 60.0);
             stackPanel.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
             stackPanel.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
 
@@ -514,7 +522,9 @@ namespace StartUI4Controls
             textBlock.SetValue(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center);
             textBlock.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Center);
             textBlock.SetValue(TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
-            textBlock.SetValue(TextBlock.MaxWidthProperty, 76.0);
+            // 这里原本钉死 MaxWidth=76（配 60 宽的项容器与默认 10 号项字号量的），
+            // 项字号一大就只剩一个字。宽度上限交给左栏：LeftPanelWidth 是宿主设的，
+            // 装不下时由上面的 TextTrimming 出省略号——裁剪点由宿主决定，而不是模板里写死一个数。
             var fontSizeBinding = new Binding("ItemFontSize")
             {
                 RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UI4NavigationView), 1)
@@ -660,6 +670,18 @@ namespace StartUI4Controls
             SetResourceReference(SelectionIndicatorBrushProperty, "UI4.Brush.Accent");
         }
 
+        /// <summary>
+        /// 本控件的模板里没有 ItemsPresenter：项是被内部那两个 UI4ListBox 重新承载的。
+        /// 默认的 ItemsControlAutomationPeer 只按"自己的项容器"枚举子节点，这里一个也找不到，
+        /// 并且它会顶掉默认的可视子枚举——结果是左栏导航项与右栏整块内容从 UIA 树上一起消失
+        /// （实测：读屏/自动化在窗口里枚举不到任何 ListItem）。
+        /// 换成 FrameworkElementAutomationPeer 走可视树，两栏都能被读到。
+        /// </summary>
+        protected override System.Windows.Automation.Peers.AutomationPeer OnCreateAutomationPeer()
+        {
+            return new System.Windows.Automation.Peers.FrameworkElementAutomationPeer(this);
+        }
+
         public ObservableCollection<UI4NavigationViewItem> RegularItems => _regularItems;
         public ObservableCollection<UI4NavigationViewBottomItem> BottomItems => _bottomItems;
 
@@ -774,8 +796,16 @@ namespace StartUI4Controls
         {
             var style = new Style(typeof(ListBoxItem), baseStyle);
             style.Setters.Add(new Setter(FrameworkElement.CursorProperty, Cursors.Hand));
-            style.Setters.Add(new Setter(FrameworkElement.WidthProperty, 70.0));
-            style.Setters.Add(new Setter(FrameworkElement.HeightProperty, 70.0));
+            // 这里原本钉死 70×70（70 是配默认 ItemFontSize=10 量出来的）。宿主把项字号调大后，
+            // 标签会被切成一个字，而且外层 LeftPanelWidth 给多宽都没用——容器自己就是 70。
+            // 宽度改为跟随左栏：宿主设了 LeftPanelWidth 就铺满，没设（NaN）时退回按内容自适应；
+            // 高度只留下限 70，字号大了自然长高。
+            style.Setters.Add(new Setter(FrameworkElement.WidthProperty,
+                new Binding(nameof(LeftPanelWidth))
+                {
+                    RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UI4NavigationView), 1)
+                }));
+            style.Setters.Add(new Setter(FrameworkElement.MinHeightProperty, 70.0));
             style.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
             style.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty, VerticalAlignment.Center));
 

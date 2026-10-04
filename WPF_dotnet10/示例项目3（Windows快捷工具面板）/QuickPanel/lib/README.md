@@ -77,7 +77,7 @@
 
 | 类别 | 数量 | 说明 |
 |---|---|---|
-| 注册的依赖属性 | **234** | `DependencyProperty.Register` 232 个 + `RegisterAttached` 2 个（`UI4ThemeScope.Theme`、`UI4WindowTitleBar.Enabled`） |
+| 注册的依赖属性 | **237** | `DependencyProperty.Register` 235 个 + `RegisterAttached` 2 个（`UI4ThemeScope.Theme`、`UI4WindowTitleBar.Enabled`） |
 | 依赖属性别名 | 1 | `UI4CheckBox.BoxCornerRadiusProperty = CornerRadiusProperty`，两个名字指向同一个 DP |
 | 公开 CLR 属性包装 | 与上表一一对应 | 另有 `UI4GridView.ComputedColumns`（只读）、`UI4ContextMenu`/`UI4MenuItem`/`UI4TrayMenuItem` 的普通属性、`UI4Theme.Persistence` 等 |
 | 公开事件 | **11** | 实例事件 7 个 + `UI4Theme` 静态事件 4 个，见 [§8.2](#82-事件全清单) |
@@ -181,7 +181,7 @@ protected override void OnStartup(StartupEventArgs e)
 | 容器 | `UI4Panel` | `ContentControl` | 10 | 阴影 + 悬浮缩放卡片 |
 | 容器 | `UI4Grid` | `Grid` | 2 | 默认页面渐变底 |
 | 容器 | `UI4ScrollViewer` | `ScrollViewer` | 1 | 美化滚动条 + 平滑滚动 |
-| 列表 | `UI4ListBox` | `ListBox` | 12 | 普通 / 圆点 / 编号 |
+| 列表 | `UI4ListBox` | `ListBox` | 13 | 普通 / 圆点 / 编号；`IsMenuMode` 供菜单类组件复用 |
 | 列表 | `UI4ListView` | `ListBox` | 17 | 卡片列表 |
 | 列表 | `UI4GridView` | `ListBox` | 15 | 自适应列数网格卡片 |
 | 导航 | `UI4Pivot` / `UI4PivotItem` | `Selector` / `HeaderedContentControl` | 10 / 1 | 滑动页签 |
@@ -745,6 +745,7 @@ Grid PART_Grid                    ← ScaleTransform 挂这里（悬浮缩放整
 | `PressedForeground` | `Color` | `#FFFFFF` | — | 项按下文字色 |
 | `ListStyleType` | `ListStyleType` | `None` | — | `None` / `Disc` / `Number` |
 | `NumberCircleBackground` | `Brush` | `#2563EB`（冻结画刷） | — | 编号圆底（**未挂令牌**） |
+| `IsMenuMode` | `bool` | `false` | — | 菜单模式：模板按「宽度受视口约束」重测，让长文字触发 `TextTrimming`（`UI4ContextMenu` / `UI4NotifyIcon` 内部置 `true`，见 §3.9、§3.11）；变更即重建 Style |
 
 - `ListStyleType`：`None` 普通列表；`Disc` 前面加圆点；`Number` 前面加编号圆角标，
   序号由内部 `IndexPlusOneConverter` 把 `AlternationIndex` 转成 1 起的数字（`AlternationCount` 被设为 `int.MaxValue`）。
@@ -752,6 +753,13 @@ Grid PART_Grid                    ← ScaleTransform 挂这里（悬浮缩放整
 - `RefreshTheme()`：按当前主题重建 `Style`。颜色已由资源引用驱动，这个方法只为「没进可视树、收不到 `Loaded`」的
   场景（如 Popup 预构建内容）保留，兼容旧调用方。
 - 三个"未挂令牌"的属性在深色 / 高对比度下不会自动变，见 [§4.11](#411-主题盲区与已知限制) 的自救写法。
+- **项的水平对齐无条件是 `Stretch`**（`UI4ListBox.cs:301` 的 `ListBoxItem` 样式 Setter、`:387` 的内容
+  `ContentPresenter`）：以前两处都写 `Left`，项按内容自适应宽度，于是长文字永远"够宽"、`TextTrimming` 不触发。
+  改 `Stretch` 后项铺满可视宽度，普通列表的项背景与描边也会整行贯通——有意为之，不是回归。
+- `IsMenuMode`（DP 在 `UI4ListBox.cs:212`）只管一件事：`HorizontalScrollBarVisibility` 在 `true` 时取
+  `Disabled`、`false` 时保持 `Auto`（`:288`）。为什么值得为它单开一个 DP——`Auto` 的 ScrollViewer 拿「无限宽」
+  去测量内容，项容器就按期望宽度排布，菜单里的长文字截不了；`Disabled` 把宽度约束交回视口，省略号才会出现。
+  默认 `false`，所以宿主直接用的普通列表照旧有横向滚动条；变更会重建 Style。
 
 ```xml
 <ui:UI4ListBox Width="200" Height="220">
@@ -848,6 +856,10 @@ columns = max(1, round(available / unit, AwayFromZero))     // 用 round 不用 
   代价是项数少时卡片很宽（4 张卡片、`ItemWidth=300` 在全屏下每张会被拉到约 578 px）。嫌胖就加项。
 - 列数在样式重建时当场重算（`OnStyleUpdate` 内补 `UpdateColumns()`），所以运行期改 `ItemWidth` 不必先缩窗口才生效。
 - 悬浮放大的不越界契约与 `UI4ListView` 完全相同。
+- **内部 ScrollViewer 的横向滚动固定 `Disabled`**（`UI4GridView.cs:400`，与同族 `UI4ListView.cs:353` 一致）。
+  写成 `Auto` 时 ScrollViewer 会用「无限宽」测量内容，`UniformGrid` 于是按子项的期望宽度分列而不是按视口分列：
+  卡片撑出视口就冒横向滚动条，列宽还随文案长短抖动——与本控件「`ItemWidth` 只算列数、卡片铺满所在列」的契约直接冲突。
+  横向因此没有可滚的内容，窄的方向靠 `ComputeColumns()` 减列。
 
 ```xml
 <ui:UI4GridView ItemsSource="{Binding Cards}" ItemWidth="250" ItemHeight="200"
@@ -970,7 +982,7 @@ private void MyTab_CloseTab(object sender, TabCloseRoutedEventArgs e)
 | `Header` | `string` | `null` | — | 左栏顶部标题（默认双向绑定） |
 | `LeftPanelBackground` | `Brush` | `#0A000000` | `UI4.Brush.Surface` | 左栏背景 |
 | `LeftPanelWidth` | `double` | `NaN` | — | 左栏宽度，`NaN` = 自适应（默认双向绑定 + `AffectsMeasure`） |
-| `ItemFontSize` | `double` | `10` | — | 项字号（`AffectsMeasure`） |
+| `ItemFontSize` | `double` | `10` | — | 项字号（`AffectsMeasure`）；DP 登记在 `UI4NavigationView` 自身（`UI4NavigationView.cs:348`），XAML 里可直接写 `ItemFontSize="12"` |
 | `ItemBackground` | `Brush` | `Transparent` | — | 项背景 |
 | `ItemForeground` | `Brush` | `Black` | — | 项文字色 |
 | `ItemHoverColor` | `Color` | `#0A000000` | — | 项悬浮底色 |
@@ -999,6 +1011,15 @@ private void MyTab_CloseTab(object sender, TabCloseRoutedEventArgs e)
   `UI4NavigationViewItem` → `RegularItems`。**增删请改 `Items`**（直接往 `RegularItems` 加不会进左栏，
   下一次 `Items` 变化还会被整表清空重建）。
 - 指示条用 `TranslateTransform` 跟着选中项移动，颜色 = `SelectionIndicatorBrush`。
+- **项容器尺寸随字号长**：`ListBoxItem` 样式的 `Width` 绑到 `LeftPanelWidth`、高度只留 `MinHeight=70`
+  （`UI4NavigationView.cs:803`、`:808`），项内部「图标 + 标题」那块用 `MinWidth`/`MinHeight=60`（`:476`、`:477`），
+  标题不再有 `MaxWidth=76` 上限（裁剪交回 `TextTrimming` 与宿主设的 `LeftPanelWidth`）。这三处原先是钉死的
+  70×70 / 60×60 / 76，`ItemFontSize` 一大就把标签挤成一个字，而且外层 `LeftPanelWidth` 给多宽都没用——容器自己就是 70。
+  宿主没设 `LeftPanelWidth`（`NaN`）时项宽回退成按内容自适应。
+- **UIA 子树可读**：`OnCreateAutomationPeer()` 返回 `FrameworkElementAutomationPeer`（`:680`）。本控件模板里
+  没有 `ItemsPresenter`（项由内部两个 `UI4ListBox` 重新承载），默认的 `ItemsControlAutomationPeer` 只按「自己的
+  项容器」枚举子节点、一个也找不到，并且它会顶掉默认的可视子枚举——症状是读屏 / 自动化在窗口里枚举不到任何左栏
+  导航项，右栏整块内容也一起从 UIA 树上消失。
 - 整体 `Background` 挂 `UI4.Brush.Background`、`Foreground` 挂 `UI4.Brush.TextForeground`。
 
 ```xml
@@ -1061,6 +1082,14 @@ private void MyTab_CloseTab(object sender, TabCloseRoutedEventArgs e)
 菜单本体是一个 `Popup` + 内部 `UI4ListBox`：`Popup` 用 `Placement=MousePoint`、`StaysOpen=false`、
 `AllowsTransparency=true`，打开时才把 `PlacementTarget` 设成绑定目标——所以它不需要在窗口可视化树里占任何位置就能弹
 （托盘菜单用的就是同一套思路）。
+
+菜单条目的宽度契约（`UI4ContextMenu.cs:345`、`:352`、`:386-387`、`:398-405`）：内部 `UI4ListBox` 置
+`IsMenuMode = true`，每条 item 的 `Grid` 宽度按 `Width − 8 − 4 − ItemPadding.Left − ItemPadding.Right` 现算
+（8 = ScrollViewer 内边距 `4,4,4,4`，4 = `ListBoxItem` 描边外扩 2×2），标题写
+`TextTrimming=CharacterEllipsis` 并配 `ToolTip = item.Text`，`Popup` 与包住列表的 `Border` 取同一个 `Width`
+且 `Border.ClipToBounds=true`。一句话：**长条目在菜单右缘收成省略号、可悬浮看全文，而不是把 Popup 撑宽或让内容溢出边界**。
+`Width` 与 `ItemPadding` 是在 `Attach()` 里被读一次的（`BuildMenu()` 由 `Attach` 调用，`:324`），
+之后再改这两个值不会重排已经建好的条目——`Open()` 只刷新各项的可用态透明度；要换宽度得 `Detach()` 后重新 `Attach()`。
 
 | 成员 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
@@ -1197,6 +1226,12 @@ CodeEditor.SyntaxHighlighting =
   其它 → `RemoveTrayIcon()`（`NIM_DELETE`）。XAML 里常写 `Visibility="Collapsed"`，代码里需要时才置 `Visible`。
 - 菜单是一个 `Popup`（`Placement=MousePoint`、`StaysOpen=false`、`AllowsTransparency=true`、`Slide` 动画），
   子内容是内部 `UI4ListBox`；另有 100 ms 的 `DispatcherTimer` 检测鼠标移出后关闭。
+- **托盘菜单的条目宽度契约同 §3.9**：内部 `UI4ListBox` 置 `IsMenuMode = true`（`UI4NotifyIcon.cs:278`），
+  行 `Grid` 宽度按 `MenuWidth − 8 − 4 − MenuItemPadding.Left − MenuItemPadding.Right` 现算（`:308`），
+  标题 `TextTrimming=CharacterEllipsis` + `ToolTip = item.Text`（`:354`、`:355`），列表外再包一层
+  `Border{ClipToBounds=true}`（`:282-286`），`Popup` 与 `Border` 同宽。
+  时机差别要记着：行内容每次 `OpenMenu()` 都重建（`RebuildAllRows()`，`:233`），而 `Popup`/`Border`/列表三者
+  的宽度只在**构造期**的 `BuildTrayPopup()` 读一次 `MenuWidth`（`:94`）——运行期改 `MenuWidth` 只改得到行宽，改不到弹层宽。
 - **`MenuActivation` 目前是死属性**：构造函数把它设成 `None`，但全文件没有任何地方读它；右键弹菜单是靠
   构造时订阅的 `TrayRightMouseDown += OnTrayRightClick`。内部处理器先跑（`e.Handled = true`），
   宿主的同名处理器仍会收到，但菜单已经弹出——要自己接管就立刻 `CloseMenu()`。`PopupActivationMode` 枚举同理。
@@ -1333,7 +1368,7 @@ UI4Theme.SetTheme / Apply / SetAccent / Register
 
 | 键 | 类型 | 库内默认 | 谁在用 |
 |---|---|---|---|
-| `UI4.Font.Size.Base` | `double` | `15` | `UI4Button`（样式 Setter，`UI4Button.cs:137`）、`UI4TextBox.cs:161`、`UI4ComboBox.cs:193`、`UI4ListBox.cs:239`、`UI4PasswordBox.cs:237` |
+| `UI4.Font.Size.Base` | `double` | `15` | `UI4Button`（样式 Setter，`UI4Button.cs:137`）、`UI4TextBox.cs:161`、`UI4ComboBox.cs:193`、`UI4ListBox.cs:251`、`UI4PasswordBox.cs:237` |
 | `UI4.Font.Size.Code` | `double` | `14` | `UI4CodeEditor.cs:37` |
 | `UI4.Font.Family` | `FontFamily` | `Segoe UI` | 宿主可直接绑给窗口/文本元素；库内控件不引用它（沿用 WPF 继承） |
 
@@ -1347,7 +1382,7 @@ UI4Theme.SetTheme / Apply / SetAccent / Register
    反过来，宿主若把键写进那份共享字典**内部**（例如 `UI4Theme.SharedResourcesFor` 返回的实例），就会被下次重写顶掉。
 3. **排印通路的本地改动只有上表那 6 处引用点**，上游 `src/StartUI4Controls` 里字号是字面常量（`FontSize = 15d` / `14`）。
    上表 §4.2 的"实测口径"统计的是上游那份树，不含这 6 处。
-4. **本包相对上游另有 4 处非排印改动**（都在 `lib/` 里，与字号无关）：`UI4ListView` 新增 `HoverBorderBrush` /
+4. **本包相对上游另有 7 处非排印改动**（都在 `lib/` 里，与字号无关）：`UI4ListView` 新增 `HoverBorderBrush` /
    `SelectedBorderBrush` 两个 `Color` DP（§3.7 的属性表已收，DP 数 15 → 17）；`UI4NavigationView` 把五处
    背景/前景回调里的 `if (_listBox != null)` 换成 `ForEachListBox`（`:207,240,263,286,309`），
    让折叠面板与菜单里的每个列表都吃到同一份色；
@@ -1355,6 +1390,14 @@ UI4Theme.SetTheme / Apply / SetAccent / Register
    `Foreground` 由 `SolidColorBrush` 快照改成绑定到宿主的 `HoverForeground` / `PressedForeground`——
    使用方（`UI4NavigationView`）把 `ItemContainerStyle` 赋成本地值之后再重建 Style 也覆盖不回来，
    快照会永久冻在首次取值那一刻，表现为"换了主题列表文字色不动"。
+   另 3 处（2026-10-04 同日第二轮，取自示例项目1/2 与示例项目3 的 `lib/`）：`UI4ListBox` 新增 `IsMenuMode`
+   DP，并把 `ListBoxItem` 样式与内容 `ContentPresenter` 的水平对齐由 `Left` 改 `Stretch`（§3.7），
+   `UI4ContextMenu` / `UI4NotifyIcon` 据此置 `IsMenuMode=true`、按 `Width` 现算行 `Grid` 宽并给长文字加
+   `TextTrimming` + `ToolTip`（§3.9、§3.11）；`UI4GridView` 内部 ScrollViewer 的横向滚动由 `Auto` 改
+   `Disabled`，与同族 `UI4ListView` 一致（§3.7）；`UI4NavigationView` 把 `ItemFontSize` 的 DP 从
+   `UI4NavigationViewItem` 挪回本控件（挂在 Item 上时 `<ui:UI4NavigationView ItemFontSize="…">` 编译期报
+   MC3072「属性不存在」）、项容器尺寸改随字号长、并改用 `FrameworkElementAutomationPeer` 让左栏项与右栏内容
+   回到 UIA 树上（§3.8）。
 
 ### 4.3 UI4Theme API 一览
 
@@ -2129,7 +2172,7 @@ bool isDark = 0.299 * bg.R + 0.587 * bg.G + 0.114 * bg.B < 128;   // 与 UI4Wind
 
 | # | 项 | 旧说法（根 README / 源码注释） | 现说法（对源码核对） | 依据 |
 |---|---|---|---|---|
-| 1 | 对外依赖属性规模 | 「250+ 个依赖属性对外开放」 | **236 个注册 DP**（234 Register + 2 RegisterAttached）+ 1 个别名 | `grep -c 'public static readonly DependencyProperty'` = 237，其中 `UI4CheckBox.BoxCornerRadiusProperty = CornerRadiusProperty` 是别名不另计。2026-10-04 的 2 个增量来自 `UI4ListView` 的 `HoverBorderBrush` / `SelectedBorderBrush` |
+| 1 | 对外依赖属性规模 | 「250+ 个依赖属性对外开放」 | **237 个注册 DP**（235 Register + 2 RegisterAttached）+ 1 个别名 | `grep -c 'public static readonly DependencyProperty'` = 238，其中 `UI4CheckBox.BoxCornerRadiusProperty = CornerRadiusProperty` 是别名不另计。2026-10-04 的 3 个增量来自 `UI4ListView` 的 `HoverBorderBrush` / `SelectedBorderBrush` 与 `UI4ListBox.IsMenuMode` |
 | 2 | 主题接线规模 | `UI4ThemeScope` 类注释与根 README 均写「26 个文件 / 89 处引用」 | **25 个文件 / 95 处** `SetResourceReference`（89 处挂控件自身属性，6 处挂内部元素） | 逐文件 grep 计数；那 6 处是 `_mainContainer.SetResourceReference(Border.BackgroundProperty, …)` 形式 |
 | 3 | `UI4Button` 前景规则 | 「按背景 WCAG **相对亮度**阈值（<0.45）选白字，否则正文色」 | 在 `OnAccent` 与 `TextForeground` 之间**取与底色对比度更高者**，无亮度阈值 | `UI4Button.cs:218-231`，注释直接说明阈值判法在 HC 亮黄上会选出白字（1.07:1） |
 | 4 | `UI4Button` 禁用态底色 | 「背景取主题令牌 `BorderNormal`」 | `UI4.Brush.OffBackground` + 前景 `UI4.Brush.TextMuted`，`BorderThickness=0` | `UI4Button.cs:195-198`；注释点名"不能用 BorderNormal——HC 下它是纯白"。同时根 README 那三行实测对比度表属旧实现口径 |
@@ -2149,6 +2192,7 @@ bool isDark = 0.299 * bg.R + 0.587 * bg.G + 0.114 * bg.B < 128;   // 与 UI4Wind
 | 18 | 「别对当前生效键重复 Register」 | 主题章节列为必须遵守的告诫 | **已由库内处理**：`Register` 覆盖当前键时会置空 `_current` 并整体 `ApplyResolved` | `UI4Theme.cs:171-175` 及其注释 |
 | 19 | 令牌覆盖度 | 只说「38 个颜色令牌」 | 38 个里 **31 个被库内消费、7 个只定义不使用**；另有 19 个颜色类 DP 未挂令牌（两项原为 30 / 8 与 20，2026-10-04 因 `UI4ListView` 两个描边 DP 与 `UI4Panel.HoverBorderBrush` 挂上令牌而变） | 固定串 grep `UI4.Color.X` / `UI4.Brush.X`（排除 `UI4Theme*`），见 [§4.11](#411-主题盲区与已知限制) 两张表 |
 | 20 | `Separator` 令牌用途 | 注释写「菜单分隔、翻牌中缝」 | 两处都没接：`UI4MenuSeparatorElement.SeparatorColor` 用字面 `#DCDCDC`，翻牌中缝硬编码 `#33000000` | `UI4Menu.cs:364`、`UI4FlipTextBlock.cs:259` |
+| 21 | §1.1 与 §二 清单的 DP 数自相矛盾 | §1.1 长期写「234（232 Register + 2 `RegisterAttached`）」 | **237（235 + 2）**，与 §二 清单列的逐控件属性数合计一致（`grep` 逐文件相加 = 238 声明，减 1 个别名） | §1.1 那句「各控件的属性数加起来正好等于 N」要当自检单用，N 就必须取清单列合计；2026-10-04 前 §1.1 漏并了 `UI4ListView` 的 2 个描边 DP（差 2），本轮连 `UI4ListBox.IsMenuMode` 一起补齐 |
 
 另有两处**根 README 引用了不存在的章节**（历史文档被删），已随本次瘦身一并处理：
 

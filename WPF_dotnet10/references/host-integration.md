@@ -1,6 +1,6 @@
 # 宿主工程接入契约
 
-从 `samples/Prompt收藏夹（示例项目）` 逐行核出的 app 侧写法。`theming.md` 讲的是库怎么工作，这里讲的是**宿主必须怎么落笔**才不会静默失效。
+从仓库内三个示例项目（`示例项目1（Prompt收藏夹）`、`示例项目2（备忘录）`、`示例项目3（Windows快捷工具面板）/QuickPanel`）逐行核出的 app 侧写法。`theming.md` 讲的是库怎么工作，这里讲的是**宿主必须怎么落笔**才不会静默失效。三者取向不同：示例项目1 是「四节设置浮层 + 数据分层」的完整形态，示例项目2 把设置放在 `UI4NavigationView` 的底部项里（独立视图而非浮层），示例项目3 只用内置明暗档、不接套装键。
 
 ## 目录约定
 
@@ -119,13 +119,14 @@ protected override void OnStartup(StartupEventArgs e)
 }
 ```
 
-五条硬约束：
+六条硬约束：
 
 1. **`Register`/`SetTheme`/`ApplyToApplication` 只能在 `base.OnStartup(e)` 之后调**。库内 `WriteToApplicationResources()` 第一句是 `Application.Current == null ? return`，在构造函数或 `Main` 里调**静默不装资源**，症状是宿主 `{DynamicResource UI4.*}` 全空。
 2. **`UI4ThemePacks.RegisterAll()` 在 `UI4Theme.Apply(套装键)` 之前**，否则 `Apply` 认不出键返回 `false`（不抛异常）。内置 `light`/`dark`/`highcontrast` 由静态构造自带，不注册也能用。
 3. **`ApplyToApplication()` 在第一个窗口 `Show()` 之前**，否则首帧的 `DynamicResource` 查不到键、回落到控件默认色。宿主自己 `Register` 了含当前键的定义时，`SetTheme` 已隐式装好字典；两种都不调 = 只有库内控件有样式、宿主样式全裸。
 4. **排印覆盖写在 `Application.Resources` 的自有项上**（`Typography.Publish` 干的就是这件事），要在装字典之后：库的兜底值住在 `MergedDictionaries` 里那份共享字典，宿主覆盖写在自有项，同一层自有项优先——所以切主题冲不掉覆盖值。写反两层（把键塞进共享字典内部）就会被下次重写顶掉。
 5. **启动不变量：窗口必须出现**。数据初始化失败只 `TryReport` 继续走；连窗口都创建不了才 `Shutdown(-2)`，绝不留「进程存活但无窗口」。延迟工作用 `Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, …)`。
+6. **带事件处理器的 `DataTemplate` 只能住在用它的那段 XAML 里**。XAML 中 `SelectionChanged="…"` 这类处理器在编译期按「这段 XAML 的宿主类」解析：模板放进 `App.xaml` 时宿主类是 `App`，主窗口里的方法根本对不上，症状是「事件写了却没接」或构造 `Application.Resources` 时炸。示例项目3 的卡片模板与分组模板因此住在 `MainWindow.xaml` 的 `Window.Resources`，`App.xaml` 只留两个转换器（它的 `App.xaml` 注释里记着这条）。
 
 `App.xaml` 配 `ShutdownMode="OnMainWindowClose"`，`MainWindow` 在 `Show()` 前手动赋值（托盘类应用改 `OnExplicitShutdown` 并自己管退出）。
 
@@ -183,7 +184,9 @@ if (picked.HasValue) UI4Theme.SetAccent(picked.Value);
 
 约定：**退出码 = 失败断言数**，0 为全通过；报告写 `%APPDATA%\<AppName>\selftest.txt`，写不进去回落 `AppDomain.CurrentDomain.BaseDirectory\selftest.txt`，且**报告写失败不得改变退出码**。自测分支不开窗、不读用户设置、不挂 UI 线程异常钩子——这样它才能在 CI 与打包脚本里当门禁用。
 
-模板自带的断言分两段。配色与令牌段（令牌数、三份内置定义逐令牌可取色、对比度门槛、`Mix`/`IsDark`、`Policy` 已决策、8 套预置资源键齐全、字典与定义同源）抓的是"键名写错运行期不报错"。排印与缩放段抓的是同一族风险的另一面：库有没有发布 `UI4.Font.*` 兜底值、宿主覆盖值换档后还在不在、层级与固定件尺寸（默认基准下必须仍是 28 / 24）、`ClampBase`/`ClampZoom` 边界、字体候选表首位、`ZoomedSizeConverter` 参数写错要回 `UnsetValue`、以及**主窗口与设置面板两块 XAML 能构造**（只 `new` 不 `Show`，BAML 与绑定表达式在这一步就解析）。最后那条把"点开设置才发现面板炸了"提前到门禁里。
+模板自带的断言分三段。配色与令牌段（令牌数、三份内置定义逐令牌可取色、对比度门槛、`Mix`/`IsDark`、`Policy` 已决策、8 套预置资源键齐全、字典与定义同源）抓的是"键名写错运行期不报错"。设置通路（kv1）段抓写侧/读侧键名一致性与钳位——九项各给互不相同的哨兵值做往返，任何一侧打错一个字母就有一项回到默认值被抓。排印与缩放段抓的是同一族风险的另一面：库有没有发布 `UI4.Font.*` 兜底值、宿主覆盖值换档后还在不在、层级与固定件尺寸（默认基准下必须仍是 28 / 24）、`ClampBase`/`ClampZoom` 边界、字体候选表首位、`ZoomedSizeConverter` 参数写错要回 `UnsetValue`、以及**主窗口与设置面板两块 XAML 能构造**（只 `new` 不 `Show`，BAML 与绑定表达式在这一步就解析）。最后那条把"点开设置才发现面板炸了"提前到门禁里。
+
+模板实测 67 条；三个示例项目在这条通路上各自加长：示例项目1 四段合成 `PASS 断言组=285`（设置 / 主题 / 数据 / 排印缩放），示例项目2 `28` 条，示例项目3 `108` 条 + `2` 行 `INFO`——它把导航容器特有的三条前提写成了断言（右栏常驻模板可实例化、各导航项共用同一个 `Content`、项的 UIA 名字取自分组标题）。抄数字就抄 `--selftest` 的真实输出，别手抄。
 
 任一段抛异常都要记成一条 FAIL 而不是让进程带堆栈退出（退出码契约在任何情况下都得成立），报告全绿时补 `INFO` 行写实测数值（字号阶梯、固定件尺寸），文档里的数字抄它、不要手抄。
 

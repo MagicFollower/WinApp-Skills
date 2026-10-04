@@ -39,7 +39,7 @@
 
 | 键 | 类型 | 库内默认 | 库内引用点 |
 |---|---|---|---|
-| `UI4.Font.Size.Base` | `double` | `15`（`UI4Theme.DefaultFontSizeBase`） | `UI4Button.cs:137`（样式 Setter 挂 `DynamicResourceExtension`）、`UI4TextBox.cs:161`、`UI4ComboBox.cs:193`、`UI4ListBox.cs:239`、`UI4PasswordBox.cs:237` |
+| `UI4.Font.Size.Base` | `double` | `15`（`UI4Theme.DefaultFontSizeBase`） | `UI4Button.cs:137`（样式 Setter 挂 `DynamicResourceExtension`）、`UI4TextBox.cs:161`、`UI4ComboBox.cs:193`、`UI4ListBox.cs:251`、`UI4PasswordBox.cs:237` |
 | `UI4.Font.Size.Code` | `double` | `14`（`DefaultFontSizeCode`） | `UI4CodeEditor.cs:37` |
 | `UI4.Font.Family` | `FontFamily` | `Segoe UI`（`DefaultFontFamily`） | 库内无人引用（字体族是继承性属性，宿主设 `Window.FontFamily` 即可），只作兜底键供宿主绑 |
 

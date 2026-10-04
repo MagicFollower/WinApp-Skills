@@ -1,6 +1,6 @@
 # StartUI4Controls 组件速查
 
-程序集/根命名空间 `StartUI4Controls`，NuGet 包 id `StartUI4.WPF`，版本 3.0.0，`net10.0-windows` + `UseWPF=true`，`Nullable=disable`、`ImplicitUsings=disable`。第三方依赖只有 `AvalonEdit 6.3.1.120`（只有 `UI4CodeEditor` 用）。公开类型 62 个、依赖属性 234 个、公开事件 11 个、公开枚举 7 个。
+程序集/根命名空间 `StartUI4Controls`，NuGet 包 id `StartUI4.WPF`，版本 3.0.0，`net10.0-windows` + `UseWPF=true`，`Nullable=disable`、`ImplicitUsings=disable`。第三方依赖只有 `AvalonEdit 6.3.1.120`（只有 `UI4CodeEditor` 用）。公开类型 62 个、注册依赖属性 237 个（`Register` 235 + `RegisterAttached` 2，另有 1 个别名，声明行 `grep` = 238）、公开事件 11 个、公开枚举 7 个。
 
 XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"`。工程内 **0 个 .xaml**，模板全由 C# 构建（`ControlTemplate` + `FrameworkElementFactory`，滚动条样式用 `XamlReader` 解析字符串），因此宿主挂 dll 后直接写 `<ui:UI4Button/>` 就有完整外观，**不需要往 `Application.Resources` 挂资源字典**；代价是改模板必须重编 dll。
 
@@ -26,16 +26,16 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
 | 容器 | `UI4Panel` | `ContentControl` | 10 | 阴影 + 悬浮缩放卡片；`BorderColor` 默认字面值不跟主题（`HoverBorderBrush` 自 2026-10-04 起由构造函数挂 `UI4.Brush.BorderHover`） |
 | 容器 | `UI4Grid` | `Grid` | 2 | 默认铺 `BackgroundGradientStart → End`；**它的 `Background` 会被 `UpdateBackground()` 写回**，主题切换即覆盖宿主赋值 |
 | 容器 | `UI4ScrollViewer` | `ScrollViewer` | 1 | 美化滚动条 + 滚轮平滑滚动 |
-| 列表 | `UI4ListBox` | `ListBox` | 12 | `ListStyleType`：普通 / 圆点 / 编号 |
+| 列表 | `UI4ListBox` | `ListBox` | 13 | `ListStyleType`：普通 / 圆点 / 编号；`IsMenuMode=true` 时禁横向滚动以便长文字截断（菜单类组件内部置 `true`），项容器水平对齐无条件是 `Stretch` |
 | 列表 | `UI4ListView` | `ListBox` | 17 | 卡片式列表，单列，悬浮放大不越界；`HoverBorderBrush`/`SelectedBorderBrush` 分别挂 `BorderHover`/`ListSelected` |
-| 列表 | `UI4GridView` | `ListBox` | 15 | 网格卡片，按宽度自适应列数；`ItemWidth` 是**算列数的基准单元**不是卡片宽度；另有只读 `ComputedColumns` |
+| 列表 | `UI4GridView` | `ListBox` | 15 | 网格卡片，按宽度自适应列数；`ItemWidth` 是**算列数的基准单元**不是卡片宽度；另有只读 `ComputedColumns`；内部 ScrollViewer 横向固定 `Disabled`（`Auto` 会让列宽随文案抖动并冒横向滚动条） |
 | 导航 | `UI4Pivot` / `UI4PivotItem` | `Selector` / `HeaderedContentControl` | 10 / 1 | 滑动切换页签 |
 | 导航 | `UI4Tab` / `UI4TabItem` | `Selector` / `HeaderedContentControl` | 11 / 6 | 浏览器风格标签；关闭事件参数是 `TabCloseRoutedEventArgs` |
-| 导航 | `UI4NavigationView` + `…Item` / `…BottomItem` | `ItemsControl` / `ContentControl` | 13 / 4 | 侧边导航 + 底部固定项 + 内容区，`LeftPanelWidth` 可调；`TextIcon="&#xE80F;"` 用 Segoe Fluent 码位 |
+| 导航 | `UI4NavigationView` + `…Item` / `…BottomItem` | `ItemsControl` / `ContentControl` | 13 / 4 | 侧边导航 + 底部固定项 + 内容区，`LeftPanelWidth` 可调；`TextIcon="&#xE80F;"` 用 Segoe Fluent 码位；`ItemFontSize` 可直接写在 `UI4NavigationView` 上，项宽随 `LeftPanelWidth`、高只保底 70；`OnCreateAutomationPeer` 走可视树，左栏项与内容区在 UIA 上读得到 |
 | 菜单 | `UI4Menu` + `UI4MenuElementItem` / `UI4MenuSeparatorElement` | `Menu` / `MenuItem` / `Separator` | 6 / 5 / 1 | 菜单栏：文字图标、KeyTip、分隔符 |
-| 菜单 | `UI4ContextMenu` | —（纯代码组件，不是控件） | 5 个普通属性 | `AddItem(new UI4MenuItem(UI4MenuItemType.Copy, text, null, handler))` → `Attach(host)` → `Open()`；内置 7 种标准条目 + `UI4MenuIcons` |
+| 菜单 | `UI4ContextMenu` | —（纯代码组件，不是控件） | 5 个普通属性 | `AddItem(new UI4MenuItem(UI4MenuItemType.Copy, text, null, handler))` → `Attach(host)` → `Open()`；内置 7 种标准条目 + `UI4MenuIcons`；长条目收省略号并带 ToolTip，**`Width`/`ItemPadding` 只在 `Attach()` 时读一次**，改宽要 `Detach()`+`Attach()` |
 | 编辑器 | `UI4CodeEditor` | AvalonEdit `TextEditor` | — | C# 高亮 + 行号 + 内置右键菜单；**XSHD 配色不跟主题**，库只染外壳底与前景 |
-| 系统集成 | `UI4NotifyIcon` | `FrameworkElement`、`IDisposable` | 6 | 纯 P/Invoke 托盘，不依赖 WinForms；`IconSource` 指图标 |
+| 系统集成 | `UI4NotifyIcon` | `FrameworkElement`、`IDisposable` | 6 | 纯 P/Invoke 托盘，不依赖 WinForms；`IconSource` 指图标；托盘菜单同 `UI4ContextMenu` 的截断口径（行每次 `OpenMenu()` 重建，但 `Popup`/`Border` 宽只在构造期读 `MenuWidth`） |
 | 系统集成 | `UI4WindowTitleBar` | —（附加属性 + 静态方法） | 1 附加 | `Enabled` 默认 `true`；窗口里出现过 UI4 控件就会在 `Loaded` 时按 DWM 染**原生**标题栏，不要写 `UI4WindowTitleBar` 元素 |
 | 主题 | `UI4Theme` / `UI4ThemeScope` / `UI4ThemeDefinition` / `UI4ThemePacks` / `UI4ThemeToken` / `UI4ThemeMode` | — | — | 见 `theming.md` |
 | 服务 | `UI4Clipboard` | —（静态类） | — | 原生 Win32 剪贴板读写 |
@@ -89,7 +89,7 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
 | `UI4Button` | 样式 Setter（`UI4Button.cs:137`） | `UI4.Font.Size.Base` | `15` |
 | `UI4TextBox` | `UI4TextBox.cs:161` | 同上 | `15` |
 | `UI4ComboBox` | `UI4ComboBox.cs:193` | 同上 | `15` |
-| `UI4ListBox` | `UI4ListBox.cs:239` | 同上 | `15` |
+| `UI4ListBox` | `UI4ListBox.cs:251` | 同上 | `15` |
 | `UI4PasswordBox` | `UI4PasswordBox.cs:237` | 同上 | `15` |
 | `UI4CodeEditor` | `UI4CodeEditor.cs:37` | `UI4.Font.Size.Code` | `14` |
 
@@ -108,6 +108,11 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
 
 - WPF 的 `Popup`（`UI4ComboBox` 下拉、`UI4ContextMenu` 右键菜单）住在自己的可视根里，**不吃祖先的 `LayoutTransform`**：宿主用 `LayoutTransform` 做全局缩放时，非 100% 档下弹层内容仍按 100% 渲染（位置对、字不跟着大）。`RenderTransform` 同样不解决，这是 WPF 机制不是库缺陷。
 - `UI4ListBox` 悬浮/选中触发器里的 `Foreground` 是**绑定**到宿主的 `HoverForeground`/`PressedForeground`（2026-10-04 起）。原因：使用方（`UI4NavigationView`）把 `ItemContainerStyle` 赋成本地值后，重建 Style 也覆盖不回来，触发器里放 `SolidColorBrush` 快照就会永久冻在首次取值那一刻，表现为"切了主题列表文字色不动"。宿主给这两个 DP 赋字面值 = 又回到快照行为。
+- **`UI4ListBox` 的项现在横向铺满**：`ListBoxItem` 样式与内容 `ContentPresenter` 的水平对齐无条件是 `Stretch`（`:301`、`:387`）。此前是 `Left`，项按内容自适应宽度——那正是"菜单里长文字截不了"的根因。普通列表的连带观感变化：项背景与描边整行贯通。
+- **菜单类组件的长文字截断要三件事凑齐**：`IsMenuMode=true`（禁横向滚动，把宽度约束交回视口）+ 项 `Stretch` + 行容器宽度按 `Width − 8 − 4 − ItemPadding.Left/Right` 现算。`UI4ContextMenu` 与 `UI4NotifyIcon` 内部都置好了；宿主拿 `UI4ListBox` 自己拼菜单时要显式写 `IsMenuMode="true"`，并在弹层外套 `Border{ClipToBounds=true}` 限宽。
+- **`UI4GridView` 横向不滚**（内部 ScrollViewer 固定 `Disabled`，`:400`）：列数只由 `ComputeColumns()` 往下减，不会再冒横向滚动条、列宽也不随文案长短抖动。宿主别在 `ScrollViewer + 无宽度约束的 StackPanel` 里放它——那等于把约束又还给无限宽。
+- **`UI4NavigationView.ItemFontSize` 现在能直接写在 XAML 上**（DP 归属已从 `UI4NavigationViewItem` 挪回本控件，`:348`）。挪之前 `<ui:UI4NavigationView ItemFontSize="12">` 编译报 MC3072，宿主的绕法是 `Nav.SetValue(UI4NavigationViewItem.ItemFontSizeProperty, …)`——**DP 字段换了宿主类，这类代码必须改成 `UI4NavigationView.ItemFontSizeProperty`**（示例项目2 在本轮就是这么编不过的）。项宽改随 `LeftPanelWidth`、高只保底 `MinHeight=70`，标题不再钉 `MaxWidth=76`。
+- **`UI4NavigationView` 的左栏与内容区在 UIA 上读得到**：`OnCreateAutomationPeer()` 返回 `FrameworkElementAutomationPeer`（`:680`）。本控件模板里没有 `ItemsPresenter`（项由内部两个 `UI4ListBox` 承载），默认的 `ItemsControlAutomationPeer` 既枚举不到项、又会顶掉可视子枚举——症状是读屏/自动化在窗口里枚举不到任何 `ListItem`。宿主若要恢复旧行为请别说成"库坏了"，那是它自己的 peer 选择。
 - `UI4FlipTextBlock` 翻牌中缝硬编码 `#33000000`，不跟令牌。
 - `UI4ListBox` 编号角标数字色在 `Dispatcher.BeginInvoke` 里重绘，**局部作用域**（`UI4ThemeScope`）下这一处可能取到全局色。
 - `UI4ComboBox` 宽度只增不减：样式把 `MinWidth` 自绑到自身 `ActualWidth`。
@@ -124,5 +129,5 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
 grep -n '^### 3\.' references/component-manual.md          # §3.1..3.11 分组定位
 grep -n '^## \|^### ' references/component-manual.md        # 全目录
 grep -n 'UI4NavigationView' references/component-manual.md  # 单控件详解
-sed -n '2039,2089p' references/component-manual.md          # §8.1 枚举 / §8.2 事件 / §8.3 不建议用的公开成员
+sed -n '2119,2168p' references/component-manual.md          # §8.1 枚举 / §8.2 事件 / §8.3 不建议用的公开成员
 ```

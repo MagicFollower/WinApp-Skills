@@ -22,16 +22,16 @@
                      "baseline":  {
                                       "selfHosted":  true,
                                       "since":  "2026-10-04",
-                                      "devSource":  "WPF_dotnet10/示例项目1（Prompt收藏夹）/lib ＋ WPF_dotnet10/示例项目2（备忘录）/lib 的并集（本仓库，非 GitHub 目录）",
-                                      "divergentFiles":  11,
-                                      "divergentList":  "UI4Button/UI4TextBox/UI4ComboBox/UI4ListBox/UI4PasswordBox/UI4CodeEditor 六处字面字号改引用 UI4.Font.Size.*；UI4Theme.WriteTokens 发布三个排印键的兜底默认值；UI4ListView 新增 HoverBorderBrush/SelectedBorderBrush；UI4NavigationView 的 ForEachListBox；UI4Panel 悬浮描边挂令牌；UI4ListBox 触发器画刷由 SolidColorBrush 快照改绑定；README.md 新增 §4.2.1",
+                                      "devSource":  "WPF_dotnet10/示例项目1（Prompt收藏夹）/lib ＋ WPF_dotnet10/示例项目2（备忘录）/lib ＋ WPF_dotnet10/示例项目3（Windows快捷工具面板）/QuickPanel/lib 三者的并集（本仓库，非 GitHub 目录）",
+                                      "divergentFiles":  14,
+                                      "divergentList":  "UI4Button/UI4TextBox/UI4ComboBox/UI4ListBox/UI4PasswordBox/UI4CodeEditor 六处字面字号改引用 UI4.Font.Size.*；UI4Theme.WriteTokens 发布三个排印键的兜底默认值；UI4ListView 新增 HoverBorderBrush/SelectedBorderBrush；UI4NavigationView 的 ForEachListBox；UI4Panel 悬浮描边挂令牌；UI4ListBox 触发器画刷由 SolidColorBrush 快照改绑定；UI4ListBox 新增 IsMenuMode DP，且 ListBoxItem 样式与内容 ContentPresenter 的水平对齐由 Left 改 Stretch（取自示例项目1/2）；UI4ContextMenu 与 UI4NotifyIcon 的菜单行 Grid 宽按 Width 现算、长文字加 TextTrimming 与 ToolTip、Popup 外套 Border 并 ClipToBounds（取自示例项目1/2）；UI4GridView 内部 ScrollViewer 横向滚动 Auto→Disabled（取自示例项目3）；UI4NavigationView 的 ItemFontSize DP 从 Item 类挪回本控件、项容器尺寸改随字号长、OnCreateAutomationPeer 改返回 FrameworkElementAutomationPeer（取自示例项目3）；README.md 新增 §4.2.1，并随上述改动更新 §1.1/§二/§3.7/§3.8/§3.9/§3.11/§4.2.1/§8.4（2165 → 2209 行）",
                                       "why":  "fetchedFrom 那份（WinApp-Skills@5d96442 的 componentSourceCode，main 分支上已删除该目录）没有上面这些改动。按 fetchedFrom 覆盖种子会静默丢掉排印通路，症状是所有 UI4* 控件掉到 WPF 裸默认 12 px 且没有编译错",
                                       "resetRequires":  "-Refresh -AllowUpstreamReset（两挡齐给才放行），跑完必须重钉 manifest",
                                       "upstreamTipChecked":  "2026-10-04 实测 MagicFollower/StartUI4.WPF@dotnet_10 tip e15dd51 的 src/StartUI4Controls/UI4Theme.cs 里 Font 零命中，即组件仓库也还没有这三个排印键"
                                   }
                  },
     "generated":  {
-                      "atUtc":  "2026-10-04T09:22:02Z",
+                      "atUtc":  "2026-10-04T14:45:01Z",
                       "by":  "make-manifest.ps1",
                       "note":  "blobSha 是 LF 归一后的 git blob sha，与 GitHub contents API 的 sha 同口径；size 同样是 LF 后的字节数。"
                   },
@@ -39,7 +39,7 @@
                      "totalFiles":  48,
                      "csFiles":  44,
                      "themeTokens":  38,
-                     "dpDeclarations":  237,
+                     "dpDeclarations":  238,
                      "dpNote":  "public static readonly DependencyProperty 声明数，含别名（如 UI4CheckBox.BoxCornerRadiusProperty = CornerRadiusProperty）。文本扫 DependencyProperty.Register( 会漏，因为本库把声明与注册调用写在相邻两行。"
                  },
     "files":  [
@@ -85,8 +85,8 @@
                   },
                   {
                       "path":  "README.md",
-                      "blobSha":  "792f5ed82bbdf2a51a3034ec649d1da2c6a53758",
-                      "size":  134929
+                      "blobSha":  "a3a68d61bf4e2848de75d86af0d00f503b6f4dc2",
+                      "size":  140933
                   },
                   {
                       "path":  "StartUI4Controls.csproj",
@@ -130,8 +130,8 @@
                   },
                   {
                       "path":  "UI4ContextMenu.cs",
-                      "blobSha":  "c9aa6077f074309764c17d6541c11c533214f4f5",
-                      "size":  18366
+                      "blobSha":  "b44597280e13ae70ee238c9771d2a88afef183b6",
+                      "size":  19203
                   },
                   {
                       "path":  "UI4FlipTextBlock.cs",
@@ -145,13 +145,13 @@
                   },
                   {
                       "path":  "UI4GridView.cs",
-                      "blobSha":  "9a673bf3bc41ca097e17b6621c1163a62b78df2e",
-                      "size":  33752
+                      "blobSha":  "bdc5f032557aef7290648c2141fc17d491e26cf5",
+                      "size":  34238
                   },
                   {
                       "path":  "UI4ListBox.cs",
-                      "blobSha":  "83ffb6f5f5225482f9216c4a949e2fc38002a5ca",
-                      "size":  20957
+                      "blobSha":  "61008f15fb432aecef6777b5e1af429d5b9d9128",
+                      "size":  21612
                   },
                   {
                       "path":  "UI4ListView.cs",
@@ -175,13 +175,13 @@
                   },
                   {
                       "path":  "UI4NavigationView.cs",
-                      "blobSha":  "81d054f246ad5437cd4a9657212d5ddb41e2385f",
-                      "size":  41619
+                      "blobSha":  "407441fe167d3901b39215bf1d06af4d5a7e0b88",
+                      "size":  44136
                   },
                   {
                       "path":  "UI4NotifyIcon.cs",
-                      "blobSha":  "37bdb2dae6b32fedfb404e56963f2f7b42daf164",
-                      "size":  25642
+                      "blobSha":  "3ae85168c28dfffdc27bec73775d9d988f3eac1f",
+                      "size":  26469
                   },
                   {
                       "path":  "UI4Panel.cs",

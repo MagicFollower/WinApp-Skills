@@ -393,7 +393,11 @@ namespace StartUI4Controls
                 scrollHost.SetValue(FrameworkElement.StyleProperty, _scrollViewerStyle);
             }
 
-            scrollHost.SetValue(ScrollViewer.HorizontalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
+            // 横向必须 Disabled 而不是 Auto：Auto 会让 ScrollViewer 用"无限宽"测量内容，
+            // UniformGrid 于是按子项的期望宽度分列（而不是按视口分列），卡片撑出视口就冒出横向滚动条，
+            // 并且列宽随文案长短抖动。本控件的契约是"ItemWidth 只用来算列数、卡片铺满所在列"，
+            // 横向永远不该滚——同族的 UI4ListView 在它的模板里就是 Disabled。
+            scrollHost.SetValue(ScrollViewer.HorizontalScrollBarVisibilityProperty, ScrollBarVisibility.Disabled);
             scrollHost.SetValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
             scrollHost.SetValue(ScrollViewer.BackgroundProperty, Brushes.Transparent);
             scrollHost.SetValue(ScrollViewer.PaddingProperty, new Thickness(ContentPadding));

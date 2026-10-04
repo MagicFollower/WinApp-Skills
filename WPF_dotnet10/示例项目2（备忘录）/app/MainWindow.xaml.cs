@@ -33,9 +33,9 @@ namespace MemoTask
             _vm = vm;
             DataContext = vm;
 
-            // 导航项的字号默认 10 px，低于可读下限。ItemFontSize 这个 DP 的 OwnerType 登记在
-            // UI4NavigationView 上（库内如此），只能按 DP 直接写值，XAML 侧挂不上。
-            Nav.SetValue(UI4NavigationViewItem.ItemFontSizeProperty, 12.0);
+            // 导航项的字号默认 10 px，低于可读下限。ItemFontSize 的 DP 登记在 UI4NavigationView 自身，
+            // 这里按 DP 直接写值（XAML 侧现在也能写，保留代码写法是为了与其它两处运行期设置同处一地）。
+            Nav.SetValue(UI4NavigationView.ItemFontSizeProperty, 12.0);
 
             var descriptor = DependencyPropertyDescriptor.FromName(
                 "SelectedItem", typeof(UI4NavigationView), typeof(UI4NavigationViewItem));
