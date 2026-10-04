@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using StartUI4Controls;
@@ -27,10 +27,10 @@ namespace PromptFavorites.Views
             {
                 _contextMenu = new UI4ContextMenu();
                 _contextMenu.AddItem(new UI4MenuItem(
-                    UI4MenuItemType.Copy, "\u91CD\u547D\u540D", null,
+                    UI4MenuItemType.Copy, "重命名", null,
                     delegate { OnRenameEntry(); }));
                 _contextMenu.AddItem(new UI4MenuItem(
-                    UI4MenuItemType.Delete, "\u5220\u9664", null,
+                    UI4MenuItemType.Delete, "删除", null,
                     delegate { OnDeleteEntry(); }));
                 _contextMenu.Attach(EntryList);
             }
@@ -179,13 +179,13 @@ namespace PromptFavorites.Views
             var vm = DataContext as EntryListViewModel;
             if (vm == null || vm.SelectedEntry == null) return;
 
-            var newName = DialogHelper.ShowInputDialog(this, "\u91CD\u547D\u540D\u6761\u76EE",
-                "\u65B0\u6807\u9898:", vm.SelectedEntry.Title);
+            var newName = DialogHelper.ShowInputDialog(this, "重命名条目",
+                "新标题:", vm.SelectedEntry.Title);
             if (string.IsNullOrWhiteSpace(newName)) return;
 
             if (!FrontmatterData.IsValidTitle(newName.Trim()))
             {
-                UI4MessageBox.Show("\u6807\u9898\u5305\u542B\u65E0\u6548\u5B57\u7B26\u3002", "\u63D0\u793A",
+                UI4MessageBox.Show("标题包含无效字符。", "提示",
                     UI4MessageBoxButtons.OK, 320);
                 return;
             }
@@ -197,7 +197,7 @@ namespace PromptFavorites.Views
                 {
                     if (entry.Title == newName.Trim())
                     {
-                        UI4MessageBox.Show("\u5DF2\u5B58\u5728\u540C\u540D\u6761\u76EE\u3002", "\u63D0\u793A",
+                        UI4MessageBox.Show("已存在同名条目。", "提示",
                             UI4MessageBoxButtons.OK, 320);
                         return;
                     }
@@ -213,8 +213,8 @@ namespace PromptFavorites.Views
             if (vm == null || vm.SelectedEntry == null) return;
 
             var result = UI4MessageBox.Show(
-                "\u786E\u5B9A\u5220\u9664\u6761\u76EE\u201C" + vm.SelectedEntry.Title + "\u201D\uFF1F",
-                "\u5220\u9664\u786E\u8BA4",
+                "确定删除条目“" + vm.SelectedEntry.Title + "”？",
+                "删除确认",
                 UI4MessageBoxButtons.OKCancel, 360);
 
             if (result == true)

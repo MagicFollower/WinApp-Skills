@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -131,24 +131,24 @@ namespace PromptFavorites
 
         private void FolderBtn_Click(object sender, RoutedEventArgs e)
         {
-            var menu = new UI4ContextMenu();
+            var menu = new UI4ContextMenu { Width = 220 };
 
             menu.AddItem(new UI4MenuItem(
-                UI4MenuItemType.Copy, "\u6253\u5F00\u5F53\u524D\u76EE\u5F55", null,
+                UI4MenuItemType.Copy, "打开当前目录", null,
                 delegate { OpenCurrentFolder(); }));
 
             menu.AddItem(new UI4MenuItem(
-                UI4MenuItemType.Copy, "\u5207\u6362\u6839\u76EE\u5F55...", null,
+                UI4MenuItemType.Copy, "切换根目录", null,
                 delegate { SelectNewFolder(); }));
 
             menu.AddItem(new UI4MenuItem(
                 UI4MenuItemType.Copy,
-                "\u6253\u5F00\u8BBE\u7F6E\u76EE\u5F55\uFF08\u5F53\u524D\u6839\uFF09", null,
+                "打开设置目录（当前根）", null,
                 delegate { OpenSettingsFolder(false); }));
 
             menu.AddItem(new UI4MenuItem(
                 UI4MenuItemType.Copy,
-                "\u6253\u5F00\u5168\u5C40\u8BBE\u7F6E\u76EE\u5F55", null,
+                "打开全局设置目录", null,
                 delegate { OpenSettingsFolder(true); }));
 
             menu.Attach(FolderBtn);
@@ -180,8 +180,8 @@ namespace PromptFavorites
             }
             catch (Exception ex)
             {
-                UI4MessageBox.Show("\u65E0\u6CD5\u6253\u5F00\u76EE\u5F55: " + ex.Message,
-                    "\u9519\u8BEF", UI4MessageBoxButtons.OK, 360);
+                UI4MessageBox.Show("无法打开目录: " + ex.Message,
+                    "错误", UI4MessageBoxButtons.OK, 360);
             }
         }
 
@@ -201,8 +201,8 @@ namespace PromptFavorites
                 }
                 catch (Exception ex)
                 {
-                    UI4MessageBox.Show("\u65E0\u6CD5\u6253\u5F00\u76EE\u5F55: " + ex.Message,
-                        "\u9519\u8BEF", UI4MessageBoxButtons.OK, 360);
+                    UI4MessageBox.Show("无法打开目录: " + ex.Message,
+                        "错误", UI4MessageBoxButtons.OK, 360);
                 }
             }
         }
@@ -211,7 +211,7 @@ namespace PromptFavorites
         {
             var dialog = new Microsoft.Win32.OpenFolderDialog
             {
-                Title = "\u9009\u62E9 Prompt \u6839\u76EE\u5F55"
+                Title = "选择 Prompt 根目录"
             };
 
             if (!string.IsNullOrEmpty(App.RootPath) && Directory.Exists(App.RootPath))

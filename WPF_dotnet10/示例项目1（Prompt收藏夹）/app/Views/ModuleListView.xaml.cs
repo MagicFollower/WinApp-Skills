@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using StartUI4Controls;
@@ -27,10 +27,10 @@ namespace PromptFavorites.Views
             {
                 _contextMenu = new UI4ContextMenu();
                 _contextMenu.AddItem(new UI4MenuItem(
-                    UI4MenuItemType.Delete, "\u91CD\u547D\u540D", null,
+                    UI4MenuItemType.Delete, "重命名", null,
                     delegate { OnRenameModule(); }));
                 _contextMenu.AddItem(new UI4MenuItem(
-                    UI4MenuItemType.Delete, "\u5220\u9664", null,
+                    UI4MenuItemType.Delete, "删除", null,
                     delegate { OnDeleteModule(); }));
                 _contextMenu.Attach(ModuleList);
             }
@@ -70,7 +70,7 @@ namespace PromptFavorites.Views
 
         private void OnRequestNewModuleName(string _)
         {
-            var name = DialogHelper.ShowInputDialog(this, "\u65B0\u5EFA\u6A21\u5757", "\u6A21\u5757\u540D\u79F0:", "");
+            var name = DialogHelper.ShowInputDialog(this, "新建模块", "模块名称:", "");
             if (string.IsNullOrWhiteSpace(name)) return;
 
             var vm = DataContext as ModuleListViewModel;
@@ -82,7 +82,7 @@ namespace PromptFavorites.Views
                 {
                     if (m.Name == name.Trim())
                     {
-                        UI4MessageBox.Show("\u5DF2\u5B58\u5728\u540C\u540D\u6A21\u5757\u3002", "\u63D0\u793A",
+                        UI4MessageBox.Show("已存在同名模块。", "提示",
                             UI4MessageBoxButtons.OK, 320);
                         return;
                     }
@@ -97,8 +97,8 @@ namespace PromptFavorites.Views
             var vm = DataContext as ModuleListViewModel;
             if (vm == null || vm.SelectedModule == null) return;
 
-            var newName = DialogHelper.ShowInputDialog(this, "\u91CD\u547D\u540D\u6A21\u5757",
-                "\u65B0\u540D\u79F0:", vm.SelectedModule.Name);
+            var newName = DialogHelper.ShowInputDialog(this, "重命名模块",
+                "新名称:", vm.SelectedModule.Name);
             if (string.IsNullOrWhiteSpace(newName)) return;
 
             if (newName.Trim() != vm.SelectedModule.Name)
@@ -107,7 +107,7 @@ namespace PromptFavorites.Views
                 {
                     if (m.Name == newName.Trim())
                     {
-                        UI4MessageBox.Show("\u5DF2\u5B58\u5728\u540C\u540D\u6A21\u5757\u3002", "\u63D0\u793A",
+                        UI4MessageBox.Show("已存在同名模块。", "提示",
                             UI4MessageBoxButtons.OK, 320);
                         return;
                     }
@@ -124,14 +124,14 @@ namespace PromptFavorites.Views
 
             if (vm.SelectedModule.EntryCount > 0)
             {
-                UI4MessageBox.Show("\u8BE5\u6A21\u5757\u4E0B\u8FD8\u6709\u6761\u76EE\uFF0C\u8BF7\u5148\u79FB\u52A8\u6216\u5220\u9664\u3002",
-                    "\u65E0\u6CD5\u5220\u9664", UI4MessageBoxButtons.OK, 360);
+                UI4MessageBox.Show("该模块下还有条目，请先移动或删除。",
+                    "无法删除", UI4MessageBoxButtons.OK, 360);
                 return;
             }
 
             var result = UI4MessageBox.Show(
-                "\u786E\u5B9A\u5220\u9664\u6A21\u5757\u201C" + vm.SelectedModule.Name + "\u201D\uFF1F",
-                "\u5220\u9664\u786E\u8BA4",
+                "确定删除模块“" + vm.SelectedModule.Name + "”？",
+                "删除确认",
                 UI4MessageBoxButtons.OKCancel, 360);
 
             if (result == true)

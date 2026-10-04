@@ -275,26 +275,15 @@ namespace StartUI4Controls
                 Width = MenuWidth,
                 ItemPadding = MenuItemPadding,
                 CornerRadius = MenuCornerRadius,
-                IsMenuMode = true,
             };
             _listBox.PreviewMouseLeftButtonUp += OnListBoxClick;
-
-            // 用 Border 包裹 ListBox 并启用 ClipToBounds，确保内容不会溢出 Popup 边界
-            var border = new Border
-            {
-                Width = MenuWidth,
-                ClipToBounds = true,
-                Child = _listBox
-            };
-
             _trayPopup = new Popup
             {
-                Child = border,
+                Child = _listBox,
                 Placement = PlacementMode.MousePoint,
                 StaysOpen = false,
                 AllowsTransparency = true,
-                PopupAnimation = PopupAnimation.Slide,
-                Width = MenuWidth
+                PopupAnimation = PopupAnimation.Slide
             };
             _trayPopup.Closed += OnTrayPopupClosed;
         }
@@ -304,14 +293,7 @@ namespace StartUI4Controls
             _listBox.Items.Clear();
             foreach (var item in _menuItems)
             {
-                // 计算 Grid 可用宽度：Popup宽度 - ScrollViewer Padding(4*2) - ListBoxItem Border Margin(2*2) - ItemPadding
-                double gridWidth = MenuWidth - 8 - 4 - MenuItemPadding.Left - MenuItemPadding.Right;
-
-                var container = new Grid
-                {
-                    Width = gridWidth,
-                    HorizontalAlignment = HorizontalAlignment.Left
-                };
+                var container = new Grid();
                 container.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(20) });
                 container.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 bool enable = item.CanExecute?.Invoke() ?? true;
@@ -350,9 +332,7 @@ namespace StartUI4Controls
                     Text = item.Text,
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(6, 0, 0, 0),
-                    Opacity = textOpacityDisable,
-                    TextTrimming = TextTrimming.CharacterEllipsis,
-                    ToolTip = item.Text
+                    Opacity = textOpacityDisable
                 };
                 Grid.SetColumn(textBlock, 1);
                 container.Children.Add(textBlock);

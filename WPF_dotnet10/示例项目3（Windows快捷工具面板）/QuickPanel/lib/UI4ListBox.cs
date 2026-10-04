@@ -209,18 +209,6 @@ namespace StartUI4Controls
             return brush;
         }
 
-        public static readonly DependencyProperty IsMenuModeProperty =
-            DependencyProperty.Register(
-                nameof(IsMenuMode),
-                typeof(bool),
-                typeof(UI4ListBox),
-                new PropertyMetadata(false, OnStyleRefresh));
-        public bool IsMenuMode
-        {
-            get => (bool)GetValue(IsMenuModeProperty);
-            set => SetValue(IsMenuModeProperty, value);
-        }
-
         public static Style _scrollViewerStyle;
 
         private static void OnStyleRefresh(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -284,9 +272,7 @@ namespace StartUI4Controls
             FrameworkElementFactory scrollViewer = new FrameworkElementFactory(typeof(ScrollViewer));
             if (_scrollViewerStyle != null)
                 scrollViewer.SetValue(FrameworkElement.StyleProperty, _scrollViewerStyle);
-            // 菜单模式下禁用水平滚动，强制内容宽度受限于视口，使 TextTrimming 生效
-            var hScrollVisibility = IsMenuMode ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
-            scrollViewer.SetValue(ScrollViewer.HorizontalScrollBarVisibilityProperty, hScrollVisibility);
+            scrollViewer.SetValue(ScrollViewer.HorizontalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
             scrollViewer.SetValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
             scrollViewer.SetValue(ScrollViewer.PaddingProperty, new Thickness(4, 4, 4, 4));
             scrollViewer.SetValue(FrameworkElement.FocusableProperty, false);
@@ -299,7 +285,7 @@ namespace StartUI4Controls
             style.Setters.Add(new Setter(Control.TemplateProperty, template));
 
             Style itemStyle = new Style(typeof(ListBoxItem));
-            itemStyle.Setters.Add(new Setter(ContentControl.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
+            itemStyle.Setters.Add(new Setter(ContentControl.HorizontalContentAlignmentProperty, HorizontalAlignment.Left));
             itemStyle.Setters.Add(new Setter(ContentControl.VerticalContentAlignmentProperty, VerticalAlignment.Center));
 
             itemStyle.Setters.Add(new Setter(Control.ForegroundProperty,
@@ -384,7 +370,7 @@ namespace StartUI4Controls
 
             contentPresenter.SetBinding(TextElement.ForegroundProperty,
                 new Binding("Foreground") { RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(ListBoxItem), 1) });
-            contentPresenter.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Stretch);
+            contentPresenter.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Left);
             contentPresenter.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
 
             FrameworkElementFactory contentPanel = new FrameworkElementFactory(typeof(StackPanel));

@@ -342,12 +342,20 @@ namespace StartUI4Controls
                 Width = this.Width,
                 ItemPadding = this.ItemPadding,
                 FontFamily = new FontFamily("Microsoft YaHei UI, Segoe UI, sans-serif"),
+                IsMenuMode = true,
             };
             ApplyColorsToListBox();
 
             foreach (var item in _menuItems)
             {
-                var container = new Grid();
+                // 计算 Grid 可用宽度：Popup宽度 - ScrollViewer Padding(4*2) - ListBoxItem Border Margin(2*2) - ItemPadding(12*2)
+                double gridWidth = this.Width - 8 - 4 - this.ItemPadding.Left - this.ItemPadding.Right;
+
+                var container = new Grid
+                {
+                    Width = gridWidth,
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
                 container.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(20) });
                 container.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
@@ -374,7 +382,9 @@ namespace StartUI4Controls
                     FontSize = 14,
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(6, 0, 0, 0),
-                    Opacity = item.CanExecute?.Invoke() ?? true ? 1.0 : 0.4
+                    Opacity = item.CanExecute?.Invoke() ?? true ? 1.0 : 0.4,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    ToolTip = item.Text
                 };
                 Grid.SetColumn(textBlock, 1);
                 container.Children.Add(textBlock);
@@ -385,13 +395,22 @@ namespace StartUI4Controls
 
             _listBox.SelectionChanged += OnSelectionChanged;
 
+            // 用 Border 包裹 ListBox 并启用 ClipToBounds，确保内容不会溢出 Popup 边界
+            var border = new Border
+            {
+                Width = this.Width,
+                ClipToBounds = true,
+                Child = _listBox
+            };
+
             _popup = new Popup
             {
-                Child = _listBox,
+                Child = border,
                 Placement = PlacementMode.MousePoint,
                 StaysOpen = false,
                 AllowsTransparency = true,
-                PopupAnimation = PopupAnimation.Slide
+                PopupAnimation = PopupAnimation.Slide,
+                Width = this.Width
             };
         }
 
