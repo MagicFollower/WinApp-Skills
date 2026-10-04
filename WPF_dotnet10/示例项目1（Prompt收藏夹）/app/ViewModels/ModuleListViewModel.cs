@@ -184,10 +184,27 @@ namespace PromptFavorites.ViewModels
             RequestNewModuleName?.Invoke(null);
         }
 
+        /// <summary>
+        /// <c>.PromptFavorites</c> 是本根配置的落点，已经被 <c>FileSystemRepository</c> 从模块枚举里滤掉。
+        /// 让模块占这个名字的后果很难查：配置目录照建在里面，但模块在左栏根本不显示、也删不掉，
+        /// 所以在新建和改名两道入口上直接拒绝并说明原因。
+        /// </summary>
+        private static bool IsReservedName(string name)
+        {
+            if (!SettingsService.IsReservedRootEntryName(name)) return false;
+
+            UI4MessageBox.Show(
+                "\u8BE5\u540D\u79F0\u88AB\u914D\u7F6E\u76EE\u5F55\u5360\u7528\uFF0C\u8BF7\u6362\u4E00\u4E2A\u3002",
+                "\u63D0\u793A", UI4MessageBoxButtons.OK, 320);
+            return true;
+        }
+
         public void AddModule(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return;
             name = name.Trim();
+
+            if (IsReservedName(name)) return;
 
             var rootPath = _service.RootPath;
             if (string.IsNullOrWhiteSpace(rootPath))
@@ -224,6 +241,7 @@ namespace PromptFavorites.ViewModels
             if (string.IsNullOrWhiteSpace(newName)) return;
             newName = newName.Trim();
             if (oldName == newName) return;
+            if (IsReservedName(newName)) return;
             if (_service.ModuleExists(newName)) return;
 
             _service.RenameModule(oldName, newName);

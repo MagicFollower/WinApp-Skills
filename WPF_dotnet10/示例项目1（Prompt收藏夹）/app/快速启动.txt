@@ -18,9 +18,39 @@
 自测（退出码 = 失败断言数，0 为全通过；2026-10-04 起是 settings/theme/data/display 四段合成）
   PromptFavorites_self_contained.exe --selftest
   PromptFavorites_no_runtime.exe --selftest
-  实测两档都是退出码 0、PASS 断言组=240；报告写到 %APPDATA%\PromptFavorites\selftest.txt，
+  2026-10-04 第七批实测（Debug 产物）：退出码 0、PASS 断言组=285（第六批是 240）
+  报告写到 %APPDATA%\PromptFavorites\selftest.txt，
   全绿时报告末尾带 7 行 INFO：明暗两档的色表原值、两档对比度实测、固定件尺寸实测、
   字号阶梯实测、字体候选表实测（README 的三张表就抄这里，免得数字再漂）
+
+配置的两层落点（2026-10-04 第七批）
+  全局引导  %APPDATA%\PromptFavorites\settings.json
+            → rootPath（上次用的根）+ 明暗档 + 排印三键 + 折叠态 + 窗口几何
+  每根配置  <Prompt 根目录>\.PromptFavorites\settings.json
+            → lastModule、sortMode/moduleSortMode、favoriteFilter、
+              moduleCustomOrder/entryCustomOrder（只在这一根里有意义的那些状态）
+  判据是"换个根目录，这个值还有没有意义"。成因与四条配套约定见设计方案 §22.1。
+  三条实操须知：
+  1) .PromptFavorites 不是模块：左栏不显示它，也不能拿它当模块名（新建与改名都会拒绝）。
+  2) 从旧版升级不需要动手：第一次启动就把旧全局里残留的数据键接进本根，同时从全局摘掉；
+     动之前建议自己留一份旧配置（本轮验证时留的是包内 .verify-backup-<时分秒>\settings.json）。
+  3) 根目录不可写（只读盘、离线同步盘）时配置不会清零：数据键继续留在全局文件里当副本，
+     设置面板"设置目录（当前根）"那行会标注当前处于回退态。
+  入口：目录按钮的菜单里"打开设置目录（当前根）"与"打开全局设置目录"分别指这两层。
+  自测凭什么验得到而不碰用户配置：SettingsService 有个 internal 的 SettingsService(globalDir)
+  重定向入口，DataSelfTest 用它把全局侧也落进临时目录，所以换根/迁移/回退/损坏留档
+  这几条是真读写文件跑出来的判据，不是纯函数推演。
+
+已知未修：下拉菜单长文案被裁（2026-10-04 第八批试过两版，都撤回了）
+  现象：目录按钮菜单里「打开设置目录（当前根）」的右括号看不见。
+  归因：lib/UI4ContextMenu.cs:242 的 Width 写死 180；条目文字排在星号列里，
+        既没 TextWrapping 也没 TextTrimming，装不下就是直接裁掉。
+        该文案纯排版 154 px，加图标列 20 + 文本左距 6 + 列表自身 12 → 需要 192，差 12 px。
+  两版都试过又都撤了：库内自动取宽（按要求不动 lib，从种子按字节拷回，lib/ 复归零偏离）、
+  宿主侧 MenuSizing 显式赋值 194（实测没生效，连同调用点与判据一起删除）。
+  下次动手前必须先回答：为什么把 Width 显式设成 194 也不改变渲染？
+  两个没排除的方向：① 看的是旧产物（publish\ 两档仍是第六批，不含本包 app/ 的改动）；
+  ② Popup/星号列这条通路上还有别的宽度来源。别在没定位之前再改一遍同样的地方。
 
 应用图标与标题
   图标文件 app\AppIcon.ico（372,526 字节 / 7 挡 16/24/32/48/64/128/256）本身在，

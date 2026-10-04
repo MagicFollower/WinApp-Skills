@@ -255,6 +255,126 @@ namespace PromptFavorites.Services
             cleared.ApplyMap(emptyFamily);
             r.Check(cleared.FontFamilyName == string.Empty,
                 "空字体族名没被还原成出厂档: [" + cleared.FontFamilyName + "]");
+
+            CheckTwoTierOwnership(r);
+        }
+
+        // ── 两层配置的键归属（纯函数，不碰任何文件）──────────────────
+
+        /// <summary>
+        /// 数据类键跟着根目录走、外观类留全局，这条分界只有一个出处（<c>RootScopedKeys</c>）。
+        /// 下面几组断言分别对着三种漂移：
+        /// ① 某个键两侧都不写——改了不生效、重启回默认；
+        /// ② 某个键两侧都写——换根时全局那份会盖回本根那份，等于白拆；
+        /// ③ <c>rootPath</c> 漏进每根文件——它既是找配置的入口又跟着配置走，自己找不到自己，
+        ///    还要多背一次当年"分隔符每存一次翻倍"的膨胀风险。
+        /// </summary>
+        private static void CheckTwoTierOwnership(SelfTestResult r)
+        {
+            var full = new SettingsService();
+            full.RootPath = @"C:\Users\webtu\Documents\Prompts";
+            full.LastModule = "写作";
+            full.MetadataCollapsed = true;
+            full.SortMode = Models.SortMode.UpdatedAt;
+            full.ModuleSortMode = Models.ModuleSortMode.Name;
+            full.FavoriteFilter = true;
+            full.ThemeMode = Models.AppThemeMode.Dark;
+            full.FontFamilyName = "楷体";
+            full.BaseFontSize = 17;
+            full.ZoomPercent = 125;
+            full.WindowWidth = 1440;
+            full.WindowHeight = 900;
+            full.WindowLeft = 30;
+            full.WindowTop = 40;
+            full.WindowState = System.Windows.WindowState.Maximized;
+            full.SetModuleOrder(new[] { "写作", "编程" });
+            full.SetEntryOrder("写作", new[] { "无损转录器", "批量改名" });
+
+            var all = full.ToMap();
+            var globalSide = SettingsService.Partition(all, false);
+            var rootSide = SettingsService.Partition(all, true);
+
+            r.Check(globalSide.Count + rootSide.Count == all.Count,
+                "键归属有漏网：全量 " + all.Count + " ≠ 全局 " + globalSide.Count
+                + " + 每根 " + rootSide.Count);
+
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            bool duplicated = false;
+            foreach (var entry in globalSide) if (!seen.Add(entry.Key)) duplicated = true;
+            foreach (var entry in rootSide) if (!seen.Add(entry.Key)) duplicated = true;
+            r.Check(!duplicated, "同一个键被两侧都写（换根时全局那份会盖回本根）");
+
+            r.Check(!Has(rootSide, "rootPath") && Has(globalSide, "rootPath"),
+                "rootPath 归属不对：它是找每根配置的入口，只能待在全局引导文件里");
+
+            var rootKeys = new[]
+            {
+                "lastModule", "sortMode", "moduleSortMode",
+                "favoriteFilter", "moduleCustomOrder", "entryCustomOrder"
+            };
+            foreach (var key in rootKeys)
+            {
+                r.Check(Has(rootSide, key) && !Has(globalSide, key),
+                    "数据键没跟着根目录走: " + key);
+            }
+
+            var globalKeys = new[]
+            {
+                "themeMode", "fontFamilyName", "baseFontSize", "zoomPercent",
+                "metadataCollapsed", "windowWidth", "windowHeight",
+                "windowLeft", "windowTop", "windowState"
+            };
+            foreach (var key in globalKeys)
+            {
+                r.Check(Has(globalSide, key) && !Has(rootSide, key),
+                    "整机偏好不该跟着根目录走: " + key);
+            }
+
+            // 分头落盘再合起来读，一个值都不能丢——kv1 没有 schema，任一侧键名打错就是改了不生效。
+            var restored = new SettingsService();
+            restored.ApplyMap(SettingsCodec.Parse(SettingsCodec.Serialize(globalSide)));
+            restored.ApplyMap(SettingsCodec.Parse(SettingsCodec.Serialize(rootSide)));
+
+            r.Check(restored.RootPath == full.RootPath && restored.LastModule == "写作"
+                    && restored.MetadataCollapsed && restored.FavoriteFilter
+                    && restored.SortMode == Models.SortMode.UpdatedAt
+                    && restored.ModuleSortMode == Models.ModuleSortMode.Name
+                    && restored.ThemeMode == Models.AppThemeMode.Dark
+                    && restored.FontFamilyName == "楷体"
+                    && System.Math.Abs(restored.BaseFontSize - 17) < 1e-9
+                    && System.Math.Abs(restored.ZoomPercent - 125) < 1e-9
+                    && System.Math.Abs(restored.WindowWidth - 1440) < 1e-9
+                    && restored.WindowState == System.Windows.WindowState.Maximized,
+                "两层分头往返后有设置有值丢失或变形");
+
+            var moduleOrder = restored.ModuleOrder;
+            r.Check(moduleOrder != null && moduleOrder.Count == 2
+                    && moduleOrder[0] == "写作" && moduleOrder[1] == "编程",
+                "模块顺序表没能经两层往返还原");
+
+            var entryOrder = restored.GetEntryOrder("写作");
+            r.Check(entryOrder != null && entryOrder.Count == 2 && entryOrder[1] == "批量改名",
+                "条目顺序表没能经两层往返还原");
+
+            // 路径推导是纯函数，但换根时"写到哪"就从这里出，判错一个分隔符就写到别处去了。
+            r.Check(SettingsService.RootConfigDirectoryFor(@"C:\Prompts")
+                    == Path.Combine(@"C:\Prompts", ".PromptFavorites"),
+                "每根配置目录推导错误");
+            r.Check(SettingsService.RootConfigDirectoryFor(@"D:\")
+                    == Path.Combine(@"D:\", ".PromptFavorites"),
+                "盘符根的配置目录推导错误（换根最容易撞到这档）");
+            r.Check(SettingsService.RootConfigDirectoryFor(@"\\server\share\Prompts")
+                    == Path.Combine(@"\\server\share\Prompts", ".PromptFavorites"),
+                "UNC 根的配置目录推导错误");
+            r.Check(SettingsService.RootConfigDirectoryFor(string.Empty) == string.Empty
+                    && SettingsService.RootConfigDirectoryFor(null) == string.Empty,
+                "空根不该推导出一个看起来能用的路径");
+
+            r.Check(SettingsService.IsReservedRootEntryName(".PromptFavorites")
+                    && SettingsService.IsReservedRootEntryName(" .promptfavorites ")
+                    && !SettingsService.IsReservedRootEntryName("编程模块")
+                    && !SettingsService.IsReservedRootEntryName(null),
+                "配置目录的保留名判定不对（模块名占了它，配置就成了看不见也删不掉的目录）");
         }
 
         private static bool Has(List<KeyValuePair<string, string>> entries, string key)

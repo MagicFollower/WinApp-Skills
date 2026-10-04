@@ -6,9 +6,9 @@ namespace PromptFavorites.Services
 {
     /// <summary>
     /// <c>--selftest</c> 的合成入口与报告落盘。契约不变：<b>退出码 = 失败断言数</b>，0 即全通过。
-    /// 四段判据分工：<see cref="SettingsSelfTest"/> 管设置与顺序编解码，
+    /// 四段判据分工：<see cref="SettingsSelfTest"/> 管设置与顺序编解码、含两层配置的键归属，
     /// <see cref="ThemeSelfTest"/> 管主题资源键与对比度门槛，
-    /// <see cref="DataSelfTest"/> 管 frontmatter 保真与仓储的文件读写，
+    /// <see cref="DataSelfTest"/> 管 frontmatter 保真、仓储的文件读写与每根配置的端到端落盘，
     /// <see cref="DisplaySelfTest"/> 管排印键通路、字号阶梯与缩放换算。
     /// </summary>
     internal static class SelfTest

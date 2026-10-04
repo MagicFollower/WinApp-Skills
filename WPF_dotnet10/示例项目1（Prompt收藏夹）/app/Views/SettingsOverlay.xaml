@@ -25,6 +25,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="应用版本"
@@ -56,13 +57,21 @@
                            FontSize="{DynamicResource App.Font.Size.Small}" Margin="0,4"
                            TextTrimming="CharacterEllipsis" ToolTip="{Binding DataRootPath}"/>
 
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="设置目录"
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="设置目录（当前根）"
                            Foreground="{DynamicResource UI4.Brush.Icon}"
                            FontSize="{DynamicResource App.Font.Size.Small}" Margin="0,4"/>
                 <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SettingsFolder}"
                            Foreground="{DynamicResource UI4.Brush.Text}"
                            FontSize="{DynamicResource App.Font.Size.Small}" Margin="0,4"
                            TextTrimming="CharacterEllipsis" ToolTip="{Binding SettingsFolder}"/>
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="设置目录（全局）"
+                           Foreground="{DynamicResource UI4.Brush.Icon}"
+                           FontSize="{DynamicResource App.Font.Size.Small}" Margin="0,4"/>
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding GlobalSettingsFolder}"
+                           Foreground="{DynamicResource UI4.Brush.Text}"
+                           FontSize="{DynamicResource App.Font.Size.Small}" Margin="0,4"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding GlobalSettingsFolder}"/>
             </Grid>
 
             <Border Height="1" Background="{DynamicResource UI4.Brush.BorderNormal}" Margin="0,0,0,16"/>

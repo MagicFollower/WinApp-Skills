@@ -8,10 +8,12 @@ using PromptFavorites.Models;
 namespace PromptFavorites.Services
 {
     /// <summary>
-    /// 数据链路的自检段：frontmatter 保真 + 仓储的真实文件读写。
-    /// 全部落在一个临时目录里，跑完删除；不碰用户的 Prompt 根目录。
+    /// 数据链路的自检段：frontmatter 保真 + 仓储的真实文件读写 + 两层配置的端到端落盘。
+    /// 全部落在临时目录里（全局侧也通过 <c>SettingsService(globalDir)</c> 重定向进来），跑完删除；
+    /// 不碰用户的 Prompt 根目录，也不碰 <c>%APPDATA%\PromptFavorites</c>。
     /// 这一段的由来：设置编解码那 29 组断言一条也不覆盖磁盘链路，"selftest 退 0"曾经
-    /// 只等于"设置没退化"。
+    /// 只等于"设置没退化"。配置拆成两层之后同样的问题会再来一次——键归属与换根顺序
+    /// 都是只有真读写文件才验得出来的东西，所以放在这一段而不是纯函数的 settings 段。
     /// </summary>
     internal static class DataSelfTest
     {
@@ -22,6 +24,213 @@ namespace PromptFavorites.Services
             CheckFrontmatter(r);
             CheckRepository(r);
             CheckModuleNotifications(r);
+            CheckConfigDirIsolation(r);
+            CheckTwoTierStorage(r);
+        }
+
+        // ── 每根配置目录 ───────────────────────────────────────────
+
+        /// <summary>
+        /// 配置目录现在住在 Prompt 根目录里面（<c>&lt;根&gt;\.PromptFavorites</c>），
+        /// 而模块列表就是"根目录下的一级子目录"，两条定义天然会撞。
+        /// 这条断言盯着撞上的症状：左栏凭空多一项，还能被改名和删除——
+        /// 删掉它等于把这一根的视图配置删了，用户看到的是一个从来没建过的模块消失了。
+        /// </summary>
+        private static void CheckConfigDirIsolation(SelfTestResult r)
+        {
+            string root = MakeTempBase("cfgdir");
+            try
+            {
+                var repo = new FileSystemRepository(root);
+                repo.CreateModule("写作");
+                repo.CreateModule(".PromptFavorites");   // 绕过 VM 的保留名判定，直接按最坏情况摆
+
+                var names = repo.GetModuleNames();
+                r.Check(names.Count == 1 && names[0] == "写作",
+                    "配置目录被当成模块列出来了: [" + string.Join("|", names.ToArray()) + "]");
+
+                // 搜索走的是同一份模块枚举，不能漏到那儿去
+                var service = new PromptService(repo);
+                r.Check(service.Search("写作").Count == 0,
+                    "搜索把配置目录当成了模块目录去读");
+            }
+            catch (Exception ex)
+            {
+                r.Check(false, "配置目录隔离自检段异常中断：" + ex.GetType().Name + " " + ex.Message);
+            }
+            finally
+            {
+                TryDelete(root);
+            }
+        }
+
+        /// <summary>
+        /// 两层配置的端到端判据，全程落在临时目录：<c>globalDir</c> 那个入口把全局侧也重定向到临时里，
+        /// 否则这几条只能靠读写用户真实的 <c>%APPDATA%\PromptFavorites\settings.json</c> 来验。
+        /// 五组断言对着同一次改动的五种失效模式：归属写错、换根覆盖、重启合不回来、
+        /// 根不可写时配置无声清零、旧版单文件全局升不上来。
+        /// </summary>
+        private static void CheckTwoTierStorage(SelfTestResult r)
+        {
+            string baseDir = MakeTempBase("twotier");
+            string globalDir = Path.Combine(baseDir, "appdata");
+            string rootA = Path.Combine(baseDir, "rootA");
+            string rootB = Path.Combine(baseDir, "rootB");
+
+            try
+            {
+                Directory.CreateDirectory(globalDir);
+                Directory.CreateDirectory(rootA);
+                Directory.CreateDirectory(rootB);
+
+                var store = new SettingsService(globalDir);
+                store.LoadGlobal();
+                store.RootPath = rootA;
+                store.AttachRoot(rootA, true);
+                store.LastModule = "写作";
+                store.SetModuleOrder(new[] { "写作", "编程" });
+                store.FavoriteFilter = true;
+                store.ThemeMode = Models.AppThemeMode.Dark;
+                store.WindowWidth = 1440;
+                store.Save();
+
+                var fileA = ReadMap(Path.Combine(rootA, ".PromptFavorites", "settings.json"));
+                var fileG = ReadMap(Path.Combine(globalDir, "settings.json"));
+
+                r.Check(fileA != null && fileA.ContainsKey("lastModule")
+                        && fileA["lastModule"] == "写作"
+                        && fileA.ContainsKey("moduleCustomOrder")
+                        && !fileA.ContainsKey("rootPath") && !fileA.ContainsKey("themeMode")
+                        && !fileA.ContainsKey("windowWidth"),
+                    "每根文件里的键不是数据类那一档");
+                r.Check(fileG != null && fileG.ContainsKey("rootPath") && fileG["rootPath"] == rootA
+                        && fileG["themeMode"] == "Dark" && fileG["windowWidth"] == "1440"
+                        && !fileG.ContainsKey("lastModule") && !fileG.ContainsKey("moduleCustomOrder"),
+                    "全局引导文件没按归属写（数据键该消失，引导与外观键该留着）");
+
+                // 换根：先把当前状态落到旧根，再挂新根且不许继承——App.ChangeRootPath 就是这个顺序。
+                store.Save();
+                store.RootPath = rootB;
+                store.AttachRoot(rootB, false);
+                r.Check(string.IsNullOrEmpty(store.LastModule) && !store.FavoriteFilter
+                        && store.ModuleOrder == null,
+                    "换到新根还带着上一个根的视图状态（被覆盖就是从这一步开始的）");
+
+                store.LastModule = "笔记";
+                store.SetEntryOrder("笔记", new[] { "手机端" });
+                store.Save();
+
+                var stillA = ReadMap(Path.Combine(rootA, ".PromptFavorites", "settings.json"));
+                r.Check(stillA != null && stillA["lastModule"] == "写作"
+                        && stillA.ContainsKey("moduleCustomOrder"),
+                    "切到另一个根把上一个根的配置盖掉了");
+                r.Check(stillA != null && !stillA.ContainsKey("entryCustomOrder"),
+                    "另一个根记的条目顺序漏进了本根的配置");
+
+                // 重启还原：新实例只认全局里的 rootPath，再叠加它自己那份
+                var reopened = new SettingsService(globalDir);
+                reopened.LoadGlobal();
+                reopened.AttachRoot(reopened.RootPath, true);
+                r.Check(reopened.RootPath == rootB && reopened.LastModule == "笔记"
+                        && reopened.ThemeMode == Models.AppThemeMode.Dark
+                        && System.Math.Abs(reopened.WindowWidth - 1440) < 1e-9,
+                    "重启后没能从全局引导 + 本根配置两层合回原状");
+
+                // 根不可写（只读盘、离线同步盘、路径根本不成立）：配置退化成留在全局副本，且必须报出来
+                string blockedRoot = Path.Combine(baseDir, "blocker");
+                File.WriteAllText(blockedRoot, "这是个文件，不是目录");
+                var degraded = new SettingsService(globalDir);
+                degraded.LoadGlobal();
+                degraded.RootPath = blockedRoot;
+                degraded.AttachRoot(blockedRoot, true);
+                degraded.LastModule = "临时根";
+                degraded.Save();
+                r.Check(degraded.IsUsingRootSettingsFallback,
+                    "写不进根目录时没置回退标志（症状会是配置每次启动都清零）");
+                var degradedGlobal = ReadMap(Path.Combine(globalDir, "settings.json"));
+                r.Check(degradedGlobal != null && degradedGlobal.ContainsKey("lastModule")
+                        && degradedGlobal["lastModule"] == "临时根",
+                    "根不可写时数据键没留副本在全局文件里");
+                var recovered = new SettingsService(globalDir);
+                recovered.LoadGlobal();
+                recovered.AttachRoot(blockedRoot, true);
+                r.Check(recovered.LastModule == "临时根",
+                    "回退副本没能在下次启动把状态接回来");
+
+                // 旧版一份全局文件装着全部键 → 首挂即迁移：落到本根、同时从全局摘掉
+                string legacyRoot = Path.Combine(baseDir, "legacy");
+                Directory.CreateDirectory(legacyRoot);
+                File.WriteAllText(Path.Combine(globalDir, "settings.json"),
+                    SettingsCodec.Header + "\r\n"
+                    + "format=kv1\r\nrootPath=" + legacyRoot + "\r\n"
+                    + "themeMode=Dark\r\nlastModule=旧版模块\r\nfavoriteFilter=true\r\n",
+                    new UTF8Encoding(false));
+
+                var migrated = new SettingsService(globalDir);
+                migrated.LoadGlobal();
+                migrated.AttachRoot(migrated.RootPath, true);
+                r.Check(migrated.LastModule == "旧版模块" && migrated.FavoriteFilter
+                        && migrated.ThemeMode == Models.AppThemeMode.Dark,
+                    "首挂没接住旧版全局文件里的数据键（升级那一次会清零）");
+                migrated.Save();
+                var migratedRoot = ReadMap(Path.Combine(legacyRoot, ".PromptFavorites", "settings.json"));
+                var migratedGlobal = ReadMap(Path.Combine(globalDir, "settings.json"));
+                r.Check(migratedRoot != null && migratedRoot["lastModule"] == "旧版模块"
+                        && migratedRoot.ContainsKey("favoriteFilter"),
+                    "旧版数据键没迁移进本根");
+                r.Check(migratedGlobal != null && !migratedGlobal.ContainsKey("lastModule")
+                        && migratedGlobal["themeMode"] == "Dark"
+                        && migratedGlobal["rootPath"] == legacyRoot,
+                    "迁移后全局文件还留着数据键（下次换根又会拿它盖回本根）");
+
+                // 本根文件被手加了 rootPath（写侧从不输出这个键）：读侧必须忽略，
+                // 否则一份视图配置能反过来改引导指针，两个根会互相指到对方身上。
+                var foreignRootFile = Path.Combine(legacyRoot, ".PromptFavorites", "settings.json");
+                File.AppendAllText(foreignRootFile, "rootPath=C:\\另一个根\r\n", new UTF8Encoding(false));
+                var repointed = new SettingsService(globalDir);
+                repointed.LoadGlobal();
+                repointed.AttachRoot(repointed.RootPath, true);
+                r.Check(repointed.RootPath == legacyRoot && repointed.LastModule == "旧版模块",
+                    "本根配置里手写的 rootPath 把引导指针带走了（应忽略该键，指针只认全局那份）");
+
+                // 本根文件坏了：改名留档 + 回默认，绝不去捡全局里那份陈年数据键
+                string brokenRoot = Path.Combine(baseDir, "broken");
+                Directory.CreateDirectory(Path.Combine(brokenRoot, ".PromptFavorites"));
+                File.WriteAllText(
+                    Path.Combine(brokenRoot, ".PromptFavorites", "settings.json"),
+                    new string('a', 70 * 1024), new UTF8Encoding(false));
+                var broken = new SettingsService(globalDir);
+                broken.LoadGlobal();
+                broken.AttachRoot(brokenRoot, true);
+                r.Check(string.IsNullOrEmpty(broken.LastModule) && !broken.FavoriteFilter,
+                    "超大或损坏的本根配置读坏了还带着旧值走（应回默认）");
+                r.Check(Directory.GetFiles(
+                        Path.Combine(brokenRoot, ".PromptFavorites"), "*.corrupt-*.bak").Length == 1,
+                    "损坏的本根配置没改名留档（取证机会被丢掉）");
+            }
+            catch (Exception ex)
+            {
+                r.Check(false, "两层配置自检段异常中断：" + ex.GetType().Name + " " + ex.Message);
+            }
+            finally
+            {
+                TryDelete(baseDir);
+                r.Check(!Directory.Exists(baseDir), "自检临时目录没能清干净：" + baseDir);
+            }
+        }
+
+        private static string MakeTempBase(string tag)
+        {
+            var path = Path.Combine(Path.GetTempPath(),
+                "PromptFavorites-selftest-" + tag + "-" + Guid.NewGuid().ToString("N").Substring(0, 8));
+            Directory.CreateDirectory(path);
+            return path;
+        }
+
+        private static Dictionary<string, string> ReadMap(string file)
+        {
+            if (!File.Exists(file)) return null;
+            return SettingsCodec.Parse(File.ReadAllText(file, new UTF8Encoding(false)));
         }
 
         // ── 模型通知 ───────────────────────────────────────────────

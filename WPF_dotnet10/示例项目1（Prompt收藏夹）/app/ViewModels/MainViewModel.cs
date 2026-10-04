@@ -190,7 +190,22 @@ namespace PromptFavorites.ViewModels
 
         public string DataRootPath { get { return App.RootPath; } }
 
-        public string SettingsFolder { get { return SettingsService.SettingsDirectory; } }
+        /// <summary>当前根目录自己的配置目录；根还没挂上时退化成全局目录。</summary>
+        public string SettingsFolder
+        {
+            get
+            {
+                var root = _settings != null ? _settings.RootSettingsDirectory : null;
+                if (!string.IsNullOrEmpty(root))
+                    return _settings.IsUsingRootSettingsFallback
+                        ? root + "（写不进去，配置暂存全局文件）"
+                        : root;
+                return SettingsService.SettingsDirectory;
+            }
+        }
+
+        /// <summary>全局引导文件所在目录（外观、窗口，以及上次用过的根目录）。</summary>
+        public string GlobalSettingsFolder { get { return SettingsService.SettingsDirectory; } }
 
         public event Action<string> ToastRequested;
 

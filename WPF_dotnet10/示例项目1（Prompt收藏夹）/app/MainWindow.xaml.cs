@@ -142,16 +142,30 @@ namespace PromptFavorites
                 delegate { SelectNewFolder(); }));
 
             menu.AddItem(new UI4MenuItem(
-                UI4MenuItemType.Copy, "\u6253\u5F00\u8BBE\u7F6E\u76EE\u5F55", null,
-                delegate { OpenSettingsFolder(); }));
+                UI4MenuItemType.Copy,
+                "\u6253\u5F00\u8BBE\u7F6E\u76EE\u5F55\uFF08\u5F53\u524D\u6839\uFF09", null,
+                delegate { OpenSettingsFolder(false); }));
+
+            menu.AddItem(new UI4MenuItem(
+                UI4MenuItemType.Copy,
+                "\u6253\u5F00\u5168\u5C40\u8BBE\u7F6E\u76EE\u5F55", null,
+                delegate { OpenSettingsFolder(true); }));
 
             menu.Attach(FolderBtn);
             menu.Open();
         }
 
-        private void OpenSettingsFolder()
+        /// <summary>
+        /// 两层配置各有各的去处：数据类状态在<paramref name="global"/>为 false 时打开的
+        /// <c>&lt;根目录&gt;\.PromptFavorites</c>，外观与窗口在 <c>%APPDATA%\PromptFavorites</c>。
+        /// 根还没挂上（根目录解析失败）时两者退化成同一个全局目录。
+        /// </summary>
+        private void OpenSettingsFolder(bool global)
         {
-            var path = SettingsService.SettingsDirectory;
+            var rootDir = App.Settings != null ? App.Settings.RootSettingsDirectory : null;
+            var path = global || string.IsNullOrEmpty(rootDir)
+                ? SettingsService.SettingsDirectory
+                : rootDir;
 
             try
             {

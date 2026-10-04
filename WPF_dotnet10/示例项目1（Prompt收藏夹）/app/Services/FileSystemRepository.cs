@@ -25,6 +25,9 @@ namespace PromptFavorites.Services
 
             return Directory.GetDirectories(RootPath)
                 .Select(d => Path.GetFileName(d))
+                // 每根配置也住在根目录下（<root>\.PromptFavorites），它不是模块。
+                // 少这层过滤的症状是左栏凭空多一项、还能被改名和删除——删掉等于把本根的视图配置删了。
+                .Where(n => !SettingsService.IsReservedRootEntryName(n))
                 .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }

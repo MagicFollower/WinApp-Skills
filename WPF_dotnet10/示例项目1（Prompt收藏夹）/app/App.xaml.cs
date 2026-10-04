@@ -29,7 +29,7 @@ namespace PromptFavorites
             DispatcherUnhandledException += OnDispatcherUnhandledException;
 
             Settings = new SettingsService();
-            Settings.Load();
+            Settings.LoadGlobal();
 
             // 配色接线：两档都注册进库，档位取设置里存的（默认 Light）。
             // 必须在 base.OnStartup 之后、且在第一个窗口 Show() 之前——库写回资源字典的第一句
@@ -43,6 +43,11 @@ namespace PromptFavorites
 
             RootPath = rootReady ? resolved : string.Empty;
             Settings.RootPath = RootPath;
+
+            // 挂上根目录才谈得上"这个根自己的配置"。inheritUnmigrated=true：本根还没有配置文件时，
+            // 允许把旧版全局文件里残留的数据键接过来，第一次 Save 就把它们落到本根、并从全局摘掉。
+            // 顺序上必须在 new MainViewModel 之前——那个构造函数会读 lastModule/排序档/收藏筛选。
+            Settings.AttachRoot(RootPath, true);
 
             MainViewModel viewModel = null;
             try
@@ -91,7 +96,11 @@ namespace PromptFavorites
                 Typography.ClampBase(Settings.BaseFontSize));
         }
 
-        /// <summary>切换根目录：先校验可用再落盘，失败时不污染已保存的设置。</summary>
+        /// <summary>
+        /// 切换根目录：先校验可用再落盘，失败时不污染已保存的设置。
+        /// 落盘顺序是这条流程的关键——旧根的状态必须先写回<b>旧根自己的</b>配置文件，
+        /// 新根那份再单独读进来；两步都做过之后，两个根才真的各记各的。
+        /// </summary>
         internal static bool ChangeRootPath(string newPath)
         {
             string resolved;
@@ -103,8 +112,13 @@ namespace PromptFavorites
                 return false;
             }
 
+            // 此刻 Settings 还挂在旧根上，这次 Save 写的就是旧根那份。
+            Settings.Save();
+
             RootPath = resolved;
             Settings.RootPath = resolved;
+            Settings.AttachRoot(resolved, false);
+
             Service = new PromptService(new FileSystemRepository(resolved));
 
             var window = Current.MainWindow;
