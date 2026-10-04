@@ -9,7 +9,7 @@ using StartUI4Controls;
 
 namespace MemoTask.ViewModels
 {
-    /// <summary>强调色预设的小方块：Key 是 #RRGGBB，色块本身就不该跟主题走，所以直接喂给按钮的渐变端点。</summary>
+    /// <summary>强调色预设的小方块。Key 是 #RRGGBB，也是点下去要写进设置的值；色块本身不跟主题走。</summary>
     internal sealed class AccentSwatch
     {
         public AccentSwatch(string hex)
@@ -18,16 +18,11 @@ namespace MemoTask.ViewModels
             Color color;
             if (!Theme.TryParseHex(hex, out color)) color = Theme.Accent;
             Color = color;
-            Brush brush = new SolidColorBrush(color);
-            brush.Freeze();
-            Fill = brush;
         }
 
         public string Key { get; private set; }
 
         public Color Color { get; private set; }
-
-        public Brush Fill { get; private set; }
     }
 
     /// <summary>

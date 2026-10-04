@@ -8,7 +8,8 @@
         <StackPanel Margin="20,20,20,12">
 
             <!-- 应用信息 -->
-            <ui:UI4Panel CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+            <ui:UI4Panel CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12"
+                         HoverScale="1">
                 <StackPanel Margin="20,16,20,20">
                     <TextBlock Text="应用信息" FontSize="17" FontWeight="SemiBold"
                                Foreground="{DynamicResource UI4.Brush.Text}"/>
@@ -81,7 +82,8 @@
             </ui:UI4Panel>
 
             <!-- 外观 -->
-            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12"
+                         HoverScale="1">
                 <StackPanel Margin="20,16,20,20">
                     <TextBlock Text="外观" FontSize="17" FontWeight="SemiBold"
                                Foreground="{DynamicResource UI4.Brush.Text}"/>
@@ -97,7 +99,7 @@
                         <TextBlock Grid.Column="0" Text="明暗模式" FontSize="13" VerticalAlignment="Center"
                                    Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <ui:UI4ComboBox Width="160" Height="36"
+                            <ui:UI4ComboBox MinWidth="160" Height="36"
                                             ItemsSource="{Binding ThemeOptions}" DisplayMemberPath="Label"
                                             SelectedValuePath="Key" SelectedValue="{Binding ThemeKey, Mode=TwoWay}"/>
                             <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" FontSize="12"
@@ -114,7 +116,7 @@
                         <TextBlock Grid.Column="0" Text="渲染档位" FontSize="13" VerticalAlignment="Center"
                                    Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <ui:UI4ComboBox Width="160" Height="36"
+                            <ui:UI4ComboBox MinWidth="204" Height="36"
                                             ItemsSource="{Binding RenderModeOptions}" DisplayMemberPath="Label"
                                             SelectedValuePath="Key" SelectedValue="{Binding RenderModeKey, Mode=TwoWay}"/>
                             <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap"
@@ -148,23 +150,10 @@
                                               Command="{Binding ResetAccentCommand}"/>
                             </StackPanel>
 
-                            <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding AccentSwatches}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <ui:UI4Button Width="44" Height="30" Margin="0,0,8,0"
-                                                      CornerRadius="6"
-                                                      GradientStart="{Binding Color}" GradientEnd="{Binding Color}"
-                                                      Command="{Binding DataContext.SetAccentCommand,
-                                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                      CommandParameter="{Binding Key}"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <!-- 色板由 SettingsView.xaml.cs 手搭 UI4Button：这个控件在构造里给
+                                 GradientStart/End 挂了 SetResourceReference，DataTemplate 内宿主赋的本地值
+                                 会在容器实例化时被资源引用顶回主题色。代码后台创建不走那条时序。 -->
+                            <WrapPanel x:Name="AccentPalette" Margin="0,12,0,0"/>
                         </StackPanel>
                     </Grid>
 
@@ -174,7 +163,8 @@
             </ui:UI4Panel>
 
             <!-- 行为 -->
-            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12"
+                         HoverScale="1">
                 <StackPanel Margin="20,16,20,20">
                     <TextBlock Text="行为" FontSize="17" FontWeight="SemiBold"
                                Foreground="{DynamicResource UI4.Brush.Text}"/>
@@ -189,7 +179,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="启动页" FontSize="13" VerticalAlignment="Center"
                                    Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
-                        <ui:UI4ComboBox Grid.Column="1" Width="180" Height="36" HorizontalAlignment="Left"
+                        <ui:UI4ComboBox Grid.Column="1" MinWidth="192" Height="36" HorizontalAlignment="Left"
                                         ItemsSource="{Binding StartPageOptions}" DisplayMemberPath="Label"
                                         SelectedValuePath="Key" SelectedValue="{Binding StartPageKey, Mode=TwoWay}"/>
                     </Grid>
@@ -201,7 +191,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="备忘自动保存" FontSize="13" VerticalAlignment="Center"
                                    Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
-                        <ui:UI4ComboBox Grid.Column="1" Width="200" Height="36" HorizontalAlignment="Left"
+                        <ui:UI4ComboBox Grid.Column="1" MinWidth="224" Height="36" HorizontalAlignment="Left"
                                         ItemsSource="{Binding AutoSaveOptions}" DisplayMemberPath="Label"
                                         SelectedValuePath="Key" SelectedValue="{Binding AutoSaveKey, Mode=TwoWay}"/>
                     </Grid>
@@ -213,7 +203,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="待办默认优先级" FontSize="13" VerticalAlignment="Center"
                                    Foreground="{DynamicResource UI4.Brush.TextMuted}"/>
-                        <ui:UI4ComboBox Grid.Column="1" Width="140" Height="36" HorizontalAlignment="Left"
+                        <ui:UI4ComboBox Grid.Column="1" MinWidth="144" Height="36" HorizontalAlignment="Left"
                                         ItemsSource="{Binding PriorityOptions}" DisplayMemberPath="Label"
                                         SelectedValuePath="Key" SelectedValue="{Binding DefaultPriorityKey, Mode=TwoWay}"/>
                     </Grid>
@@ -221,7 +211,8 @@
             </ui:UI4Panel>
 
             <!-- 数据 -->
-            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12"
+                         HoverScale="1">
                 <StackPanel Margin="20,16,20,20">
                     <TextBlock Text="数据" FontSize="17" FontWeight="SemiBold"
                                Foreground="{DynamicResource UI4.Brush.Text}"/>
@@ -252,7 +243,8 @@
             </ui:UI4Panel>
 
             <!-- 快捷键 -->
-            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12">
+            <ui:UI4Panel Margin="0,16,0,0" CornerRadius="12" ShadowDepth="6" ShadowBlurRadius="12" ShadowOpacity="0.12"
+                         HoverScale="1">
                 <StackPanel Margin="20,16,20,20">
                     <TextBlock Text="快捷键" FontSize="17" FontWeight="SemiBold"
                                Foreground="{DynamicResource UI4.Brush.Text}"/>

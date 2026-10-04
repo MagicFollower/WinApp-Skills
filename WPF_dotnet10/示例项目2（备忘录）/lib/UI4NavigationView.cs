@@ -204,10 +204,7 @@ namespace StartUI4Controls
 
         private void OnItemHoverColorChanged(Color oldValue, Color newValue)
         {
-            if (_listBox != null)
-            {
-                _listBox.HoverBackground = newValue;
-            }
+            ForEachListBox(delegate (UI4ListBox lb) { lb.HoverBackground = newValue; });
         }
 
         public static readonly DependencyProperty ItemBackgroundProperty =
@@ -240,10 +237,7 @@ namespace StartUI4Controls
 
         private void OnItemPressedBackgroundChanged(Color oldValue, Color newValue)
         {
-            if (_listBox != null)
-            {
-                _listBox.PressedBackground = newValue;
-            }
+            ForEachListBox(delegate (UI4ListBox lb) { lb.PressedBackground = newValue; });
         }
 
         public static readonly DependencyProperty ItemPressedForegroundProperty =
@@ -266,10 +260,7 @@ namespace StartUI4Controls
 
         private void OnItemPressedForegroundChanged(Color oldValue, Color newValue)
         {
-            if (_listBox != null)
-            {
-                _listBox.PressedForeground = newValue;
-            }
+            ForEachListBox(delegate (UI4ListBox lb) { lb.PressedForeground = newValue; });
         }
 
         public static readonly DependencyProperty ItemHoverForegroundProperty =
@@ -292,10 +283,7 @@ namespace StartUI4Controls
 
         private void OnItemHoverForegroundChanged(Color oldValue, Color newValue)
         {
-            if (_listBox != null)
-            {
-                _listBox.HoverForeground = newValue;
-            }
+            ForEachListBox(delegate (UI4ListBox lb) { lb.HoverForeground = newValue; });
         }
 
         public static readonly DependencyProperty ItemForegroundProperty =
@@ -318,10 +306,17 @@ namespace StartUI4Controls
 
         private void OnItemForegroundChanged(Brush oldValue, Brush newValue)
         {
-            if (_listBox != null)
-            {
-                _listBox.Foreground = newValue;
-            }
+            ForEachListBox(delegate (UI4ListBox lb) { lb.Foreground = newValue; });
+        }
+
+        /// <summary>
+        /// 五个 Item* 回调都要同时喂常规列表和底部列表：<c>_bottomListBox</c> 只在 <see cref="OnApplyTemplate"/>
+        /// 里配过一次，不补就会冻在首次套模板时那套主题的配色（浅色档下底部项直接看不见）。
+        /// </summary>
+        private void ForEachListBox(Action<UI4ListBox> apply)
+        {
+            if (_listBox != null) apply(_listBox);
+            if (_bottomListBox != null) apply(_bottomListBox);
         }
 
         public static readonly DependencyProperty HeaderProperty =

@@ -28,11 +28,13 @@
                            ShowClearButton="True"
                            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <ui:UI4ComboBox Grid.Column="2" Width="140" Height="36" Margin="0,0,12,0"
+            <ui:UI4ComboBox Grid.Column="2" MinWidth="144" Height="36" Margin="0,0,12,0"
+                            HorizontalAlignment="Left"
                             ItemsSource="{Binding TagOptions}" DisplayMemberPath="Label"
                             SelectedValuePath="Key" SelectedValue="{Binding TagFilter, Mode=TwoWay}"/>
 
-            <ui:UI4ComboBox Grid.Column="3" Width="132" Height="36"
+            <ui:UI4ComboBox Grid.Column="3" MinWidth="160" Height="36"
+                            HorizontalAlignment="Left"
                             ItemsSource="{Binding SortOptions}" DisplayMemberPath="Label"
                             SelectedValuePath="Key" SelectedValue="{Binding SortKey, Mode=TwoWay}"/>
         </Grid>
@@ -65,7 +67,7 @@
                                 IsSynchronizedWithCurrentItem="False"
                                 ItemMargin="24" ItemCornerRadius="12"
                                 ShadowDepth="12" ShadowBlurRadius="12" ShadowOpacity="0.16"
-                                HoverScale="1.02"
+                                HoverScale="1"
                                 Background="Transparent">
                     <ui:UI4ListView.ItemTemplate>
                         <DataTemplate>
@@ -126,6 +128,7 @@
             <!-- 编辑档 -->
             <ui:UI4Panel Grid.Column="2" CornerRadius="12" ContentPadding="0"
                          ShadowDepth="8" ShadowBlurRadius="15" ShadowOpacity="0.1"
+                         HoverScale="1"
                          Visibility="{Binding ShowDetail, Converter={StaticResource BoolToVis}}">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>

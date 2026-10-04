@@ -175,9 +175,10 @@ namespace StartUI4Controls
 
         public UI4Panel()
         {
-            // 声明式跟随主题：面板底与投影色挂令牌
+            // 声明式跟随主题：面板底、投影色与悬浮描边都挂令牌
             SetResourceReference(BackgroundProperty, "UI4.Brush.Background");
             SetResourceReference(ShadowColorProperty, "UI4.Color.Shadow");
+            SetResourceReference(HoverBorderBrushProperty, "UI4.Brush.BorderHover");
             Style = BuildPanelStyle();
             Cursor = Cursors.Arrow;
         }

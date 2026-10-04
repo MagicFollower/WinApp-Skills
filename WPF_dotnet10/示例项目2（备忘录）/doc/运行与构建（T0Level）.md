@@ -299,7 +299,18 @@ PASS 整幅一致（1024 像素全等）
 
 ### 上游与恢复
 
-- **`lib/` 是上游逐文件镜像**（`MagicFollower/WinApp-Skills` 的 `WPF_dotnet10/componentSourceCode/StartUI4Controls`）。少文件或改过文件导致构建异常时，跑 Skill 的 `fetch-source.ps1` 补齐（本地优先、缺口才回源、按 blob sha 校验），别手工去上游粘文件。上游改版后刷新顺序：`-Refresh` → `make-manifest.ps1` → 再 `fetch-source.ps1` 看 `VERIFY ok`。
+- **`lib/` 本来是上游逐文件镜像**（`MagicFollower/WinApp-Skills` 的 `WPF_dotnet10/componentSourceCode/StartUI4Controls`）。少文件导致构建异常时，跑 Skill 的 `fetch-source.ps1` 补齐（本地优先、缺口才回源、按 blob sha 校验），别手工去上游粘文件。上游改版后刷新顺序：`-Refresh` → `make-manifest.ps1` → 再 `fetch-source.ps1` 看 `VERIFY ok`。
+  **现状更正：有四个文件被本工程有意改过，不再是镜像**（第 1-2 行的成因见下面「四个坑」第 4 条，第 3-4 行见「交互反馈口径」一节）：
+
+  | 文件 | 本工程 blob | 上游种子 blob | 改了什么 |
+  | --- | --- | --- | --- |
+  | `lib\UI4ListBox.cs` | `8588266b56dc6915e7591cfa8ef1888f7e8fe1b3` | `d9947460b376c6fdeb42d74ab7398a68eec32f06` | 悬浮/选中触发器的画刷由快照改成 `ColorToBrushConverter` 活绑定 |
+  | `lib\UI4NavigationView.cs` | `81d054f246ad5437cd4a9657212d5ddb41e2385f` | `f840dd24ad1af2ebee782d815abfdd2065c53afb` | 五个 `Item*Changed` 回调经 `ForEachListBox` 同时喂两个列表 |
+  | `lib\UI4ListView.cs` | `5a2c079da409d7125e331885513259efa978e1a6` | `7fa8f61a76c286642d998d0b749d935667434eed` | 新增 `HoverBorderBrush` / `SelectedBorderBrush` 两个模板触发器 |
+  | `lib\UI4Panel.cs` | `645c0a09fd5a6ecb036a42a5b1de41a01fa41b56` | `77eb5f40c37e206d06d861e80a690eff8005b825` | `HoverBorderBrush` 挂上 `UI4.Brush.BorderHover` 令牌（原来是不跟主题的字面色） |
+
+  所以 `fetch-source.ps1` 现在会对这四个文件报漂移，`make-manifest.ps1` 重钉清单前别把它当污染处理。要退回上游原样就用种子覆盖这四个文件，代价是浅色档下导航栏文字对比度回到 1.20:1、卡片与设置卡片的悬浮反馈回到"只放大不改边框"。
+  **改库前必读**：`lib/` 是 `ProjectReference` 进来的整份源码、归本工程所有，"保持与上游镜像一致"不是本项目的约束；但每次动完要把行尾归一回 LF（编辑工具会把整个文件转成 CRLF，`diff` 就会显示成整文件重写），并回写这张表。
 
 ### 主题通路
 
@@ -311,14 +322,14 @@ PASS 整幅一致（1024 像素全等）
 - **38 个令牌里没有状态色**（没有 `Danger` / `Warning`），所以删除按钮、逾期/优先级文字色用的是 `app\Helpers\Theme.cs` 里的固定色（`{x:Static h:Theme.Danger}` 等）；这两条色对亮/暗两档底色的对比度由 `--selftest` 钉住（≥3.0）。写 `UI4.Color.Danger` 这种不存在的键**不报编译错**，只表现为画不出东西（本轮实测踩过一次）。
 - **`UI4NavigationView` 的三个坑**：`ItemFontSize` 这个 DP 的 `OwnerType` 登记在 `UI4NavigationView` 上，XAML 挂不上，只能 `Nav.SetValue(UI4NavigationViewItem.ItemFontSizeProperty, 12.0)`（库默认 10 px，低于可读下限）；它是 `ItemsControl`，右侧内容靠 `SelectedItem.Content`，页面 Key 用 `UI4NavigationViewItem.Tag`（`notes`/`todos`/`settings`），程序化改 `SelectedItem` 不会触发 `SelectionChanged` 的常规绑定期望，所以 `MainWindow` 用 `DependencyPropertyDescriptor.FromName("SelectedItem", …).AddValueChanged` 才接得住；`ItemText/ItemIcon/…` 那五个颜色 DP 没接令牌（手册 §4.11），本应用在 `MainWindow.xaml` 里逐个写了 `{DynamicResource UI4.Brush.*}` 才跟主题。
 - **默认 TwoWay 的绑定点上要写 `Mode=OneWay`**，否则窗口创建期直接抛"无法对只读属性进行 TwoWay 绑定"（本轮实测：`Run.Text` 绑 `StartedText` 让窗口起不来，异常落 `%APPDATA%\MemoTask\error.log`）。同理，`ComboBox` 的 `SelectedValue` 回写要挡 `null`（`ItemsSource` 重建时会把 `null` 写回，把用户选的标签筛选悄悄清掉）；选项对象得覆写 `ToString()` 返回中文 Label，否则闭合态显示类型名。
-- **`UI4PasswordBox.Password` 绑定要显式 `Mode=TwoWay`**；`UI4ListView/UI4GridView` 的悬浮放大是按像素预算反算钳过的，越出父容器不是 bug 而是 `HoverScale` 太大被钳住的表象。本应用备忘列表用 `UI4ListView` + `ItemMargin="24"`，正好吃满 8 px 放大预算。
+- **`UI4PasswordBox.Password` 绑定要显式 `Mode=TwoWay`**；`UI4ListView/UI4GridView` 的悬浮放大是按像素预算反算钳过的，越出父容器不是 bug 而是 `HoverScale` 太大被钳住的表象。**本应用已把这条反馈关掉**（见下一节「交互反馈口径」），`ItemMargin="24"` 现在只当普通间距与投影外溢用，不再是放大预算。
 - **`UI4CodeEditor` 的语法高亮不跟主题**（AvalonEdit 由 XSHD 决定），本应用未使用该控件。
 - **本应用没有托盘图标**（`UI4NotifyIcon` 未使用）。若将来加，必须在 `OnClosing` 里 `Visibility = Collapsed; Dispose();`，否则托盘残留点不动的死图标（Shell 行为，不是库的 bug）；它的 `MenuActivation` 是从没被读过的死属性。
 
 ### 自适应与间距
 
 - **界面自适应当编码期约束**，不是收尾补丁：`MinWidth/MinHeight` 定下限（本应用 720×480）；多栏布局按 `ActualWidth` 分档而不是写死宽度（备忘录页在内容区宽 ≥ 760 时"列表 + 编辑器"并排，窄档改单栏并用「返回列表」切换，见 `NotesViewModel.ShowList/ShowDetail` 与 `MainWindow.UpdatePanes`）；`app.manifest` 的 PerMonitorV2 声明别删（net10 的 WPF 仍按清单取 DPI 级别）；字体族走系统栈（`Segoe UI Variable Text, Segoe UI`），正文不小于 12；窗口尺寸/位置持久化，恢复时做越界回正（`Helpers\Monitors.cs` 用 `MonitorFromPoint` 判三点，判不过就 `ClampToNearestMonitor`；DIP 与物理像素别混在一个单位里比）。
-- **间距刻度与外溢余量**：`Margin/Padding` 只用 4 的倍数（4/8/12/16/20/24/32）——同排兄弟 ≥ 8、分组之间 ≥ 16、内容到窗口边缘 ≥ 16；卡片外边距要 ≥ `ShadowDepth + ShadowBlurRadius`（本应用列表卡片 `Margin="24"` 对 `ShadowDepth=12 + ShadowBlurRadius=12 = 24`；`UI4Panel` 默认是 8+5≈13）；`UI4ListView`/`UI4GridView` 的 `ItemMargin` 左右 ≥ 10，不然悬浮放大被 `EdgeReserve=6` 吃光、看起来像控件坏了。别用 `ClipToBounds` 兜溢出，切边正是它的效果。静态自查用仓库根脚本（含 `Views\` 与 `InnerPadding`）：
+- **间距刻度与外溢余量**：`Margin/Padding` 只用 4 的倍数（4/8/12/16/20/24/32）——同排兄弟 ≥ 8、分组之间 ≥ 16、内容到窗口边缘 ≥ 16；卡片外边距要 ≥ `ShadowDepth + ShadowBlurRadius`（本应用列表卡片 `Margin="24"` 对 `ShadowDepth=12 + ShadowBlurRadius=12 = 24`；`UI4Panel` 默认是 8+5≈13）；`UI4ListView`/`UI4GridView` 的 `ItemMargin` 左右 ≥ 10，不然悬浮放大被 `EdgeReserve=6` 吃光、看起来像控件坏了（**这条只在开着 `HoverScale` 时成立；本应用已把放大关掉，见下一节**）。别用 `ClipToBounds` 兜溢出，切边正是它的效果。静态自查用仓库根脚本（含 `Views\` 与 `InnerPadding`）：
 
        .\scan-spacing.ps1
 
@@ -335,7 +346,38 @@ PASS 整幅一致（1024 像素全等）
    off_scale_count=0
    ```
 
-### 本应用踩过并修掉的两个坑（改同类代码前先看这两条）
+### 交互反馈口径（2026-10-04 定：悬浮一律走描边色，不走放大）
+
+- **可悬浮的表面只有三种描边色**，粗细一律不变（改粗细会把卡片内容挤得位移）：
+
+  | 状态 | 令牌 | 暗档实测 | 亮档实测 |
+  | --- | --- | --- | --- |
+  | 静止 | `UI4.Color.PanelBorder` | `#353F60`（列表卡）/ `#31394E`（设置卡） | `#D0D7F7` |
+  | 悬浮 | `UI4.Color.BorderHover`（= 强调色） | `#7A93F5` | `#4F6BE8` |
+  | 选中（列表卡） | `UI4.Color.ListSelected` | `#3B7BFF` | `#2563EB` |
+
+- **放大一律显式钉 `HoverScale="1"`**：`UI4ListView` 2 处（备忘录列表、待办列表）+ `UI4Panel` 7 处（设置 5 张卡、备忘详情卡、待办编辑卡）。库里 `UI4ListView.HoverScale` 默认 **1.01**、`UI4Panel.HoverScale` 默认 **1.005**，所以**不写就等于开着**。判据：同屏量悬浮卡与静止卡的左边缘 x，两者都 = 124（开着 1.005 会差约 3 px）。
+- **选中压得住悬浮**：`UI4ListView` 的模板触发器里悬浮先加、选中后加，两条同时命中时后者胜出——实测在已选中的卡上再压鼠标，描边仍是 `#3B7BFF`。
+- **`ListSelected` 原本是 38 个令牌里没人消费的 8 个之一**，这里第一次用起来。注意它亮暗两档都是饱和蓝，所以**强调色也选蓝色系时（例如默认的 `#4F6BE8`）悬浮与选中会偏像**；要拉开就在 `Helpers\Theme.cs` 里给它派生一个非强调色。
+- **下拉框只写 `MinWidth`、不写 `Width`**，取值 = 该框最宽选项的实测宽再进位到 4 的倍数 + 4。2026-10-04 用真控件量（临时目录探针逐个 `Measure` 读 `DesiredSize`，字号按各框实际值）：
+
+  | 位置 | 原 `Width` | 最宽选项实测 | 现 `MinWidth` |
+  | --- | --- | --- | --- |
+  | 备忘录·标签筛选 | 140 | 全部标签 = 140 | 144 |
+  | 备忘录·排序 | 132 | 按修改时间 = 155 | 160 |
+  | 待办·优先级（添加条 / 编辑卡） | 104 | 普通 = 110 | 116 |
+  | 待办·筛选（`FontSize=13`） | 116 | 未来 7 天 = 133.6 | 140 |
+  | 待办·排序（`FontSize=13`） | 116 | 按添加时间 = 145 | 152 |
+  | 设置·明暗模式 | 160 | 跟随系统 = 140 | 160（本来没截断，只把 `Width` 换成 `MinWidth`） |
+  | 设置·渲染档位 | 160 | 自动（硬件加速） = 200 | 204 |
+  | 设置·启动页 | 180 | 上次浏览的页面 = 185 | 192 |
+  | 设置·自动保存 | 200 | 关闭（只认 Ctrl+S） = 216.8 | 224 |
+  | 设置·默认优先级 | 140 | 普通 = 110 | 144（本来没截断） |
+
+  为什么是 `MinWidth` 而不是 `Width`：`MinWidth ≥ 最宽选项` ⇒ 闭合态无论选到哪一项都不截断；而标签框的选项是用户数据、长度无上限，`MinWidth`-only 让它遇到长标签时自己变宽而不是裁字。控件自身装饰约 80 px（左内边距 12 + 右内边距 30 + 箭头列 36），上表的数已经含进去了。
+  **换机器要重量**：本机 WPF 解析到的字体是 `HarmonyOS Sans SC Medium`，15px 下一个汉字 ≈ 15 px、装饰 ≈ 80 px；换字体环境这两个数会漂，所以表里是"本机实测"而不是通用常数。弹层侧不用管——库里 `UI4ComboBox` 已把 `Popup` 的 `MinWidth` 绑到控件自身宽度。
+
+### 本应用踩过并修掉的四个坑（改同类代码前先看这四条）
 
 1. **`settings.json` 会静默写不出去**（首轮运行必现）。`AppSettings.Window.Left/Top` 默认是 `double.NaN`（含义 = 还没落过位），而 `System.Text.Json` 默认序列化 `NaN` **抛 `ArgumentException`**：
 
@@ -347,6 +389,36 @@ PASS 整幅一致（1024 像素全等）
 2. **本机截屏通路在硬件加速态取不到帧**。症状：窗口标题栏在、`ContentRendered` 正常触发、底色确实取到了深色，但 `CopyFromScreen`、`PrintWindow`、整屏截图**全是白的**；把进程切到软件渲染（`RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly`）后截图立刻正常。判读：这是本机图形/截屏栈的问题，不是应用画错了。
    落成的产品能力：设置页 → 外观 → **渲染档位**（`WPF 默认（硬件加速）` / `软件渲染`，存 `settings.json` 的 `RenderMode`，只在建窗口前生效所以**改完要重启**）。代码默认 `auto`（可移植，不该被本机的毛病拖着走）；本机 `%APPDATA%\MemoTask\settings.json` 现值已设为 `software`。
    **由此得一条验收纪律：颜色类结论要么人眼看窗口，要么先把 `RenderMode` 设成 `software` 再截图；硬件加速态下的白屏截图不算证据。**
+3. **`UI4Button` 的 `GradientStart/GradientEnd` 在 `DataTemplate` 里盖不住**（症状：设置页强调色色板 6 块全变成同一个当前主题渐变，看不出蓝/青/绿/橙/红/紫）。`lib\UI4Button.cs:125-126` 在构造函数里给这两个 DP 挂了 `SetResourceReference("UI4.Color.Accent" / "UI4.Color.AccentEnd")`；宿主在 `DataTemplate` 内写 `GradientStart="{Binding Color}"` 想覆盖，但模板容器实例化时资源引用会后置解析、把本地绑定整个顶掉（`ReadLocalValue` 回成 `ResourceReferenceExpression`），画出来就是 `Accent → AccentEnd`。
+   对照实验（本机实测：临时目录整份复制 `lib` 建探针工程，同一次运行里跑 8 组，`SetAccent` 前后各读一次）：
+
+   | 覆盖方式 | 结果 |
+   | --- | --- |
+   | 代码 `SetValue` 本地值 | 盖住，纯色 |
+   | 代码 `SetBinding` | 盖住，纯色 |
+   | `XamlReader.Parse` 直接解析的元素 + Binding | 盖住，纯色 |
+   | **`DataTemplate` 内 + Binding** | **盖不住**，回成主题色 |
+   | `DataTemplate` 内改绑 `Background` | 盖住（库没给 `Background` 挂资源引用） |
+
+   `SetAccent` 前后结果一致 → 不是"换主题才冲掉"，是容器实例化那一刻本地绑定就没保住。同一模板里的 `Width/Margin/CornerRadius` 都生效，只有这两个挂了资源引用的 DP 被顶，所以别拿"XAML 本地值优先"的直觉套在这条通路上。
+   修法（这条不改 `lib`，改在宿主侧就够；下面第 4 条那种根因在库里的才动库）：色板从 XAML 的 `ItemsControl + DataTemplate` 挪进 `Views\SettingsView.xaml.cs`，代码后台 `new UI4Button` 手搭、四个色位全走本地值；只有"选中描边"那两处仍用 `SetResourceReference("UI4.Brush.Text")`——代码后台创建的实例资源引用正常解析，而这里本来就要跟主题。顺带给当前生效色加了描边 + `✓`（`AccentHex` 变化时由 `PropertyChanged` 重标）。
+   判据（`RenderMode=software` 下截窗取色）：修前 6 块逐块都是 `#42FA44 → #67BDBC`；修后横向取 5 点全等的纯色 `#4F6BE8 / #1B93A8 / #218A5B / #B26A00 / #E5484D / #8B5CF6`，亮暗两档一致。点击链路另测：模拟点第 6 块 → 预览块与 `AccentHex` 变 `#8B5CF6`、全站强调色转紫、「恢复默认」出现、勾落在第 6 块。
+   范围：全工程另三处 `GradientStart/End="{x:Static h:Theme.Danger}"`（`TodosView.xaml:146`、`NotesView.xaml:208`、`SettingsView.xaml:240`）都在 `DataTemplate` 外，属上表第一/第三行那两条成立的通路，未改。
+4. **`UI4ListBox` 触发器烤快照 + `UI4NavigationView` 只配一个列表 → 运行期切档后导航栏文字冻在旧主题**（症状：暗档跑着切到浅色，左侧「设置」和当前页那一项变成 `#E4EAF2` 压 `#FDFEFE`，对比度 **1.20:1** 几乎看不见；一直用暗档、或每次冷启动进哪一档就停在哪一档，都撞不到）。两条独立成因：
+   - **D1** `UI4ListBox.BuildListStyle()` 把 `new SolidColorBrush(HoverForeground)` / `new SolidColorBrush(PressedForeground)` 当**值**烤进 `IsMouseOver` / `IsSelected` 触发器，而库刷新主题的通路是 `OnStyleRefresh` 重建 `Style`、再由 `Style` 的 setter 下发 `ItemContainerStyle`；`UI4NavigationView.ConfigureListBox` 却把 `ItemContainerStyle` 赋成了**本地值**，把那条 setter 永久遮蔽 → 选中项的字色冻在首次套模板那一刻。
+   - **D2** `UI4NavigationView` 那五个 `On Item*Changed` 回调（`ItemForeground` / `ItemHoverColor` / `ItemPressedBackground` / `ItemPressedForeground` / `ItemHoverForeground`）全部只写 `_listBox`，`_bottomListBox` 只在 `OnApplyTemplate` 里配过一次 → 底部项从此不跟主题。
+   判据实验（无鼠标无截屏：临时目录整份复制 `lib` 建探针，直接读容器 `Foreground` 的有效值）——修前：
+
+   ```
+   ==== light after flip, BBB selected ====
+     container 'AAA'    selected=False effectiveFg=#1E1E1E   跟上了
+     container 'BBB'    selected=True  effectiveFg=#E6E6E6   陈旧（D1）
+     container 'BOTTOM' selected=False effectiveFg=#E6E6E6   陈旧（D2）
+   ```
+
+   修法（两条都落在库里，就是上一节那两个偏离种子的 blob）：D1 把那两个触发器 setter 换成 `Binding(...) + Internal.ColorToBrushConverter.Instance`——库里 `UI4CheckBox`/`UI4Radio`/`UI4TextBox`/`UI4ListView`/`UI4GridView`/`UI4PasswordBox` 六处早就是这个写法，`UI4ListBox` 是唯一还在烤快照的；D2 加一个 `ForEachListBox(Action<UI4ListBox>)`，让五个回调同时喂两个列表。修后探针三处全部 `#1E1E1E`，且 `containerStyle` 仍是库自己重建的 `LOCAL` 值（导航项 70×70 观感不变）。
+   真窗口验收（`RenderMode=software`；切档前把窗口摆到固定位置，并用 `WindowFromPoint` 证明点击坐标属于本进程 pid，不属于就只截图不发点击）：暗→亮后再选中一个常规项，三处导航文字全部 `#10202A` 压 `#FDFEFE` = **16.47:1**；反向亮→暗 = **11.99:1**。同场景修前 1.20:1。
+   两条宿主侧兜底口径也量过、都没采用：`ThemeChanged` 里把 `Nav.Template` 置空再赋回，能逼库重跑 `ConfigureListBox` 把配色修好，但每次切档重套模板有闪动风险、且不解其它 `UI4ListBox` 消费方；"宿主自己走进内部 `UI4ListBox` 补值 + `ClearValue(ItemContainerStyle)`"实测会把导航项那套 70×70/手型容器样式一起清掉（`containerStyle` 从 `LOCAL` 变 `fromStyle`），不可取。
 
 ### PowerShell 侧
 

@@ -26,7 +26,8 @@
                            PlaceholderText="要做什么？回车即添加，可写「明天」「10-20」「+3」"
                            Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <ui:UI4ComboBox Grid.Column="1" Width="104" Height="36" Margin="12,0,0,0"
+            <ui:UI4ComboBox Grid.Column="1" MinWidth="116" Height="36" Margin="12,0,0,0"
+                            HorizontalAlignment="Left"
                             ItemsSource="{Binding PriorityOptions}" DisplayMemberPath="Label"
                             SelectedValuePath="Key" SelectedValue="{Binding NewPriorityKey, Mode=TwoWay}"/>
 
@@ -48,12 +49,12 @@
             <TextBlock Grid.Column="0" Text="{Binding StatusText}" FontSize="12"
                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                        Foreground="{DynamicResource UI4.Brush.Icon}"/>
-            <ui:UI4ComboBox Grid.Column="1" Width="116" Height="32" Margin="0,0,12,0"
-                            FontSize="13"
+            <ui:UI4ComboBox Grid.Column="1" MinWidth="140" Height="32" Margin="0,0,12,0"
+                            FontSize="13" HorizontalAlignment="Left"
                             ItemsSource="{Binding FilterOptions}" DisplayMemberPath="Label"
                             SelectedValuePath="Key" SelectedValue="{Binding FilterKey, Mode=TwoWay}"/>
-            <ui:UI4ComboBox Grid.Column="2" Width="116" Height="32"
-                            FontSize="13"
+            <ui:UI4ComboBox Grid.Column="2" MinWidth="152" Height="32"
+                            FontSize="13" HorizontalAlignment="Left"
                             ItemsSource="{Binding SortOptions}" DisplayMemberPath="Label"
                             SelectedValuePath="Key" SelectedValue="{Binding SortKey, Mode=TwoWay}"/>
         </Grid>
@@ -81,6 +82,7 @@
         <!-- 选中项编辑面板 -->
         <ui:UI4Panel Grid.Row="3" Margin="0,16,0,0" CornerRadius="12"
                      ShadowDepth="0" ShadowBlurRadius="15" ShadowOpacity="0"
+                     HoverScale="1"
                      Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
             <Grid Margin="20,16,20,16">
                 <Grid.RowDefinitions>
@@ -98,7 +100,8 @@
                     <ui:UI4TextBox Grid.Column="0" Height="36" InnerPadding="12"
                                    PlaceholderText="待办标题"
                                    Text="{Binding EditTitle, UpdateSourceTrigger=PropertyChanged}"/>
-                    <ui:UI4ComboBox Grid.Column="1" Width="104" Height="36" Margin="12,0,0,0"
+                    <ui:UI4ComboBox Grid.Column="1" MinWidth="116" Height="36" Margin="12,0,0,0"
+                                    HorizontalAlignment="Left"
                                     ItemsSource="{Binding PriorityOptions}" DisplayMemberPath="Label"
                                     SelectedValuePath="Key" SelectedValue="{Binding EditPriorityKey, Mode=TwoWay}"/>
                     <ui:UI4TextBox Grid.Column="2" Width="132" Height="36" Margin="12,0,0,0" InnerPadding="12"
@@ -159,7 +162,7 @@
                             IsSynchronizedWithCurrentItem="False"
                             ItemMargin="24" ItemCornerRadius="12"
                             ShadowDepth="12" ShadowBlurRadius="12" ShadowOpacity="0.16"
-                            HoverScale="1.01"
+                            HoverScale="1"
                             Background="Transparent">
                 <ui:UI4ListView.ItemTemplate>
                     <DataTemplate>

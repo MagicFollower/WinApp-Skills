@@ -91,6 +91,34 @@ namespace StartUI4Controls
             set => SetValue(ItemBorderThicknessProperty, value);
         }
 
+        public static readonly DependencyProperty HoverBorderBrushProperty =
+            DependencyProperty.Register(
+                nameof(HoverBorderBrush),
+                typeof(Color),
+                typeof(UI4ListView),
+                new PropertyMetadata(Color.FromArgb(255, 0, 120, 212), OnStyleUpdate));
+
+        /// <summary>鼠标经过时的卡片描边色。</summary>
+        public Color HoverBorderBrush
+        {
+            get => (Color)GetValue(HoverBorderBrushProperty);
+            set => SetValue(HoverBorderBrushProperty, value);
+        }
+
+        public static readonly DependencyProperty SelectedBorderBrushProperty =
+            DependencyProperty.Register(
+                nameof(SelectedBorderBrush),
+                typeof(Color),
+                typeof(UI4ListView),
+                new PropertyMetadata(Color.FromArgb(255, 37, 99, 235), OnStyleUpdate));
+
+        /// <summary>选中卡片的描边色。与 <see cref="HoverBorderBrush"/> 分开，否则鼠标一压就分不清选的是哪张。</summary>
+        public Color SelectedBorderBrush
+        {
+            get => (Color)GetValue(SelectedBorderBrushProperty);
+            set => SetValue(SelectedBorderBrushProperty, value);
+        }
+
         public static readonly DependencyProperty ItemPaddingProperty =
             DependencyProperty.Register(
                 nameof(ItemPadding),
@@ -231,6 +259,8 @@ namespace StartUI4Controls
             // 声明式跟随主题：卡片底 / 卡片描边 / 投影色都挂令牌
             SetResourceReference(ItemBackgroundProperty, "UI4.Brush.Surface");
             SetResourceReference(ItemBorderBrushProperty, "UI4.Color.PanelBorder");
+            SetResourceReference(HoverBorderBrushProperty, "UI4.Color.BorderHover");
+            SetResourceReference(SelectedBorderBrushProperty, "UI4.Color.ListSelected");
             SetResourceReference(ShadowColorProperty, "UI4.Color.Shadow");
         }
 
@@ -386,7 +416,34 @@ namespace StartUI4Controls
 
             itemTemplate.VisualTree = itemRoot;
 
-            // 悬浮不再改边框色：整项的反馈只留放大与投影，边框始终保持 ItemBorderBrush。
+            // 整项反馈走描边色而不是改尺寸：Setter.TargetName 只能在模板触发器里用，所以挂在
+            // itemTemplate.Triggers 而不是 itemStyle.Triggers。先加悬浮后加选中——两条同时命中时
+            // 后加入的触发器胜出，选中态压得住悬浮态。粗细不动，避免卡片内容被挤得位移。
+            Trigger hoverBorderTrigger = new Trigger
+            {
+                Property = UIElement.IsMouseOverProperty,
+                Value = true
+            };
+            hoverBorderTrigger.Setters.Add(new Setter(Border.BorderBrushProperty,
+                new Binding(nameof(HoverBorderBrush))
+                {
+                    RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UI4ListView), 1),
+                    Converter = Internal.ColorToBrushConverter.Instance
+                }) { TargetName = "PART_ItemBorder" });
+            itemTemplate.Triggers.Add(hoverBorderTrigger);
+
+            Trigger selectedBorderTrigger = new Trigger
+            {
+                Property = ListBoxItem.IsSelectedProperty,
+                Value = true
+            };
+            selectedBorderTrigger.Setters.Add(new Setter(Border.BorderBrushProperty,
+                new Binding(nameof(SelectedBorderBrush))
+                {
+                    RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UI4ListView), 1),
+                    Converter = Internal.ColorToBrushConverter.Instance
+                }) { TargetName = "PART_ItemBorder" });
+            itemTemplate.Triggers.Add(selectedBorderTrigger);
 
             itemStyle.Setters.Add(new Setter(Control.TemplateProperty, itemTemplate));
             listStyle.Setters.Add(new Setter(ListBox.ItemContainerStyleProperty, itemStyle));
