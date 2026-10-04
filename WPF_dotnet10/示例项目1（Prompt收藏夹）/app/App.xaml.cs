@@ -22,17 +22,19 @@ namespace PromptFavorites
 
             if (e.Args != null && Array.IndexOf(e.Args, "--selftest") >= 0)
             {
-                Shutdown(SettingsSelfTest.Run());
+                Shutdown(SelfTest.Run());
                 return;
             }
 
             DispatcherUnhandledException += OnDispatcherUnhandledException;
 
-            RegisterAppTheme();
-            UI4Theme.SetTheme(UI4ThemeMode.Light);
-
             Settings = new SettingsService();
             Settings.Load();
+
+            // 配色接线：两档都注册进库，档位取设置里存的（默认 Light）。
+            // 必须在 base.OnStartup 之后、且在第一个窗口 Show() 之前——库写回资源字典的第一句
+            // 就是 Application.Current == null 则 return，早一步会静默不装字典。
+            HostPalette.Apply(Settings.ThemeMode);
 
             string resolved;
             bool rootReady = RootPathResolver.TryEnsure(Settings.RootPath, out resolved)
@@ -74,62 +76,6 @@ namespace PromptFavorites
                 Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle,
                     new Action(PromptForRootPath));
             }
-        }
-
-        /// <summary>
-        /// 应用配色：单一定死的浅色方案（终端靛），在内置 Light 上覆盖全部语义令牌后接管 "light" 键。
-        /// 中性按钮的底必须是浅的——UI4Button 按底色亮度自动挑字色（L&lt;0.45 给白字），
-        /// 中灰底配白字只有 2.4:1；浅中性会让它自动换成正文色（实测 10.8:1）。
-        /// </summary>
-        private static void RegisterAppTheme()
-        {
-            var accent = Theme.Accent;
-            var accentDark = Theme.AccentHover;
-            var surface = Mix(Theme.Background, Colors.White, 0.85f);
-            // 源色的 dark_foreground 对底只有 4.49:1，卡在 AA 线上；向正文混 18% 推到 5.7:1，观感不变
-            var secondary = Mix(Theme.Secondary, Theme.Foreground, 0.18f);
-            var neutral = Mix(Theme.Background, Theme.Muted, 0.62f);
-
-            var def = UI4ThemeDefinition.Light();
-            def.Key = "light";
-            def.With(UI4ThemeToken.Background, Theme.Background)
-               .With(UI4ThemeToken.Surface, surface)
-               .With(UI4ThemeToken.TextForeground, Theme.Foreground)
-               .With(UI4ThemeToken.TextSecondary, secondary)
-               .With(UI4ThemeToken.Accent, accent)
-               .With(UI4ThemeToken.AccentDark, accentDark)
-               .With(UI4ThemeToken.AccentEnd, Theme.Signal)
-               .With(UI4ThemeToken.BorderNormal, Theme.Muted)
-               .With(UI4ThemeToken.BorderSecondary, Mix(Theme.Muted, Theme.Background, 0.45f))
-               .With(UI4ThemeToken.BorderHover, accent)
-               .With(UI4ThemeToken.BorderFocus, accentDark)
-               .With(UI4ThemeToken.Placeholder, Mix(Theme.Muted, Theme.Foreground, 0.30f))
-               .With(UI4ThemeToken.CheckBackground, accentDark)
-               .With(UI4ThemeToken.Icon, secondary)
-               .With(UI4ThemeToken.IconHover, Mix(Theme.Foreground, accent, 0.35f))
-               .With(UI4ThemeToken.PanelBorder, Color.FromArgb(60, accent.R, accent.G, accent.B))
-               .With(UI4ThemeToken.OffBackground, neutral)
-               .With(UI4ThemeToken.MenuBackground, surface)
-               .With(UI4ThemeToken.ListSelected, accent)
-               .With(UI4ThemeToken.HeaderBackground, Mix(Theme.Background, Theme.Foreground, 0.04f))
-               .With(UI4ThemeToken.HeaderForeground, Theme.Foreground)
-               .With(UI4ThemeToken.RowHoverBackground, Mix(Theme.Background, accent, 0.06f))
-               .With(UI4ThemeToken.RowSelectedBackground, Theme.Selection)
-               .With(UI4ThemeToken.GridLine, Mix(Theme.Background, Theme.Muted, 0.45f))
-               .With(UI4ThemeToken.ProgressStart, accent)
-               .With(UI4ThemeToken.CheckBoxUnchecked, Mix(Theme.Muted, Theme.Background, 0.3f))
-               .With(UI4ThemeToken.HoverBorderColorLight, Mix(Theme.Muted, accent, 0.35f));
-            UI4Theme.Register(def);
-        }
-
-        private static Color Mix(Color a, Color b, float w)
-        {
-            if (w <= 0f) return a;
-            if (w >= 1f) return b;
-            return Color.FromArgb(a.A,
-                (byte)(a.R + (b.R - a.R) * w),
-                (byte)(a.G + (b.G - a.G) * w),
-                (byte)(a.B + (b.B - a.B) * w));
         }
 
         /// <summary>切换根目录：先校验可用再落盘，失败时不污染已保存的设置。</summary>

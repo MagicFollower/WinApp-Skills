@@ -64,7 +64,31 @@ namespace PromptFavorites.Services
         public void WriteEntry(string filePath, FrontmatterData data, string body)
         {
             var content = FrontmatterParser.Serialize(data, body);
-            File.WriteAllText(filePath, content, Utf8NoBom);
+            WriteAtomic(filePath, content);
+        }
+
+        /// <summary>
+        /// 临时文件 + 原子替换。<see cref="File.WriteAllText"/> 是截断写：进程被杀或磁盘满时留下半截文件，
+        /// 而半截 frontmatter 缺了闭合的 <c>---</c> 就会被当成"没有 frontmatter"，下次读把整篇当正文——
+        /// 用户看到的现象是元数据凭空消失。替换/改名都是同目录内的原子操作，不存在半截窗口。
+        /// </summary>
+        private static void WriteAtomic(string filePath, string content)
+        {
+            string temp = filePath + ".tmp-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            try
+            {
+                File.WriteAllText(temp, content, Utf8NoBom);
+                if (File.Exists(filePath))
+                    File.Replace(temp, filePath, null);
+                else
+                    File.Move(temp, filePath);
+            }
+            catch
+            {
+                try { if (File.Exists(temp)) File.Delete(temp); }
+                catch { }
+                throw;
+            }
         }
 
         public string CreateModule(string name)
@@ -102,8 +126,10 @@ namespace PromptFavorites.Services
 
         public void RenameEntry(string oldPath, string newPath)
         {
-            if (File.Exists(oldPath))
-                File.Move(oldPath, newPath);
+            if (!File.Exists(oldPath)) return;
+            if (File.Exists(newPath))
+                throw new IOException("\u76ee\u6807\u5df2\u5b58\u5728\uff1a" + newPath);
+            File.Move(oldPath, newPath);
         }
 
         public void DeleteEntry(string filePath)
@@ -119,8 +145,19 @@ namespace PromptFavorites.Services
 
             var fileName = Path.GetFileName(filePath);
             var targetPath = Path.Combine(targetModulePath, fileName);
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath)) return;
+
+            // 同一路径的两种写法（相对/短名）不该被判成冲突，所以先归一化再比
+            if (File.Exists(targetPath) && !SamePath(filePath, targetPath))
+                throw new IOException("\u76ee\u6807\u5df2\u5b58\u5728\uff1a" + targetPath);
+
+            if (!SamePath(filePath, targetPath))
                 File.Move(filePath, targetPath);
+        }
+
+        private static bool SamePath(string a, string b)
+        {
+            return string.Equals(Path.GetFullPath(a), Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase);
         }
 
         public void UpdateFavorite(string filePath, bool favorite)

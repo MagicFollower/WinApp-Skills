@@ -20,9 +20,8 @@
                                   Margin="4,0,0,0"
                                   CornerRadius="14"
                                   FontSize="16" FontWeight="Bold"
-                                  GradientStart="{x:Static h:Theme.Accent}"
-                                  GradientEnd="{x:Static h:Theme.Accent}"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                                  GradientStart="{DynamicResource UI4.Color.Accent}"
+                                  GradientEnd="{DynamicResource UI4.Color.Accent}"
                                   Command="{Binding AddEntryCommand}"
                                   ToolTip="新建条目"/>
                     <ui:UI4Button x:Name="FavoriteBtn"
@@ -30,29 +29,23 @@
                                   Height="28" Padding="10,0"
                                   CornerRadius="14"
                                   FontSize="12"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="FavoriteFilter_Click"/>
                 </DockPanel>
                 <WrapPanel>
                     <ui:UI4Button Content="使用次数" Height="24" Padding="8,0"
                                   CornerRadius="12" FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortUseCount_Click" x:Name="SortUseCountBtn"/>
                     <ui:UI4Button Content="修改时间" Height="24" Padding="8,0"
                                   CornerRadius="12" FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortUpdatedAt_Click" x:Name="SortUpdatedAtBtn"/>
                     <ui:UI4Button Content="创建时间" Height="24" Padding="8,0"
                                   CornerRadius="12" FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortCreatedAt_Click" x:Name="SortCreatedAtBtn"/>
                     <ui:UI4Button Content="名称" Height="24" Padding="8,0"
                                   CornerRadius="12" FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortName_Click" x:Name="SortNameBtn"/>
                     <ui:UI4Button Content="自定义" Height="24" Padding="8,0"
                                   CornerRadius="12" FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortCustom_Click" x:Name="SortCustomBtn"/>
                 </WrapPanel>
             </StackPanel>
@@ -91,7 +84,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
                                 <Button Content="{Binding Favorite, Converter={StaticResource BoolToStar}}"
-                                        Foreground="#FFFFB800" FontSize="12" Margin="8,0,0,0"
+                                        Foreground="{DynamicResource App.Brush.Favorite}" FontSize="12" Margin="8,0,0,0"
                                         Background="Transparent" BorderThickness="0"
                                         Padding="0" Cursor="Hand"
                                         ToolTip="收藏/取消收藏"

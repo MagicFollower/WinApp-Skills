@@ -629,7 +629,7 @@ entryCustomOrder=模块A:标题1|标题2>模块B:标题3
 以下内容未在本次设计中最终确定，可在实现阶段决定：
 
 1. 窗口默认尺寸、最小尺寸、各栏宽度。
-2. 浅色/深色/跟随系统主题。
+2. 浅色/深色/跟随系统主题。 → **已决（2026-10-04）**：做浅色 + 深色两档，界面上手动切换、档位持久化；**不跟随系统**。配色是同源的「终端靛」与「终端靛·夜」，不用组件库内置暗色。详见 README「配色」节与《问题归因与基线核对（2026-10-04）.md》§七。
 3. 全局快捷键呼出快速搜索是否进入 MVP。
 4. 刷新按钮位置。
 5. 根目录下直接存在 `.md` 文件的处理方式。
@@ -667,10 +667,11 @@ entryCustomOrder=模块A:标题1|标题2>模块B:标题3
 
 ## 21. 剪贴板实现说明（技术决策）
 
-结论摘要（完整的问题报告：根因分层、方案取舍、两次误判、改动原理与实测数据见 [`剪贴板卡顿问题报告.md`](剪贴板卡顿问题报告.md)）：
+结论摘要（完整的问题报告：根因分层、方案取舍、两次误判、改动原理与实测数据见《剪贴板卡顿问题报告.md》——**该报告未随本包交付**，2026-10-04 核对时目录内不存在；下面 5 条结论已按当前 `lib/` 源码逐条复核，复核结果就地在各条标注）：
 
 1. 缺陷在组件库不在本应用：库内所有可编辑控件的复制/剪切/粘贴最终落到 WPF 的 `System.Windows.Clipboard`（OLE 通道，抢锁失败在调用线程重试），故"凡是可编辑文本组件，Ctrl+X 都卡约 2 秒"。
-2. 修复落在库内：`UI4Clipboard`（原生 Win32 读写，写/读在后台线程重试后回投 UI 线程；`ContainsText()` 用 `IsClipboardFormatAvailable` 不参与抢锁）+ `Internal/ClipboardCommandTakeover`（`PreviewKeyDown` 隧道接管 Ctrl+C/X/V，装到 `UI4TextBox`/`UI4PasswordBox`/`UI4CodeEditor`/`UI4TextBlock`/`UI4DataGrid`）。
+2. 修复落在库内：`UI4Clipboard`（原生 Win32 读写，写/读在后台线程重试后回投 UI 线程；`ContainsText()` 用 `IsClipboardFormatAvailable` 不参与抢锁）+ `Internal/ClipboardCommandTakeover`（`PreviewKeyDown` 隧道接管 Ctrl+C/X/V）。
+   - 2026-10-04 按当前 `lib/` 源码复核挂载点：`UI4TextBox.cs:165`、`UI4PasswordBox.cs:395`、`UI4CodeEditor.cs:48`、`UI4TextBlock.cs:259`（内部那个只读文本框）。原文此处还列了 `UI4DataGrid` —— **那是 net48 时代的文件名，net10 版里不存在 `UI4DataGrid.cs`**（网格类控件现在叫 `UI4GridView.cs`，它不接管剪贴板）。该说法保留在此作为更正记录，见《问题归因与基线核对（2026-10-04）.md》§四。
 3. 只接在 `CommandBinding.PreviewExecuted` **拦不住真实按键**（实测仍阻塞约 2 秒），必须接按键隧道。
 4. Notepad 式"所有权 + 延迟渲染"在本机不可用（延迟渲染声明固定失败），不采用。
 5. 应用侧不保留任何剪贴板实现，复制按钮直接调 `UI4Clipboard.TrySetTextAsync`（`ViewModels/MainViewModel.cs:179`），失败提示留在应用层。

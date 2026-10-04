@@ -134,6 +134,12 @@ namespace PromptFavorites.Services
                 LastUsedAt = item.LastUsedAt
             };
 
+            // 磁盘上那份可能有外部工具加的字段，本程序不认识也要带回去（未知键不能靠保存来"清洗"）
+            FrontmatterData onDisk;
+            string diskBody;
+            _repo.ReadEntry(item.FilePath, out onDisk, out diskBody);
+            data.AdoptUnknownFrom(onDisk);
+
             _repo.WriteEntry(item.FilePath, data, item.Body);
             item.UpdatedAt = now;
 

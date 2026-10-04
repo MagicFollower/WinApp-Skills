@@ -15,10 +15,11 @@ namespace PromptFavorites.Helpers
                 Height = 180,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ResizeMode = ResizeMode.NoResize,
-                ShowInTaskbar = false,
-                Background = (System.Windows.Media.Brush)Application.Current.FindResource("UI4.Brush.Surface")
-                    ?? System.Windows.Media.Brushes.White
+                ShowInTaskbar = false
             };
+            // 用资源引用而不是 FindResource 取一次：取一次的话，对话框开着时切档就定在旧档上
+            win.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty,
+                "UI4.Brush.Surface");
 
             if (owner != null)
             {
@@ -40,10 +41,11 @@ namespace PromptFavorites.Helpers
             var label = new System.Windows.Controls.TextBlock
             {
                 Text = prompt,
-                Margin = new Thickness(0, 0, 0, 8),
-                Foreground = (System.Windows.Media.Brush)Application.Current.FindResource("UI4.Brush.Text")
-                    ?? System.Windows.Media.Brushes.Black
+                Margin = new Thickness(0, 0, 0, 8)
             };
+            // 原生 TextBlock 的默认前景是黑：这行不接令牌，夜景档就是黑字压深底（原生控件的观感问题要修在宿主）
+            label.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty,
+                "UI4.Brush.Text");
             System.Windows.Controls.Grid.SetRow(label, 0);
             grid.Children.Add(label);
 
@@ -74,11 +76,11 @@ namespace PromptFavorites.Helpers
                 Width = 70,
                 Height = 30,
                 Margin = new Thickness(0, 0, 8, 0),
-                IsDefault = true,
-                GradientStart = Theme.Accent,
-                GradientEnd = Theme.Accent,
-                HoverBackground = Theme.AccentHoverBrush
+                IsDefault = true
             };
+            // 底色挂令牌资源引用而不是本地色：这个对话框是纯代码建的窗口，本地赋色会在切档时留在旧档上
+            okBtn.SetResourceReference(UI4Button.GradientStartProperty, "UI4.Color.Accent");
+            okBtn.SetResourceReference(UI4Button.GradientEndProperty, "UI4.Color.Accent");
             okBtn.Click += (s, e) =>
             {
                 result = textBox.Text;
@@ -91,11 +93,10 @@ namespace PromptFavorites.Helpers
                 Content = "\u53D6\u6D88",
                 Width = 70,
                 Height = 30,
-                IsCancel = true,
-                GradientStart = Theme.Neutral,
-                GradientEnd = Theme.Neutral,
-                HoverBackground = Theme.NeutralHoverBrush
+                IsCancel = true
             };
+            cancelBtn.SetResourceReference(UI4Button.GradientStartProperty, "UI4.Color.OffBackground");
+            cancelBtn.SetResourceReference(UI4Button.GradientEndProperty, "UI4.Color.OffBackground");
             cancelBtn.Click += (s, e) =>
             {
                 win.DialogResult = false;

@@ -31,11 +31,22 @@
                               CornerRadius="6"
                               FontSize="16"
                               Margin="0,0,8,0"
-                              GradientStart="{x:Static h:Theme.Accent}"
-                              GradientEnd="{x:Static h:Theme.Accent}"
-                              HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                              GradientStart="{DynamicResource UI4.Color.Accent}"
+                              GradientEnd="{DynamicResource UI4.Color.Accent}"
                               ToolTip="打开/切换根目录"
                               Click="FolderBtn_Click"/>
+                <ui:UI4Button DockPanel.Dock="Right"
+                              x:Name="ThemeBtn"
+                              Content="明"
+                              Width="36" Height="36"
+                              Padding="0"
+                              CornerRadius="6"
+                              FontSize="13"
+                              Margin="8,0,0,0"
+                              GradientStart="{DynamicResource UI4.Color.OffBackground}"
+                              GradientEnd="{DynamicResource UI4.Color.OffBackground}"
+                              ToolTip="切换明暗配色"
+                              Click="ThemeBtn_Click"/>
                 <ui:UI4TextBox x:Name="SearchBox"
                                PlaceholderText="搜索标题和正文..."
                                ShowClearButton="True"
@@ -78,9 +89,9 @@
                 Visibility="Collapsed"
                 HorizontalAlignment="Center" VerticalAlignment="Top"
                 Margin="0,16,0,0" Panel.ZIndex="100"
-                Background="#E632323D"
+                Background="{DynamicResource App.Brush.Toast}"
                 CornerRadius="8"
-                Padding="20,10"
+                Padding="20,12"
                 IsHitTestVisible="False">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.3"/>
@@ -88,7 +99,7 @@
             <StackPanel Orientation="Horizontal">
                 <TextBlock x:Name="ToastTextBlock"
                            Text="已复制"
-                           Foreground="White"
+                           Foreground="{DynamicResource App.Brush.ToastText}"
                            FontSize="14"
                            VerticalAlignment="Center"/>
             </StackPanel>

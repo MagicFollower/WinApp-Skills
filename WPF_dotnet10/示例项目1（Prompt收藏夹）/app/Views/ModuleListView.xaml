@@ -19,9 +19,8 @@
                                   Margin="4,0,0,0"
                                   CornerRadius="14"
                                   FontSize="16" FontWeight="Bold"
-                                  GradientStart="{x:Static h:Theme.Accent}"
-                                  GradientEnd="{x:Static h:Theme.Accent}"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
+                                  GradientStart="{DynamicResource UI4.Color.Accent}"
+                                  GradientEnd="{DynamicResource UI4.Color.Accent}"
                                   Command="{Binding AddModuleCommand}"
                                   ToolTip="新建模块"/>
                     <TextBlock Text="模块" FontSize="14" FontWeight="SemiBold"
@@ -34,17 +33,14 @@
                     <ui:UI4Button x:Name="SortCreatedAtBtn" Content="创建日期"
                                   Height="24" Padding="8,0" CornerRadius="12"
                                   FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortCreatedAt_Click"/>
                     <ui:UI4Button x:Name="SortNameBtn" Content="名称"
                                   Height="24" Padding="8,0" CornerRadius="12"
                                   FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortName_Click"/>
                     <ui:UI4Button x:Name="SortCustomBtn" Content="自定义"
                                   Height="24" Padding="8,0" CornerRadius="12"
                                   FontSize="11" Margin="0,4,4,0"
-                                  HoverBackground="{DynamicResource App.Brush.AccentHover}"
                                   Click="SortCustom_Click"/>
                 </WrapPanel>
             </StackPanel>

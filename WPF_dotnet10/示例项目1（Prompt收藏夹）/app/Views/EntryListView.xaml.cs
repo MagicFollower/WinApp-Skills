@@ -80,50 +80,32 @@ namespace PromptFavorites.Views
 
         private void UpdateFavoriteButton(bool active)
         {
-            var accent = Theme.Accent;
-            var neutral = Theme.Neutral;
-
-            if (active)
-            {
-                FavoriteBtn.GradientStart = accent;
-                FavoriteBtn.GradientEnd = accent;
-                FavoriteBtn.Foreground = Brushes.White;
-            }
-            else
-            {
-                FavoriteBtn.GradientStart = neutral;
-                FavoriteBtn.GradientEnd = neutral;
-                FavoriteBtn.Foreground = Brushes.Black;
-            }
+            PaintChip(FavoriteBtn, active);
         }
 
         private void UpdateSortButtons(SortMode mode)
         {
-            var accent = Theme.Accent;
-            var neutral = Theme.Neutral;
-
-            SetSortBtnStyle(SortUseCountBtn, mode == SortMode.UseCount, accent, neutral);
-            SetSortBtnStyle(SortUpdatedAtBtn, mode == SortMode.UpdatedAt, accent, neutral);
-            SetSortBtnStyle(SortCreatedAtBtn, mode == SortMode.CreatedAt, accent, neutral);
-            SetSortBtnStyle(SortNameBtn, mode == SortMode.Name, accent, neutral);
-            SetSortBtnStyle(SortCustomBtn, mode == SortMode.Custom, accent, neutral);
+            PaintChip(SortUseCountBtn, mode == SortMode.UseCount);
+            PaintChip(SortUpdatedAtBtn, mode == SortMode.UpdatedAt);
+            PaintChip(SortCreatedAtBtn, mode == SortMode.CreatedAt);
+            PaintChip(SortNameBtn, mode == SortMode.Name);
+            PaintChip(SortCustomBtn, mode == SortMode.Custom);
         }
 
-        private static void SetSortBtnStyle(UI4Button btn, bool selected, Color accent, Color neutral)
+        /// <summary>
+        /// 选中态的底色挂令牌资源引用（切档自动跟随），前景清掉本地值交还给库：
+        /// <c>UI4Button</c> 在 <c>OnAccent</c> 与正文色之间取与底色对比度更高者，
+        /// 而本地赋 <c>Brushes.White/Black</c> 占的就是本地值槽，会把这条自动判据顶掉
+        /// ——浅色档看不出问题，夜景档会变成白字压亮靛（实测 2.67:1）。
+        /// </summary>
+        private static void PaintChip(UI4Button btn, bool selected)
         {
             if (btn == null) return;
-            if (selected)
-            {
-                btn.GradientStart = accent;
-                btn.GradientEnd = accent;
-                btn.Foreground = Brushes.White;
-            }
-            else
-            {
-                btn.GradientStart = neutral;
-                btn.GradientEnd = neutral;
-                btn.Foreground = Brushes.Black;
-            }
+
+            string key = selected ? "UI4.Color.Accent" : "UI4.Color.OffBackground";
+            btn.SetResourceReference(UI4Button.GradientStartProperty, key);
+            btn.SetResourceReference(UI4Button.GradientEndProperty, key);
+            btn.ClearValue(Control.ForegroundProperty);
         }
 
         private void SortUseCount_Click(object sender, RoutedEventArgs e)

@@ -1,20 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace PromptFavorites.Services
 {
     /// <summary>
-    /// 设置编解码的自检（由 PromptFavorites.exe --selftest 触发，退出码即失败断言数）。
+    /// 设置编解码的自检段（由 <see cref="SelfTest"/> 汇总，最终成为 --selftest 的退出码）。
     /// 只跑纯函数，不读写用户设置文件、不弹窗。
     /// </summary>
     internal static class SettingsSelfTest
     {
-        public static int Run()
+        public static void Run(SelfTestResult r)
         {
-            var report = new StringBuilder();
-            int failed = 0;
+            r.Section("settings");
 
             var hostile = new[]
             {
@@ -30,6 +28,8 @@ namespace PromptFavorites.Services
                 string.Empty
             };
 
+            // kv1 不变量：写侧不转义、读侧不反转义，值原样回来（只允许首尾空格被裁掉）。
+            // 这条直接对着当年那次"每存一次反斜杠翻倍"的指数膨胀事故。
             foreach (var value in hostile)
             {
                 var map = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -39,13 +39,11 @@ namespace PromptFavorites.Services
                 string back;
                 parsed.TryGetValue("rootPath", out back);
 
-                if (!string.Equals(value.Trim(), back ?? string.Empty, StringComparison.Ordinal))
-                {
-                    failed++;
-                    report.AppendLine("FAIL 往返: [" + value + "] -> [" + back + "]");
-                }
+                r.Check(string.Equals(value.Trim(), back ?? string.Empty, StringComparison.Ordinal),
+                    "kv1 往返: [" + value + "] -> [" + back + "]");
             }
 
+            // 序列化文本对同一份数据必须逐轮恒定、体积不增。
             var seed = new Dictionary<string, string>(StringComparer.Ordinal);
             seed["rootPath"] = @"C:\Users\webtu\Documents\Prompts";
             seed["lastModule"] = "编程模块";
@@ -55,33 +53,28 @@ namespace PromptFavorites.Services
             {
                 var reparsed = SettingsCodec.Parse(currentText);
                 var reserialized = SettingsCodec.Serialize(reparsed);
-                if (reserialized != currentText)
-                {
-                    failed++;
-                    report.AppendLine("FAIL 稳定性: 第 " + (round + 1) + " 轮序列化文本发生变化");
-                    break;
-                }
-                if (reserialized.Length > firstText.Length)
-                {
-                    failed++;
-                    report.AppendLine("FAIL 稳定性: 第 " + (round + 1) + " 轮体积增长 "
-                        + firstText.Length + " -> " + reserialized.Length);
-                    break;
-                }
+
+                bool stable = reserialized == currentText;
+                r.Check(stable, "稳定性: 第 " + (round + 1) + " 轮序列化文本发生变化");
+                if (!stable) break;
+
+                bool noGrowth = reserialized.Length <= firstText.Length;
+                r.Check(noGrowth, "稳定性: 第 " + (round + 1) + " 轮体积增长 "
+                    + firstText.Length + " -> " + reserialized.Length);
+                if (!noGrowth) break;
+
                 currentText = reserialized;
             }
 
+            // 旧 JSON 只读一次：识别、严格单遍逆转义、分隔符折叠抢救。
             foreach (var value in hostile)
             {
                 var legacyText = "{\n  \"rootPath\": \"" + LegacyEscape(value) + "\",\n"
                     + "  \"lastModule\": \"编程模块\"\n}";
 
-                if (!SettingsCodec.LooksLikeLegacyJson(legacyText))
-                {
-                    failed++;
-                    report.AppendLine("FAIL 旧格式未被识别: [" + value + "]");
-                    continue;
-                }
+                bool recognized = SettingsCodec.LooksLikeLegacyJson(legacyText);
+                r.Check(recognized, "旧格式识别: [" + value + "]");
+                if (!recognized) continue;
 
                 var parsed = SettingsCodec.ParseLegacyJson(legacyText);
                 string back;
@@ -89,20 +82,13 @@ namespace PromptFavorites.Services
 
                 var expected = SettingsCodec.CollapseSeparators(value);
                 var actual = SettingsCodec.CollapseSeparators(back ?? string.Empty);
-                if (!string.Equals(expected, actual, StringComparison.Ordinal))
-                {
-                    failed++;
-                    report.AppendLine("FAIL 旧格式还原: [" + value + "] -> [" + back + "]");
-                }
+                r.Check(string.Equals(expected, actual, StringComparison.Ordinal),
+                    "旧格式还原: [" + value + "] -> [" + back + "]");
             }
 
             var doubled = SettingsCodec.CollapseSeparators(
                 "C:" + new string('\\', 1 << 16) + "Users" + new string('\\', 1 << 16) + "Prompts");
-            if (doubled.Length > 64)
-            {
-                failed++;
-                report.AppendLine("FAIL 分隔符折叠失效，长度=" + doubled.Length);
-            }
+            r.Check(doubled.Length <= 64, "分隔符折叠失效，长度=" + doubled.Length);
 
             var geometry = new SettingsService();
             var badValues = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -110,23 +96,17 @@ namespace PromptFavorites.Services
             badValues["windowHeight"] = "Infinity";
             badValues["windowLeft"] = "1e400";
             geometry.ApplyMap(badValues);
-            if (double.IsNaN(geometry.WindowWidth) || double.IsInfinity(geometry.WindowHeight)
-                || double.IsNaN(geometry.WindowLeft) || double.IsInfinity(geometry.WindowLeft))
-            {
-                failed++;
-                report.AppendLine("FAIL 非法几何值被接受");
-            }
+            r.Check(!double.IsNaN(geometry.WindowWidth) && !double.IsInfinity(geometry.WindowHeight)
+                    && !double.IsNaN(geometry.WindowLeft) && !double.IsInfinity(geometry.WindowLeft),
+                "非法几何值被接受");
 
             var sane = new SettingsService();
             var goodValues = new Dictionary<string, string>(StringComparer.Ordinal);
             goodValues["windowState"] = "Maximized";
             goodValues["sortMode"] = "UpdatedAt";
             sane.ApplyMap(goodValues);
-            if (sane.WindowState != System.Windows.WindowState.Maximized)
-            {
-                failed++;
-                report.AppendLine("FAIL windowState 未还原");
-            }
+            r.Check(sane.WindowState == System.Windows.WindowState.Maximized, "windowState 未还原");
+            r.Check(sane.SortMode == Models.SortMode.UpdatedAt, "sortMode 未还原");
 
             // 自定义拖动顺序：名字可以含 '=' 和引号，但绝不能含 '| > :'（Windows 文件名非法字符），
             // 所以分隔符取这三个字符、值侧不做任何转义。下面断言这条不变量成立。
@@ -142,32 +122,21 @@ namespace PromptFavorites.Services
 
             var orderText = CustomOrderCodec.EncodeNames(orderNames);
             var orderBack = CustomOrderCodec.DecodeNames(orderText);
-            if (orderBack.Count != orderNames.Length)
+            r.Check(orderBack.Count == orderNames.Length,
+                "名称表往返数量: " + orderNames.Length + " -> " + orderBack.Count);
+            for (int i = 0; i < orderNames.Length && i < orderBack.Count; i++)
             {
-                failed++;
-                report.AppendLine("FAIL 名称表往返数量: " + orderNames.Length + " -> " + orderBack.Count);
-            }
-            else
-            {
-                for (int i = 0; i < orderNames.Length; i++)
-                {
-                    if (!string.Equals(orderNames[i], orderBack[i], StringComparison.Ordinal))
-                    {
-                        failed++;
-                        report.AppendLine("FAIL 名称表往返位置 " + i + ": [" + orderNames[i] + "] -> [" + orderBack[i] + "]");
-                    }
-                }
+                r.Check(string.Equals(orderNames[i], orderBack[i], StringComparison.Ordinal),
+                    "名称表往返位置 " + i + ": [" + orderNames[i] + "] -> [" + orderBack[i] + "]");
             }
 
             var orderKv = new Dictionary<string, string>(StringComparer.Ordinal);
             orderKv["moduleCustomOrder"] = orderText;
             string orderKvBack;
-            SettingsCodec.Parse(SettingsCodec.Serialize(orderKv)).TryGetValue("moduleCustomOrder", out orderKvBack);
-            if (!string.Equals(orderText, orderKvBack ?? string.Empty, StringComparison.Ordinal))
-            {
-                failed++;
-                report.AppendLine("FAIL 顺序键经 kv1 往返发生变化: [" + orderKvBack + "]");
-            }
+            SettingsCodec.Parse(SettingsCodec.Serialize(orderKv))
+                .TryGetValue("moduleCustomOrder", out orderKvBack);
+            r.Check(string.Equals(orderText, orderKvBack ?? string.Empty, StringComparison.Ordinal),
+                "顺序键经 kv1 往返发生变化: [" + orderKvBack + "]");
 
             var scopes = new List<KeyValuePair<string, List<string>>>();
             scopes.Add(new KeyValuePair<string, List<string>>("编程模块",
@@ -177,68 +146,65 @@ namespace PromptFavorites.Services
 
             var scopeText = CustomOrderCodec.EncodeScopes(scopes);
             var scopeBack = CustomOrderCodec.DecodeScopes(scopeText);
-            if (scopeBack.Count != 2
-                || scopeBack["编程模块"].Count != 2
-                || scopeBack["编程模块"][1] != "批量改名 a=b"
-                || scopeBack["WebDAV 备份"][0] != "手机端")
-            {
-                failed++;
-                report.AppendLine("FAIL 模块分组往返: [" + scopeText + "]");
-            }
+            r.Check(scopeBack.Count == 2
+                    && scopeBack["编程模块"].Count == 2
+                    && scopeBack["编程模块"][1] == "批量改名 a=b"
+                    && scopeBack["WebDAV 备份"][0] == "手机端",
+                "模块分组往返: [" + scopeText + "]");
 
             var rows = new List<string> { "a", "b", "c", "新建的" };
             var manual = CustomOrderCodec.Apply(rows, s => s, new List<string> { "c", "a", "已删除的" });
-            if (manual.Count != 4 || manual[0] != "c" || manual[1] != "a"
-                || manual[2] != "b" || manual[3] != "新建的")
-            {
-                failed++;
-                report.AppendLine("FAIL 手动顺序应用: 表内项在前、未记录者按原相对顺序落末尾");
-            }
+            r.Check(manual.Count == 4 && manual[0] == "c" && manual[1] == "a"
+                    && manual[2] == "b" && manual[3] == "新建的",
+                "手动顺序应把表内项排前、未记录者按原相对顺序落末尾");
 
-            if (CustomOrderCodec.Apply(rows, s => s, null).Count != 4)
-            {
-                failed++;
-                report.AppendLine("FAIL 空顺序表应原样返回且不改动");
-            }
+            r.Check(CustomOrderCodec.Apply(rows, s => s, null).Count == 4,
+                "空顺序表应原样返回且不改动");
 
             var positions = new List<string> { "x", "y", "z" };
             CustomOrderCodec.Rename(positions, "y", "改名后");
-            if (positions.Count != 3 || positions[1] != "改名后")
-            {
-                failed++;
-                report.AppendLine("FAIL 改名后位置发生变化: [" + string.Join("|", positions) + "]");
-            }
+            r.Check(positions.Count == 3 && positions[1] == "改名后",
+                "改名后位置发生变化: [" + string.Join("|", positions) + "]");
 
-            var status = failed == 0
-                ? "PASS 断言组=" + (hostile.Length * 2 + 9)
-                : report.ToString();
+            // 档位持久化（明暗切换）：按名还原，非法值、数字串与本项目不消费的 System 一律回默认 Light。
+            var themeStore = new SettingsService();
+            var themeValues = new Dictionary<string, string>(StringComparer.Ordinal);
+            themeValues["themeMode"] = "Dark";
+            themeStore.ApplyMap(themeValues);
+            r.Check(themeStore.ThemeMode == Models.AppThemeMode.Dark, "themeMode=Dark 未还原");
 
-            var body = "SettingsSelfTest " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                + " failed=" + failed + "\r\n" + status;
+            var themeFallback = new SettingsService();
+            var junkValues = new Dictionary<string, string>(StringComparer.Ordinal);
+            junkValues["themeMode"] = "1";
+            themeFallback.ApplyMap(junkValues);
+            r.Check(themeFallback.ThemeMode == Models.AppThemeMode.Light,
+                "themeMode 的数字串被接受（应按名解析失败、保留默认档）");
 
-            // 单文件发布下 AppDomain.CurrentDomain.BaseDirectory 可能指向会被清理的临时解包目录，
-            // 产物优先落设置目录旁边；写失败不影响退出码（契约仍是"退出码＝失败断言数"）。
-            try
-            {
-                var appData = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "PromptFavorites");
-                Directory.CreateDirectory(appData);
-                File.WriteAllText(Path.Combine(appData, "selftest.txt"), body);
-            }
-            catch
-            {
-                try
-                {
-                    File.WriteAllText(
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "selftest.txt"), body);
-                }
-                catch
-                {
-                }
-            }
+            junkValues["themeMode"] = "System";
+            themeFallback.ApplyMap(junkValues);
+            r.Check(themeFallback.ThemeMode == Models.AppThemeMode.Light,
+                "本项目不跟随系统：themeMode=System 不该被接受");
 
-            return failed;
+            // 同一口径要覆盖既有枚举键，否则"只有新键严格"会留下第二种行为。
+            var enumFallback = new SettingsService();
+            var numeric = new Dictionary<string, string>(StringComparer.Ordinal);
+            numeric["sortMode"] = "2";
+            numeric["moduleSortMode"] = "1";
+            numeric["windowState"] = "0";
+            enumFallback.ApplyMap(numeric);
+            r.Check(enumFallback.SortMode == Models.SortMode.UseCount
+                    && enumFallback.ModuleSortMode == Models.ModuleSortMode.CreatedAt
+                    && enumFallback.WindowState == System.Windows.WindowState.Normal,
+                "sortMode/moduleSortMode/windowState 的数字串被接受（应按名解析失败、保留默认值）");
+
+            var enumRoundTrip = new SettingsService();
+            enumRoundTrip.SortMode = Models.SortMode.Custom;
+            enumRoundTrip.ThemeMode = Models.AppThemeMode.Dark;
+            var roundBack = SettingsCodec.Parse(SettingsCodec.Serialize(enumRoundTrip.ToMap()));
+            var restored = new SettingsService();
+            restored.ApplyMap(roundBack);
+            r.Check(restored.SortMode == Models.SortMode.Custom && restored.ThemeMode == Models.AppThemeMode.Dark,
+                "sortMode/themeMode 经 kv1 往返后发生变化");
         }
 
         private static string LegacyEscape(string value)

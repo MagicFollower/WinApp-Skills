@@ -161,27 +161,20 @@ namespace PromptFavorites.Views
 
         private void UpdateSortButtons(ModuleSortMode mode)
         {
-            SetSortBtnStyle(SortCreatedAtBtn, mode == ModuleSortMode.CreatedAt);
-            SetSortBtnStyle(SortNameBtn, mode == ModuleSortMode.Name);
-            SetSortBtnStyle(SortCustomBtn, mode == ModuleSortMode.Custom);
+            PaintChip(SortCreatedAtBtn, mode == ModuleSortMode.CreatedAt);
+            PaintChip(SortNameBtn, mode == ModuleSortMode.Name);
+            PaintChip(SortCustomBtn, mode == ModuleSortMode.Custom);
         }
 
-        private static void SetSortBtnStyle(UI4Button btn, bool selected)
+        /// <summary>底色挂令牌资源引用、前景交还给库，口径与中栏排序胶囊一致（见 EntryListView.PaintChip）。</summary>
+        private static void PaintChip(UI4Button btn, bool selected)
         {
             if (btn == null) return;
 
-            if (selected)
-            {
-                btn.GradientStart = Theme.Accent;
-                btn.GradientEnd = Theme.Accent;
-                btn.Foreground = Brushes.White;
-            }
-            else
-            {
-                btn.GradientStart = Theme.Neutral;
-                btn.GradientEnd = Theme.Neutral;
-                btn.Foreground = Brushes.Black;
-            }
+            string key = selected ? "UI4.Color.Accent" : "UI4.Color.OffBackground";
+            btn.SetResourceReference(UI4Button.GradientStartProperty, key);
+            btn.SetResourceReference(UI4Button.GradientEndProperty, key);
+            btn.ClearValue(Control.ForegroundProperty);
         }
     }
 }

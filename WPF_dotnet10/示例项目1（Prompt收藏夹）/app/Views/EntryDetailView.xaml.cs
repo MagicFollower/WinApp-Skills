@@ -12,7 +12,6 @@ namespace PromptFavorites.Views
 {
     public partial class EntryDetailView : UserControl
     {
-        private static readonly Color Neutral = Theme.Neutral;
 
         private bool _isSyncing;
         private EntryDetailViewModel _vm;
@@ -121,14 +120,18 @@ namespace PromptFavorites.Views
             if (_vm.IsFavorite)
             {
                 FavBtn.Content = "\u2605 \u5DF2\u6536\u85CF";
-                FavBtn.GradientStart = Theme.Favorite;
-                FavBtn.GradientEnd = Theme.FavoriteEnd;
+                // 金色是语义色，按设计不跟界面配色走，两档同一个金；字色交回库判（深字压金，明暗都成立）
+                FavBtn.SetResourceReference(UI4Button.GradientStartProperty, "App.Color.Favorite");
+                FavBtn.SetResourceReference(UI4Button.GradientEndProperty, "App.Color.FavoriteEnd");
+                FavBtn.ClearValue(Control.ForegroundProperty);
             }
             else
             {
                 FavBtn.Content = "\u2606 \u672A\u6536\u85CF";
-                FavBtn.GradientStart = Neutral;
-                FavBtn.GradientEnd = Neutral;
+                string key = "UI4.Color.OffBackground";
+                FavBtn.SetResourceReference(UI4Button.GradientStartProperty, key);
+                FavBtn.SetResourceReference(UI4Button.GradientEndProperty, key);
+                FavBtn.ClearValue(Control.ForegroundProperty);
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace PromptFavorites.Models
 {
@@ -11,6 +12,33 @@ namespace PromptFavorites.Models
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public DateTime? LastUsedAt { get; set; }
+
+        /// <summary>
+        /// frontmatter 里本程序不认识的字段（用户或 Obsidian 之类外部工具加的）。
+        /// 读时收下、写时原样带回——否则"备份=复制文件夹、可以直接用外部编辑器改"这个承诺，
+        /// 每次保存都会被静默吃掉一块。
+        /// </summary>
+        public List<KeyValuePair<string, string>> Unknown { get; private set; }
+
+        public FrontmatterData()
+        {
+            Unknown = new List<KeyValuePair<string, string>>();
+        }
+
+        /// <summary>把另一份里读到的未知字段搬过来（按原顺序，重名者保留先出现的）。</summary>
+        public void AdoptUnknownFrom(FrontmatterData other)
+        {
+            if (other == null || other.Unknown.Count == 0) return;
+            foreach (var pair in other.Unknown)
+            {
+                bool present = false;
+                foreach (var mine in Unknown)
+                {
+                    if (string.Equals(mine.Key, pair.Key, StringComparison.Ordinal)) { present = true; break; }
+                }
+                if (!present) Unknown.Add(pair);
+            }
+        }
 
         public static FrontmatterData WithDefaults(string fileName, string folderName, DateTime fileCreatedAt)
         {

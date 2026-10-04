@@ -6,6 +6,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using PromptFavorites.Helpers;
+using PromptFavorites.Models;
 using PromptFavorites.Services;
 using StartUI4Controls;
 
@@ -30,6 +32,30 @@ namespace PromptFavorites
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             AttachVm(DataContext as ViewModels.MainViewModel);
+            UpdateThemeButton();
+        }
+
+        /// <summary>明暗切换：改设置 → 让库整体换字典 → 立即落盘。按钮上显示的是<b>当前</b>档。</summary>
+        private void ThemeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var settings = App.Settings;
+            if (settings == null) return;
+
+            var next = settings.ThemeMode == AppThemeMode.Light
+                ? AppThemeMode.Dark
+                : AppThemeMode.Light;
+
+            settings.ThemeMode = next;
+            HostPalette.Apply(next);
+            settings.Save();
+            UpdateThemeButton();
+        }
+
+        private void UpdateThemeButton()
+        {
+            bool dark = App.Settings != null && App.Settings.ThemeMode == AppThemeMode.Dark;
+            ThemeBtn.Content = dark ? "夜" : "明";
+            ThemeBtn.ToolTip = dark ? "切换到浅色（终端靛）" : "切换到夜景（终端靛·夜）";
         }
 
         private void AttachVm(ViewModels.MainViewModel vm)

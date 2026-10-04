@@ -27,6 +27,7 @@ namespace PromptFavorites.Services
         public WindowState WindowState { get; set; }
         public SortMode SortMode { get; set; }
         public ModuleSortMode ModuleSortMode { get; set; }
+        public AppThemeMode ThemeMode { get; set; }
         public bool FavoriteFilter { get; set; }
         public string RootPath { get; set; }
 
@@ -211,6 +212,7 @@ namespace PromptFavorites.Services
             entries.Add(Pair("windowState", WindowState.ToString()));
             entries.Add(Pair("sortMode", SortMode.ToString()));
             entries.Add(Pair("moduleSortMode", ModuleSortMode.ToString()));
+            entries.Add(Pair("themeMode", ThemeMode.ToString()));
             entries.Add(Pair("favoriteFilter", Text(FavoriteFilter)));
             entries.Add(Pair("rootPath", RootPath));
 
@@ -253,17 +255,23 @@ namespace PromptFavorites.Services
             if (map.TryGetValue("windowLeft", out value) && TryOffset(value, ci, out number)) WindowLeft = number;
             if (map.TryGetValue("windowTop", out value) && TryOffset(value, ci, out number)) WindowTop = number;
 
+            // 枚举一律按**名**解析：Enum.TryParse 默许数字串（"1" 会静默变成第一个枚举值之后的
+            // 某档），而设置文件是用户可以拿编辑器打开改的，数字串必须判非法而不是猜一个档。
             SortMode sortMode;
-            if (map.TryGetValue("sortMode", out value) && Enum.TryParse(value, out sortMode))
+            if (map.TryGetValue("sortMode", out value) && TryParseName<SortMode>(value, out sortMode))
                 SortMode = sortMode;
 
             ModuleSortMode moduleSortMode;
-            if (map.TryGetValue("moduleSortMode", out value) && Enum.TryParse(value, out moduleSortMode))
+            if (map.TryGetValue("moduleSortMode", out value) && TryParseName<ModuleSortMode>(value, out moduleSortMode))
                 ModuleSortMode = moduleSortMode;
 
             WindowState windowState;
-            if (map.TryGetValue("windowState", out value) && Enum.TryParse(value, out windowState))
+            if (map.TryGetValue("windowState", out value) && TryParseName<WindowState>(value, out windowState))
                 WindowState = windowState;
+
+            AppThemeMode themeMode;
+            if (map.TryGetValue("themeMode", out value) && TryParseName<AppThemeMode>(value, out themeMode))
+                ThemeMode = themeMode;
 
             if (map.TryGetValue("moduleCustomOrder", out value))
             {
@@ -286,6 +294,29 @@ namespace PromptFavorites.Services
         private static string Text(bool value)
         {
             return value ? "true" : "false";
+        }
+
+        /// <summary>
+        /// 按枚举<b>名</b>解析，拒绝空值与含数字的串。<see cref="Enum.TryParse{TEnum}(string,out TEnum)"/>
+        /// 会把 "1" 静默解析成第 2 个枚举成员，而设置文件是用户能自己用编辑器改的，
+        /// 那种值应当判非法保留原档，而不是猜一档。
+        /// </summary>
+        private static bool TryParseName<TEnum>(string value, out TEnum result) where TEnum : struct
+        {
+            result = default(TEnum);
+            if (string.IsNullOrWhiteSpace(value)) return false;
+
+            var text = value.Trim();
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                if (c >= '0' && c <= '9') return false;
+            }
+
+            TEnum parsed;
+            if (!Enum.TryParse(text, false, out parsed)) return false;
+            result = parsed;
+            return true;
         }
 
         private static bool TrySize(string value, CultureInfo ci, out double result)
@@ -312,6 +343,7 @@ namespace PromptFavorites.Services
             WindowState = WindowState.Normal;
             SortMode = SortMode.UseCount;
             ModuleSortMode = ModuleSortMode.CreatedAt;
+            ThemeMode = AppThemeMode.Light;
             FavoriteFilter = false;
             _moduleOrder = null;
             _entryOrders.Clear();
