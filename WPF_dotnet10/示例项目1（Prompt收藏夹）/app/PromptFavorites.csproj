@@ -9,6 +9,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>PromptFavorites</RootNamespace>
     <AssemblyName>PromptFavorites</AssemblyName>
+    <!-- 显式钉版本号：设置面板的"应用版本"用反射读它，发布脚本的 FileVersion 守门也比它。
+         不写就靠 SDK 默认的 1.0.0.0，改了看不出来是哪个版本在跑。 -->
+    <Version>1.0.0</Version>
     <!-- net10 的 WPF 仍按清单取 DPI 感知级别，PerMonitorV2 声明照旧生效 -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- ApplicationIcon 管 exe 文件本身的图标（编译期烤进 apphost 的 RT_GROUP_ICON）。

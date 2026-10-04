@@ -206,6 +206,11 @@ namespace PromptFavorites.Services
             _repo.DeleteModule(path);
         }
 
+        public string CreateModule(string name)
+        {
+            return _repo.CreateModule(name);
+        }
+
         public void RenameEntry(PromptItem item, string newTitle)
         {
             var dir = Path.GetDirectoryName(item.FilePath);

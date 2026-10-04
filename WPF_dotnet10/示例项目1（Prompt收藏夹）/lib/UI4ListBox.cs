@@ -236,7 +236,7 @@ namespace StartUI4Controls
 
         public UI4ListBox()
         {
-            FontSize = 15d;
+            SetResourceReference(FontSizeProperty, "UI4.Font.Size.Base");
             Style = BuildListStyle();
 
             // 声明式跟随主题：文本/边框/面板底/悬停底都挂令牌，切换主题触发 OnStyleRefresh 重建

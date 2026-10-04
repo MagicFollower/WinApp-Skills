@@ -205,6 +205,63 @@ namespace PromptFavorites.Services
             restored.ApplyMap(roundBack);
             r.Check(restored.SortMode == Models.SortMode.Custom && restored.ThemeMode == Models.AppThemeMode.Dark,
                 "sortMode/themeMode 经 kv1 往返后发生变化");
+
+            // 排印三键：写侧键名与读侧键名必须逐字一致——kv1 没有 schema，任一侧打错一个字母
+            // 就是"设置面板改了、重启回到默认"这种查不出来的丢设置。
+            var typoStore = new SettingsService();
+            typoStore.FontFamilyName = "Segoe UI Variable Text";
+            typoStore.BaseFontSize = 17.5;
+            typoStore.ZoomPercent = 133;
+            var typoMap = typoStore.ToMap();
+            r.Check(Has(typoMap, "fontFamilyName") && Has(typoMap, "baseFontSize") && Has(typoMap, "zoomPercent"),
+                "排印三键没写进 kv1: " + string.Join(",", System.Array.ConvertAll(
+                    typoMap.ToArray(), p => p.Key)));
+
+            var typoRestored = new SettingsService();
+            typoRestored.ApplyMap(SettingsCodec.Parse(SettingsCodec.Serialize(typoMap)));
+            r.Check(typoRestored.FontFamilyName == "Segoe UI Variable Text"
+                    && System.Math.Abs(typoRestored.BaseFontSize - 17.5) < 1e-9
+                    && System.Math.Abs(typoRestored.ZoomPercent - 133) < 1e-9,
+                "排印三键经 kv1 往返后发生变化: [" + typoRestored.FontFamilyName + ", "
+                + typoRestored.BaseFontSize + ", " + typoRestored.ZoomPercent + "]");
+
+            // 区间：越界与非法值都不能原样吃下去。钳到边界（500→200、-1→50），
+            // 解析不了或 NaN/Infinity 这类"能解析但不是可用尺寸"的回默认值。
+            var outOfRange = new Dictionary<string, string>(StringComparer.Ordinal);
+            outOfRange["baseFontSize"] = "500";
+            outOfRange["zoomPercent"] = "-1";
+            var clamped = new SettingsService();
+            clamped.ApplyMap(outOfRange);
+            r.Check(clamped.BaseFontSize == Helpers.Typography.MaxBaseSize
+                    && clamped.ZoomPercent == Helpers.Typography.MinZoomPercent,
+                "越界排印值没被钳回区间: base=" + clamped.BaseFontSize + " zoom=" + clamped.ZoomPercent);
+
+            var junk = new Dictionary<string, string>(StringComparer.Ordinal);
+            junk["baseFontSize"] = "abc";
+            junk["zoomPercent"] = "NaN";
+            var junked = new SettingsService();
+            junked.BaseFontSize = 20;
+            junked.ZoomPercent = 150;
+            junked.ApplyMap(junk);
+            r.Check(junked.BaseFontSize == 20, "解析不了的 baseFontSize 覆盖了已生效值");
+            r.Check(junked.ZoomPercent == Helpers.Typography.DefaultZoomPercent,
+                "NaN 的 zoomPercent 被直接接受（应回默认档）: " + junked.ZoomPercent);
+
+            // 空字体族名要能原样回来，它代表"用出厂字体栈"，不是"字体没设置"
+            var emptyFamily = new Dictionary<string, string>(StringComparer.Ordinal);
+            emptyFamily["fontFamilyName"] = "";
+            var cleared = new SettingsService();
+            cleared.FontFamilyName = "楷体";
+            cleared.ApplyMap(emptyFamily);
+            r.Check(cleared.FontFamilyName == string.Empty,
+                "空字体族名没被还原成出厂档: [" + cleared.FontFamilyName + "]");
+        }
+
+        private static bool Has(List<KeyValuePair<string, string>> entries, string key)
+        {
+            for (int i = 0; i < entries.Count; i++)
+                if (entries[i].Key == key) return true;
+            return false;
         }
 
         private static string LegacyEscape(string value)

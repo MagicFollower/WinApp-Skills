@@ -375,7 +375,23 @@ namespace StartUI4Controls
             res["UI4.Brush.Text"] = CreateFrozen(theme.ColorOf(UI4ThemeToken.TextForeground));
             res["UI4.Brush.Border"] = CreateFrozen(theme.ColorOf(UI4ThemeToken.BorderNormal));
             res["UI4.Brush.Accent"] = CreateFrozen(theme.ColorOf(UI4ThemeToken.Accent));
+
+            // 排印默认值：控件模板引用 UI4.Font.Size.* 时由这里兜底。
+            // 宿主想改字号，往 Application.Resources 的**自身项**（不是 MergedDictionaries）写同名键即可——
+            // 自身项先于 MergedDictionaries 命中，所以覆盖有效，而缺键的宿主不会静默掉到 WPF 默认 12px。
+            res["UI4.Font.Size.Base"] = DefaultFontSizeBase;
+            res["UI4.Font.Size.Code"] = DefaultFontSizeCode;
+            res["UI4.Font.Family"] = DefaultFontFamily;
         }
+
+        /// <summary>正文/控件字号默认值（历史上是控件构造里写死的 15）。</summary>
+        public const double DefaultFontSizeBase = 15d;
+
+        /// <summary>代码编辑器字号默认值（历史上是 UI4CodeEditor 里写死的 14，与正文不同）。</summary>
+        public const double DefaultFontSizeCode = 14d;
+
+        /// <summary>字体族默认值。字体族本身是继承性属性，宿主设 Window.FontFamily 即可覆盖，这里只提供兜底键。</summary>
+        public static readonly FontFamily DefaultFontFamily = new FontFamily("Segoe UI");
 
         // ────────────────────────────────────────────────────────
         //  持久化（默认关闭）

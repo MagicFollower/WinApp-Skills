@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using PromptFavorites.Helpers;
 using PromptFavorites.Models;
 using PromptFavorites.Services;
@@ -36,6 +40,157 @@ namespace PromptFavorites.ViewModels
             get { return _statusMessage; }
             set { SetProperty(ref _statusMessage, value); }
         }
+
+        // ── 设置面板：配色档 / 字体 / 全局缩放 ──────────────────────────
+        //
+        // 三个可调项的真源都是 SettingsService（落盘那份），这里只是它的可绑定视图：
+        // setter 写设置 + 触发即时生效，默认值与区间只从 Typography 取，面板里不重抄常量。
+
+        private bool _isSettingsOpen;
+        public bool IsSettingsOpen
+        {
+            get { return _isSettingsOpen; }
+            set
+            {
+                // 只在关闭时落盘：滑杆每动一格就写一次盘会把手动改的其它键一起冲掉，也是无谓的磁盘 IO。
+                if (SetProperty(ref _isSettingsOpen, value) && !value)
+                    _settings.Save();
+            }
+        }
+
+        /// <summary>配色档。库的字典由 <see cref="HostPalette"/> 整体重写，档位只存请求值（两档，不跟随系统）。</summary>
+        public AppThemeMode ThemeMode
+        {
+            get { return _settings.ThemeMode; }
+            set
+            {
+                if (_settings.ThemeMode == value) return;
+                _settings.ThemeMode = value;
+                HostPalette.Apply(value);
+                RaisePropertyChanged();
+                RaisePropertyChanged(nameof(ThemeModeSwitchLabel));
+            }
+        }
+
+        /// <summary>切换按钮上的文案写的是<b>目标档</b>，当前档由 <see cref="ThemeMode"/> 单源决定。</summary>
+        public string ThemeModeSwitchLabel
+        {
+            get
+            {
+                return _settings.ThemeMode == AppThemeMode.Dark
+                    ? "切换到浅色（终端靛）"
+                    : "切换到夜景（终端靛·夜）";
+            }
+        }
+
+        public void ToggleThemeMode()
+        {
+            ThemeMode = _settings.ThemeMode == AppThemeMode.Dark
+                ? AppThemeMode.Light
+                : AppThemeMode.Dark;
+        }
+
+        /// <summary>
+        /// 下拉里的字体族名，<b>第 0 项固定是出厂字体栈</b>。两个理由：① WPF 的 ComboBox 挂了 ItemsSource 之后，
+        /// 把 SelectedItem 设成一个不在列表里的值会被静默清空，表现就是"恢复默认之后下拉框没跟着变"；
+        /// ② 列表用字符串而不是 <c>FontFamily</c>，相等判定是精确的，不依赖它对方括号复合族的 Equals 口径。
+        /// 一次性枚举，不每次打开面板再查系统。
+        /// </summary>
+        public IReadOnlyList<string> AvailableFonts { get; private set; }
+
+        private string _selectedFontFamily;
+        public string SelectedFontFamily
+        {
+            get { return _selectedFontFamily; }
+            set
+            {
+                if (SetProperty(ref _selectedFontFamily, value))
+                {
+                    // 选中出厂项就存空串：让"没设置过"和"设成出厂值"在设置文件里是同一个事实
+                    _settings.FontFamilyName =
+                        string.Equals(value, Typography.DefaultFontFamilySource, StringComparison.Ordinal)
+                            ? string.Empty : (value ?? string.Empty);
+                    App.ApplyDisplaySettings();
+                }
+            }
+        }
+
+        private double _baseFontSize;
+        public double BaseFontSize
+        {
+            get { return _baseFontSize; }
+            set
+            {
+                if (SetProperty(ref _baseFontSize, Typography.ClampBase(value)))
+                {
+                    _settings.BaseFontSize = _baseFontSize;
+                    App.ApplyDisplaySettings();
+                }
+            }
+        }
+
+        private double _zoomPercent;
+        public double ZoomPercent
+        {
+            get { return _zoomPercent; }
+            set
+            {
+                if (SetProperty(ref _zoomPercent, Typography.ClampZoom(value)))
+                {
+                    _settings.ZoomPercent = _zoomPercent;
+                    RaisePropertyChanged(nameof(ZoomFactor));
+                }
+            }
+        }
+
+        /// <summary>窗口内容的 LayoutTransform 与窗口下限都只读这一个系数。</summary>
+        public double ZoomFactor { get { return _zoomPercent / 100.0; } }
+
+        public void ResetTypography()
+        {
+            _settings.FontFamilyName = string.Empty;
+            _settings.BaseFontSize = Typography.DefaultBaseSize;
+
+            // 出厂项就在列表第 0 位，所以赋值后下拉框会显示它（设成列表外的值会被 ComboBox 清空）
+            _selectedFontFamily = Typography.DefaultFontFamilySource;
+            RaisePropertyChanged(nameof(SelectedFontFamily));
+
+            _baseFontSize = Typography.DefaultBaseSize;
+            RaisePropertyChanged(nameof(BaseFontSize));
+
+            App.ApplyDisplaySettings();
+        }
+
+        public void ResetZoom()
+        {
+            ZoomPercent = Typography.DefaultZoomPercent;
+        }
+
+        // ── 只读应用信息 ────────────────────────────────────────────────
+
+        public string AppVersion
+        {
+            get
+            {
+                var v = Assembly.GetExecutingAssembly().GetName().Version;
+                return v != null ? v.ToString(3) : "未知";
+            }
+        }
+
+        public string RuntimeVersion { get { return RuntimeInformation.FrameworkDescription; } }
+
+        public string LibraryVersion
+        {
+            get
+            {
+                var v = typeof(UI4Theme).Assembly.GetName().Version;
+                return v != null ? v.ToString(3) : "未知";
+            }
+        }
+
+        public string DataRootPath { get { return App.RootPath; } }
+
+        public string SettingsFolder { get { return SettingsService.SettingsDirectory; } }
 
         public event Action<string> ToastRequested;
 
@@ -87,6 +242,27 @@ namespace PromptFavorites.ViewModels
 
             Entries.IsFavoriteFilter = settings.FavoriteFilter;
             Entries.CurrentSort = settings.SortMode;
+
+            AvailableFonts = Typography.BuildFamilyChoices(
+                Fonts.SystemFontFamilies.Select(f => f.Source).ToList());
+
+            // 显示值走一遍 clamp：设置文件是纯文本，可能被手改成 7 或 500，
+            // 滑杆拿到越界值会把刻度画歪，而生效值那边（App.ApplyDisplaySettings）本来就是 clamp 后再发的。
+            _baseFontSize = Typography.ClampBase(settings.BaseFontSize);
+            _zoomPercent = Typography.ClampZoom(settings.ZoomPercent);
+            _selectedFontFamily = ResolveFamilyEntry(settings.FontFamilyName);
+        }
+
+        /// <summary>
+        /// 存的字体名可能已被系统卸载或被手改，那就不在列表里——回落到出厂项，
+        /// 否则 ComboBox 会因为取不到匹配项把选中标签清空（看着像"字体没设置"）。
+        /// 生效值那边 <c>Typography.SafeFamily</c> 已经有同样的回落，两处口径一致。
+        /// </summary>
+        private string ResolveFamilyEntry(string familySource)
+        {
+            if (string.IsNullOrEmpty(familySource)) return Typography.DefaultFontFamilySource;
+            return AvailableFonts.Contains(familySource)
+                ? familySource : Typography.DefaultFontFamilySource;
         }
 
         private void OnModuleSelected(PromptModule module)

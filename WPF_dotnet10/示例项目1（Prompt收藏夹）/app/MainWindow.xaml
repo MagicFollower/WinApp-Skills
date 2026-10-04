@@ -3,14 +3,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
         xmlns:views="clr-namespace:PromptFavorites.Views"
-        xmlns:h="clr-namespace:PromptFavorites.Helpers"
         Title="收藏夹"
         Icon="AppIcon.ico"
         Width="1200" Height="750"
-        MinWidth="900" MinHeight="500"
+        MinWidth="{Binding ZoomFactor, Converter={StaticResource ZoomedSize}, ConverterParameter=W:900, FallbackValue=900}"
+        MinHeight="{Binding ZoomFactor, Converter={StaticResource ZoomedSize}, ConverterParameter=H:500, FallbackValue=500}"
         WindowStartupLocation="CenterScreen"
+        FontFamily="{DynamicResource UI4.Font.Family}"
+        FontSize="{DynamicResource UI4.Font.Size.Base}"
+        PreviewKeyDown="Window_PreviewKeyDown"
         Background="{DynamicResource UI4.Brush.Background}">
+    <!-- 全局缩放挂在根内容的 LayoutTransform 上：搜索栏、三栏、Toast、设置浮层一起放大缩小。
+         LayoutTransform 会先把可用尺寸除以系数再交给子树，所以放大后不会裁切，只是可视设计像素变少——
+         窗口下限因此要跟着长（MinWidth/MinHeight 走 ZoomedSize 换算）。
+         已知边界：WPF 的 Popup（下拉浮层、右键菜单）住在自己的可视根里，不吃这层变换，
+         缩放档下弹层内容仍按 100% 渲染。 -->
     <Grid>
+        <Grid.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding ZoomFactor}" ScaleY="{Binding ZoomFactor}"/>
+        </Grid.LayoutTransform>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -29,24 +40,27 @@
                               Width="36" Height="36"
                               Padding="0"
                               CornerRadius="6"
-                              FontSize="16"
+                              FontSize="{DynamicResource App.Font.Size.Icon}"
                               Margin="0,0,8,0"
                               GradientStart="{DynamicResource UI4.Color.Accent}"
                               GradientEnd="{DynamicResource UI4.Color.Accent}"
+                              HoverBackground="{DynamicResource UI4.Brush.AccentDark}"
                               ToolTip="打开/切换根目录"
                               Click="FolderBtn_Click"/>
                 <ui:UI4Button DockPanel.Dock="Right"
-                              x:Name="ThemeBtn"
-                              Content="明"
+                              x:Name="SettingsBtn"
+                              Content="&#xE713;"
+                              FontFamily="Segoe MDL2 Assets"
                               Width="36" Height="36"
                               Padding="0"
                               CornerRadius="6"
-                              FontSize="13"
+                              FontSize="{DynamicResource App.Font.Size.Icon}"
                               Margin="8,0,0,0"
                               GradientStart="{DynamicResource UI4.Color.OffBackground}"
                               GradientEnd="{DynamicResource UI4.Color.OffBackground}"
-                              ToolTip="切换明暗配色"
-                              Click="ThemeBtn_Click"/>
+                              HoverBackground="{DynamicResource UI4.Brush.AccentDark}"
+                              ToolTip="设置（Esc 关闭）"
+                              Click="SettingsBtn_Click"/>
                 <ui:UI4TextBox x:Name="SearchBox"
                                PlaceholderText="搜索标题和正文..."
                                ShowClearButton="True"
@@ -56,12 +70,14 @@
             </DockPanel>
         </Border>
 
-        <!-- 三栏布局 -->
+        <!-- 三栏布局：左 240 / 中 300。左栏这个宽度是算出来的——三个排序胶囊在字号基准 20 下
+             约 204 px，加两头的 12 内缩正好 228，留到 240 仍是一行；要覆盖到 28 上限需要 ~290。
+             Splitter 命中宽 6 px，用户可拖。设计最小尺寸 900×500 按缩放系数折算见 MinWidth/MinHeight -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="240"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="300"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -69,14 +85,14 @@
             <views:ModuleListView Grid.Column="0"
                                   DataContext="{Binding Modules}"/>
 
-            <GridSplitter Grid.Column="1" Width="4"
+            <GridSplitter Grid.Column="1" Width="6"
                           HorizontalAlignment="Stretch"
                           Background="{DynamicResource UI4.Brush.BorderNormal}"/>
 
             <views:EntryListView Grid.Column="2"
                                  DataContext="{Binding Entries}"/>
 
-            <GridSplitter Grid.Column="3" Width="4"
+            <GridSplitter Grid.Column="3" Width="6"
                           HorizontalAlignment="Stretch"
                           Background="{DynamicResource UI4.Brush.BorderNormal}"/>
 
@@ -100,9 +116,24 @@
                 <TextBlock x:Name="ToastTextBlock"
                            Text="已复制"
                            Foreground="{DynamicResource App.Brush.ToastText}"
-                           FontSize="14"
+                           FontSize="{DynamicResource App.Font.Size.Lead}"
                            VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
+
+        <!-- 设置浮层：遮罩吃掉点击，卡片内容交给 SettingsOverlay -->
+        <Grid Grid.Row="0" Grid.RowSpan="2" x:Name="SettingsHost"
+              Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}"
+              Panel.ZIndex="90">
+            <Border Background="#80000000" MouseLeftButtonDown="SettingsOverlay_BackgroundClick"/>
+            <Border Background="{DynamicResource UI4.Brush.Surface}"
+                    BorderBrush="{DynamicResource UI4.Brush.BorderNormal}"
+                    BorderThickness="1"
+                    CornerRadius="12" Padding="24"
+                    Width="480" MaxHeight="600"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <views:SettingsOverlay DataContext="{Binding}"/>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

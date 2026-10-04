@@ -21,6 +21,29 @@ namespace PromptFavorites.Services
 
             CheckFrontmatter(r);
             CheckRepository(r);
+            CheckModuleNotifications(r);
+        }
+
+        // ── 模型通知 ───────────────────────────────────────────────
+
+        /// <summary>
+        /// 模块名与计数都会被就地改写（改名、刷新计数），所以必须播报变化。
+        /// 这条断言对着的是那类"改了不生效"的缺陷：属性没有 PropertyChanged 时，
+        /// 任何一次整表重建都会让它看起来是好的，只有真正走增量刷新时才暴露。
+        /// </summary>
+        private static void CheckModuleNotifications(SelfTestResult r)
+        {
+            var fired = new List<string>();
+            var module = new Models.PromptModule { Name = "写作", FullPath = @"C:\Prompts\写作", EntryCount = 3 };
+            ((System.ComponentModel.INotifyPropertyChanged)module).PropertyChanged +=
+                (s, e) => fired.Add(e.PropertyName);
+
+            module.Name = "编程";
+            module.EntryCount = 5;
+            module.EntryCount = 5;   // 同值不应该再报一次，否则每次刷新都全表重绘
+
+            r.Check(fired.Count == 2 && fired[0] == "Name" && fired[1] == "EntryCount",
+                "PromptModule 的变更通知不对，实际收到 [" + string.Join(",", fired.ToArray()) + "]");
         }
 
         // ── frontmatter ────────────────────────────────────────────

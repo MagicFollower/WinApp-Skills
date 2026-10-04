@@ -10,20 +10,28 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 标题栏 -->
-        <Border Grid.Row="0" Padding="12,10,12,6">
+        <!-- 标题栏：内缩与中栏统一为 12（水平）/ 8（垂直），两栏的「+」到列边距离才一致 -->
+        <Border Grid.Row="0" Padding="12,8">
             <StackPanel>
-                <DockPanel>
+                <!-- LastChildFill=False：末子不再被拉成整行宽，标题按内容收 -->
+                <DockPanel LastChildFill="False">
+                    <!-- 用 MDL2 的 Add 字形而不是文本 "+"：加号在 Segoe UI 里墨迹本就低于 em 框中心
+                         （实测 16 px 时偏下 1.5~2 px，字号越大越明显），图标字体是按光学居中设计的 -->
                     <ui:UI4Button DockPanel.Dock="Right"
-                                  Content="+" Width="28" Height="28"
+                                  Content="&#xE710;"
+                                  FontFamily="Segoe MDL2 Assets"
+                                  Width="{DynamicResource App.Size.RoundButton}"
+                                  Height="{DynamicResource App.Size.RoundButton}"
+                                  Padding="0"
+                                  CornerRadius="{DynamicResource App.Radius.RoundButton}"
+                                  FontSize="{DynamicResource App.Font.Size.Icon}"
                                   Margin="4,0,0,0"
-                                  CornerRadius="14"
-                                  FontSize="16" FontWeight="Bold"
                                   GradientStart="{DynamicResource UI4.Color.Accent}"
                                   GradientEnd="{DynamicResource UI4.Color.Accent}"
                                   Command="{Binding AddModuleCommand}"
                                   ToolTip="新建模块"/>
-                    <TextBlock Text="模块" FontSize="14" FontWeight="SemiBold"
+                    <TextBlock DockPanel.Dock="Left" Text="模块"
+                               FontSize="{DynamicResource App.Font.Size.Lead}"
                                Foreground="{DynamicResource UI4.Brush.Text}"
                                VerticalAlignment="Center"/>
                 </DockPanel>
@@ -31,16 +39,19 @@
                 <!-- 排序：与中栏排序条同款胶囊 -->
                 <WrapPanel Margin="0,4,0,0">
                     <ui:UI4Button x:Name="SortCreatedAtBtn" Content="创建日期"
-                                  Height="24" Padding="8,0" CornerRadius="12"
-                                  FontSize="11" Margin="0,4,4,0"
+                                  Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortCreatedAt_Click"/>
                     <ui:UI4Button x:Name="SortNameBtn" Content="名称"
-                                  Height="24" Padding="8,0" CornerRadius="12"
-                                  FontSize="11" Margin="0,4,4,0"
+                                  Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortName_Click"/>
                     <ui:UI4Button x:Name="SortCustomBtn" Content="自定义"
-                                  Height="24" Padding="8,0" CornerRadius="12"
-                                  FontSize="11" Margin="0,4,4,0"
+                                  Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortCustom_Click"/>
                 </WrapPanel>
             </StackPanel>
@@ -72,7 +83,7 @@
                         <TextBlock Grid.Column="1"
                                    Text="{Binding EntryCount}"
                                    Foreground="{DynamicResource UI4.Brush.Icon}"
-                                   FontSize="12"
+                                   FontSize="{DynamicResource App.Font.Size.Small}"
                                    VerticalAlignment="Center"
                                    Margin="8,0,0,0"/>
                     </Grid>

@@ -16,6 +16,7 @@ namespace PromptFavorites.Services
         void RecordCopy(PromptItem item);
         void RenameModule(string oldName, string newName);
         void DeleteModule(string name);
+        string CreateModule(string name);
         void RenameEntry(PromptItem item, string newTitle);
         void DeleteEntry(PromptItem item);
         IReadOnlyList<PromptItem> Search(string keyword);

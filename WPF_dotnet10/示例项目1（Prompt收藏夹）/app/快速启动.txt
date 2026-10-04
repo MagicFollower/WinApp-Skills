@@ -1,27 +1,38 @@
 开发构建（需要本机装有 .NET 10 SDK）
   dotnet build .\PromptFavorites.csproj
+  判据：0 个错误。警告恰好是上游 lib 自带的 9 条（CS0414×5 + CS1574×4）；
+  如果报 0 个警告，多半是增量只重编了 app，请用 dotnet build .\PromptFavorites.csproj --no-incremental
 
 直接运行
   dotnet run --project .\PromptFavorites.csproj
 
 一键打包单 exe（上级目录两个脚本，产物文件名带模式后缀）
-  publish.cmd            → ..\publish\PromptFavorites_self_contained.exe  约 67 MB，运行时在包里，目标机免装 .NET
-  publish_no_runtime.cmd → ..\publish_no_runtime\PromptFavorites_no_runtime.exe  约 2.4 MB，
+  publish.cmd            → ..\publish\PromptFavorites_self_contained.exe  约 67 MiB，运行时在包里，目标机免装 .NET
+  publish_no_runtime.cmd → ..\publish_no_runtime\PromptFavorites_no_runtime.exe  约 2.4 MiB，
                            但目标机必须先装 .NET 10 Desktop Runtime（dotnet --list-runtimes 看得到
                            Microsoft.WindowsDesktop.App 10.x 就行）
+  2026-10-04 第三批实测：70,607,724 字节 / 2,535,636 字节，两个目录各自只有一个 exe，
+  FileVersion 都是 1.0.0.0（与 csproj 的 <Version>1.0.0</Version> 一致）。
+  重打之前先删空 ..\publish 与 ..\publish_no_runtime，别拿上一轮产物验本轮改动。
 
-自测（退出码 = 失败断言数，0 为全通过；2026-10-04 起是设置/主题/数据三段合成）
+自测（退出码 = 失败断言数，0 为全通过；2026-10-04 起是 settings/theme/data/display 四段合成）
   PromptFavorites_self_contained.exe --selftest
   PromptFavorites_no_runtime.exe --selftest
-  实测两档都是退出码 0、PASS 断言组=111；报告写到 %APPDATA%\PromptFavorites\selftest.txt，
-  全绿时报告末尾还带 4 行 INFO：明暗两档的色表原值与对比度实测值（README 的表就抄这里）
+  实测两档都是退出码 0、PASS 断言组=240；报告写到 %APPDATA%\PromptFavorites\selftest.txt，
+  全绿时报告末尾带 7 行 INFO：明暗两档的色表原值、两档对比度实测、固定件尺寸实测、
+  字号阶梯实测、字体候选表实测（README 的三张表就抄这里，免得数字再漂）
 
-应用图标
-  app\AppIcon.ico 就是成品（7 挡 16/24/32/48/64/128/256）。原生成脚本 tools\make-icon.ps1
-  没随本包交付，要换图标请整体替换这个 .ico，并同步 csproj 里 <ApplicationIcon> 与 <Resource Include> 两处
-
-应用图标
-  图标文件 app\AppIcon.ico（372,526 字节 / 7 挡）本身在，csproj 的 <ApplicationIcon> 与 <Resource> 两处都指它。
+应用图标与标题
+  图标文件 app\AppIcon.ico（372,526 字节 / 7 挡 16/24/32/48/64/128/256）本身在，
+  csproj 的 <ApplicationIcon> 与 <Resource Include> 两处、以及 Window.Icon 都指它。
   注意：原生成脚本 tools\make-icon.ps1 与验证脚本 tools\verify-icon.ps1 **未随本包交付**，
-  所以"改设计重跑脚本"这条路当前不可复现——要换图标就整体替换 app\AppIcon.ico（保持多尺寸结构）。
+  所以"改设计重跑脚本"这条路当前不可复现——要换图标请整体替换 app\AppIcon.ico（保持多尺寸结构）。
+  窗口标题只有 MainWindow.xaml 的 Title 一个真源。
   两条链路（exe 图标 vs 窗口图标）的区别见上级目录的《标题与图标设置教程.md》
+
+设置面板（第三批新增）
+  齿轮 → 应用信息 / 配色 / 字体 / 全局缩放；关掉浮层（完成、遮罩、Esc）时落盘一次。
+  键名与区间：themeMode（Light|Dark，按名解析）、fontFamilyName（可空 = 出厂字体栈）、
+  baseFontSize（12–28，默认 15）、zoomPercent（50–200，默认 100）。
+  字号调的是基准，其余层级按 11/12/13/14/16 的阶梯跟随；缩放走根 LayoutTransform，
+  窗口下限按系数折算。弹层（下拉、右键菜单）不随缩放放大，是 WPF Popup 的机制，已在 README 标为已知边界。

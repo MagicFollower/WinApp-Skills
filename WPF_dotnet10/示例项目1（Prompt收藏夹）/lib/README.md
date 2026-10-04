@@ -1286,7 +1286,7 @@ protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
 ### 4.2 生效通路：一份共享字典 + 资源引用
 
 一个主题键对应**一份共享 `ResourceDictionary`**（`UI4Theme.SharedResourcesFor(key)`），里面写满
-38×2 个键（`UI4.Color.X` 与 `UI4.Brush.X`，Brush 是冻结画刷）外加 3 个常用别名：
+38×2 个键（`UI4.Color.X` 与 `UI4.Brush.X`，Brush 是冻结画刷）外加 3 个常用别名（下表）与 3 个排印默认值（[§4.2.1](#421-排印键-ui4font)）：
 
 | 别名 | 指向 |
 |---|---|
@@ -1321,6 +1321,28 @@ UI4Theme.SetTheme / Apply / SetAccent / Register
 3. **换字典不留空窗**。`WriteToApplicationResources()` 是**原位替换**上一次挂上的那份（先 `merged[index] = dict` 再摘多余的），
    不是 `Remove` + `Add`——后者会在中间留一个引用解析不到的窗口，实测 `dark → highcontrast` 期间控件会短暂读到硬编码默认色。
    库还维护 `_installedResources` 账本，摘除只认账本：`Register` 会清缓存，靠缓存去找旧字典就会把已挂上的那份永远留在树里。
+
+### 4.2.1 排印键 `UI4.Font.*`
+
+字号与字体族走的是同一份共享字典，但键不是从令牌派生的——它们是 3 个固定键，由 `WriteTokens` 在
+每次重写字典时一并发布（`UI4Theme.DefaultFontSizeBase` / `DefaultFontSizeCode` / `DefaultFontFamily`）：
+
+| 键 | 类型 | 库内默认 | 谁在用 |
+|---|---|---|---|
+| `UI4.Font.Size.Base` | `double` | `15` | `UI4Button`（样式 Setter，`UI4Button.cs:137`）、`UI4TextBox.cs:161`、`UI4ComboBox.cs:193`、`UI4ListBox.cs:239`、`UI4PasswordBox.cs:237` |
+| `UI4.Font.Size.Code` | `double` | `14` | `UI4CodeEditor.cs:37` |
+| `UI4.Font.Family` | `FontFamily` | `Segoe UI` | 宿主可直接绑给窗口/文本元素；库内控件不引用它（沿用 WPF 继承） |
+
+三条口径：
+
+1. **这 3 个键永远存在**（在每份主题字典里都有库内默认值），所以宿主引用它们不会因为"没挂字典"拿到 `DependencyUnsetValue`；
+   想改观感就在**应用资源根**上覆盖同名键（后写者胜），或给某个控件实例直接赋本地值（照 §4.2 第 2 条 = 退订）。
+2. **宿主覆盖不会被主题切换冲掉**：主题值住在 `Application.Resources.MergedDictionaries` 里的那份共享字典，
+   而宿主直接写的是 `Application.Resources` 自身的键——按 WPF 的查找顺序，同一层的自有项优先于 MergedDictionaries，
+   所以覆盖值是稳定生效的（这条是实测结论，见 `ThemeSelfTest` 的 `字体覆盖值在换档后仍解析到宿主值`）。
+   反过来，宿主若把键写进那份共享字典**内部**（例如 `UI4Theme.SharedResourcesFor` 返回的实例），就会被下次重写顶掉。
+3. **只有这 6 处引用点**是本地改动，上游 `src/StartUI4Controls` 里字号是字面常量（`FontSize = 15d` / `14`）。
+   上表 §4.2 的"实测口径"统计的是上游那份树，不含这 6 处。
 
 ### 4.3 UI4Theme API 一览
 

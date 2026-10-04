@@ -4,10 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using PromptFavorites.Helpers;
-using PromptFavorites.Models;
 using PromptFavorites.Services;
 using StartUI4Controls;
 
@@ -17,6 +16,7 @@ namespace PromptFavorites
     {
         private ViewModels.MainViewModel _vm;
         private readonly DispatcherTimer _toastTimer;
+        private readonly DispatcherTimer _searchDebounceTimer;
 
         public MainWindow()
         {
@@ -27,35 +27,41 @@ namespace PromptFavorites
             _toastTimer = new DispatcherTimer();
             _toastTimer.Interval = TimeSpan.FromSeconds(1.6);
             _toastTimer.Tick += ToastTimer_Tick;
+
+            _searchDebounceTimer = new DispatcherTimer();
+            _searchDebounceTimer.Interval = TimeSpan.FromMilliseconds(300);
+            _searchDebounceTimer.Tick += SearchDebounceTimer_Tick;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             AttachVm(DataContext as ViewModels.MainViewModel);
-            UpdateThemeButton();
         }
 
-        /// <summary>明暗切换：改设置 → 让库整体换字典 → 立即落盘。按钮上显示的是<b>当前</b>档。</summary>
-        private void ThemeBtn_Click(object sender, RoutedEventArgs e)
+        /// <summary>设置浮层的开合只有这几个入口（齿轮 / 完成 / 遮罩 / Esc），
+        /// 状态存在 <c>MainViewModel.IsSettingsOpen</c> 一处，按钮上不另存。</summary>
+        private void SettingsBtn_Click(object sender, RoutedEventArgs e)
         {
-            var settings = App.Settings;
-            if (settings == null) return;
-
-            var next = settings.ThemeMode == AppThemeMode.Light
-                ? AppThemeMode.Dark
-                : AppThemeMode.Light;
-
-            settings.ThemeMode = next;
-            HostPalette.Apply(next);
-            settings.Save();
-            UpdateThemeButton();
+            var vm = DataContext as ViewModels.MainViewModel;
+            if (vm != null) vm.IsSettingsOpen = true;
         }
 
-        private void UpdateThemeButton()
+        private void SettingsOverlay_BackgroundClick(object sender, MouseButtonEventArgs e)
         {
-            bool dark = App.Settings != null && App.Settings.ThemeMode == AppThemeMode.Dark;
-            ThemeBtn.Content = dark ? "夜" : "明";
-            ThemeBtn.ToolTip = dark ? "切换到浅色（终端靛）" : "切换到夜景（终端靛·夜）";
+            var vm = DataContext as ViewModels.MainViewModel;
+            if (vm != null) vm.IsSettingsOpen = false;
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Escape) return;
+
+            var vm = DataContext as ViewModels.MainViewModel;
+            if (vm != null && vm.IsSettingsOpen)
+            {
+                vm.IsSettingsOpen = false;
+                e.Handled = true;
+            }
         }
 
         private void AttachVm(ViewModels.MainViewModel vm)
@@ -109,6 +115,15 @@ namespace PromptFavorites
 
         private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
+            // 防抖：每次按键重启计时，停 300ms 才真的去全盘读文件（逐键搜索会把条目多时的耗时叠加成卡顿）
+            _searchDebounceTimer.Stop();
+            _searchDebounceTimer.Start();
+        }
+
+        private void SearchDebounceTimer_Tick(object sender, EventArgs e)
+        {
+            _searchDebounceTimer.Stop();
+
             var vm = DataContext as ViewModels.MainViewModel;
             if (vm != null && vm.SearchText != SearchBox.Text)
                 vm.SearchText = SearchBox.Text;

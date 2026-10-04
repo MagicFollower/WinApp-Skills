@@ -11,44 +11,70 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 控制条：收藏筛选 + 排序 -->
-        <Border Grid.Row="0" Padding="8,8,8,4">
-            <StackPanel>
-                <DockPanel Margin="0,0,0,4">
-                    <ui:UI4Button DockPanel.Dock="Right"
-                                  Content="+" Width="28" Height="28"
-                                  Margin="4,0,0,0"
-                                  CornerRadius="14"
-                                  FontSize="16" FontWeight="Bold"
-                                  GradientStart="{DynamicResource UI4.Color.Accent}"
-                                  GradientEnd="{DynamicResource UI4.Color.Accent}"
-                                  Command="{Binding AddEntryCommand}"
-                                  ToolTip="新建条目"/>
+        <!-- 控制条：收藏筛选 + 排序。内缩与左栏统一为 12/8。
+             结构：Grid 两列（第 0 列 * 装"收藏 + 排序胶囊"这个 StackPanel，第 1 列 Auto 是「+」）。
+             收藏胶囊与排序胶囊同在一个 StackPanel 里：面板宽 = 二者中较宽的那个 = 排序胶囊最宽的一行，
+             收藏胶囊 Stretch 到这个宽度 → 两行始终等宽；列被拖宽时 WrapPanel 可用宽度变大、换行减少、
+             最宽一行随之变宽，收藏胶囊跟着一起变宽。
+             两条走过的弯路都不要再试：① Auto 列装 WrapPanel 会让它拿到近乎无限的可用宽度
+             （实测 5 个胶囊排成一行、整列被撑到 306 px、「+」被挤出可视区）；
+             ② MinWidth 绑 ActualWidth 有一拍布局滞后（实测收藏胶囊停在 438 而胶囊块到 462）。 -->
+        <Border Grid.Row="0" Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" HorizontalAlignment="Left">
                     <ui:UI4Button x:Name="FavoriteBtn"
                                   Content="★ 收藏"
-                                  Height="28" Padding="10,0"
-                                  CornerRadius="14"
-                                  FontSize="12"
+                                  HorizontalAlignment="Stretch"
+                                  Height="{DynamicResource App.Size.RoundButton}"
+                                  Padding="10,0"
+                                  CornerRadius="{DynamicResource App.Radius.RoundButton}"
+                                  FontSize="{DynamicResource App.Font.Size.Small}"
                                   Click="FavoriteFilter_Click"/>
-                </DockPanel>
-                <WrapPanel>
-                    <ui:UI4Button Content="使用次数" Height="24" Padding="8,0"
-                                  CornerRadius="12" FontSize="11" Margin="0,4,4,0"
+
+                    <WrapPanel x:Name="SortChips">
+                    <ui:UI4Button Content="使用次数" Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortUseCount_Click" x:Name="SortUseCountBtn"/>
-                    <ui:UI4Button Content="修改时间" Height="24" Padding="8,0"
-                                  CornerRadius="12" FontSize="11" Margin="0,4,4,0"
+                    <ui:UI4Button Content="修改时间" Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortUpdatedAt_Click" x:Name="SortUpdatedAtBtn"/>
-                    <ui:UI4Button Content="创建时间" Height="24" Padding="8,0"
-                                  CornerRadius="12" FontSize="11" Margin="0,4,4,0"
+                    <ui:UI4Button Content="创建时间" Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortCreatedAt_Click" x:Name="SortCreatedAtBtn"/>
-                    <ui:UI4Button Content="名称" Height="24" Padding="8,0"
-                                  CornerRadius="12" FontSize="11" Margin="0,4,4,0"
+                    <ui:UI4Button Content="名称" Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortName_Click" x:Name="SortNameBtn"/>
-                    <ui:UI4Button Content="自定义" Height="24" Padding="8,0"
-                                  CornerRadius="12" FontSize="11" Margin="0,4,4,0"
+                    <ui:UI4Button Content="自定义" Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
                                   Click="SortCustom_Click" x:Name="SortCustomBtn"/>
                 </WrapPanel>
-            </StackPanel>
+                </StackPanel>
+
+                <ui:UI4Button Grid.Column="1"
+                              Content="&#xE710;"
+                              FontFamily="Segoe MDL2 Assets"
+                              Width="{DynamicResource App.Size.RoundButton}"
+                              Height="{DynamicResource App.Size.RoundButton}"
+                              Padding="0"
+                              CornerRadius="{DynamicResource App.Radius.RoundButton}"
+                              FontSize="{DynamicResource App.Font.Size.Icon}"
+                              Margin="4,0,0,0"
+                              VerticalAlignment="Top"
+                              GradientStart="{DynamicResource UI4.Color.Accent}"
+                              GradientEnd="{DynamicResource UI4.Color.Accent}"
+                              Command="{Binding AddEntryCommand}"
+                              ToolTip="新建条目"/>
+            </Grid>
         </Border>
 
         <Separator Grid.Row="1"/>
@@ -74,17 +100,17 @@
                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock Text="{Binding Title}"
                                        Foreground="{DynamicResource UI4.Brush.Text}"
-                                       FontWeight="SemiBold" FontSize="13"
+                                       FontSize="{DynamicResource App.Font.Size.Medium}"
                                        TextTrimming="CharacterEllipsis"/>
                             <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                <TextBlock Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="11">
+                                <TextBlock Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="{DynamicResource App.Font.Size.Caption}">
                                     <TextBlock.Text>
                                         <Binding Path="UseCount"
                                                  Converter="{StaticResource UseCountDisplay}"/>
                                     </TextBlock.Text>
                                 </TextBlock>
                                 <Button Content="{Binding Favorite, Converter={StaticResource BoolToStar}}"
-                                        Foreground="{DynamicResource App.Brush.Favorite}" FontSize="12" Margin="8,0,0,0"
+                                        Foreground="{DynamicResource App.Brush.Favorite}" FontSize="{DynamicResource App.Font.Size.Small}" Margin="8,0,0,0"
                                         Background="Transparent" BorderThickness="0"
                                         Padding="0" Cursor="Hand"
                                         ToolTip="收藏/取消收藏"
@@ -94,7 +120,7 @@
                         </StackPanel>
                         <Button Grid.Column="1"
                                 Content="&#x1F4CB;"
-                                FontSize="14"
+                                FontSize="{DynamicResource App.Font.Size.Lead}"
                                 Background="Transparent" BorderThickness="0"
                                 Cursor="Hand"
                                 VerticalAlignment="Center"

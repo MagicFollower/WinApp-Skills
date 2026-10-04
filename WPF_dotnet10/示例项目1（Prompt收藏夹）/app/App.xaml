@@ -10,6 +10,7 @@
         <c:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <c:UseCountDisplayConverter x:Key="UseCountDisplay"/>
         <c:DateTimeFormatConverter x:Key="DateTimeFormat"/>
+        <c:ZoomedSizeConverter x:Key="ZoomedSize"/>
 
         <!-- 语义色：收藏星标。按设计它不跟界面配色走，明暗两档同一个金；
              值取自 Helpers/Theme.cs，不在这里重抄一遍十六进制。

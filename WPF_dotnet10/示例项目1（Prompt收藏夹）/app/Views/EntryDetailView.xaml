@@ -26,19 +26,19 @@
                             Cursor="Hand" MouseLeftButtonUp="ToggleMetadata_Click">
                     <TextBlock Text="{Binding MetadataSummary}"
                                Foreground="{DynamicResource UI4.Brush.Text}"
-                               FontSize="13" VerticalAlignment="Center"/>
+                               FontSize="{DynamicResource App.Font.Size.Medium}" VerticalAlignment="Center"/>
                     <TextBlock Text=" [展开]" Foreground="{DynamicResource UI4.Brush.Accent}"
-                               FontSize="12" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                               FontSize="{DynamicResource App.Font.Size.Small}" VerticalAlignment="Center" Margin="4,0,0,0"/>
                 </StackPanel>
 
                 <!-- 展开详情 -->
                 <StackPanel x:Name="MetadataPanel" Visibility="Collapsed">
                     <DockPanel Margin="0,0,0,8">
                         <TextBlock DockPanel.Dock="Left" Text="标题" Width="70"
-                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="{DynamicResource App.Font.Size.Small}"
                                    VerticalAlignment="Center"/>
                         <ui:UI4Button DockPanel.Dock="Right" Content="[收起]"
-                                      Height="24" Padding="6,0" CornerRadius="12" FontSize="11"
+                                      Height="{DynamicResource App.Size.Chip}" Padding="6,0" CornerRadius="{DynamicResource App.Radius.Chip}" FontSize="{DynamicResource App.Font.Size.Caption}"
                                       GradientStart="{DynamicResource UI4.Color.OffBackground}"
                                       GradientEnd="{DynamicResource UI4.Color.OffBackground}"
                                       Click="ToggleMetadata_Click"/>
@@ -48,7 +48,7 @@
 
                     <DockPanel Margin="0,0,0,8">
                         <TextBlock Text="模块" Width="70"
-                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="{DynamicResource App.Font.Size.Small}"
                                    VerticalAlignment="Center"/>
                         <ui:UI4ComboBox x:Name="ModuleCombo" Height="30"
                                         ItemsSource="{Binding ModuleOptions}"
@@ -57,9 +57,9 @@
 
                     <DockPanel Margin="0,0,0,8">
                         <TextBlock Text="收藏" Width="70"
-                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="{DynamicResource App.Font.Size.Small}"
                                    VerticalAlignment="Center"/>
-                        <ui:UI4Button x:Name="FavBtn" Height="28" Padding="10,0"
+                        <ui:UI4Button x:Name="FavBtn" Height="{DynamicResource App.Size.RoundButton}" Padding="10,0"
                                       IsEnabled="{Binding HasEntry}"
                                       HoverBackground="{DynamicResource App.Brush.FavoriteHover}"
                                       Click="ToggleFavorite_Click"/>
@@ -67,21 +67,21 @@
 
                     <DockPanel Margin="0,0,0,4">
                         <TextBlock Text="使用次数" Width="70"
-                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"/>
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="{DynamicResource App.Font.Size.Small}"/>
                         <TextBlock Text="{Binding UseCount}"
-                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="12"/>
+                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="{DynamicResource App.Font.Size.Small}"/>
                     </DockPanel>
                     <DockPanel Margin="0,0,0,4">
                         <TextBlock Text="创建时间" Width="70"
-                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"/>
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="{DynamicResource App.Font.Size.Small}"/>
                         <TextBlock Text="{Binding CreatedAt, Converter={StaticResource DateTimeFormat}}"
-                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="12"/>
+                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="{DynamicResource App.Font.Size.Small}"/>
                     </DockPanel>
                     <DockPanel Margin="0,0,0,4">
                         <TextBlock Text="修改时间" Width="70"
-                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="12"/>
+                                   Foreground="{DynamicResource UI4.Brush.Icon}" FontSize="{DynamicResource App.Font.Size.Small}"/>
                         <TextBlock Text="{Binding UpdatedAt, Converter={StaticResource DateTimeFormat}}"
-                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="12"/>
+                                   Foreground="{DynamicResource UI4.Brush.Text}" FontSize="{DynamicResource App.Font.Size.Small}"/>
                     </DockPanel>
                 </StackPanel>
             </StackPanel>
@@ -91,7 +91,7 @@
         <ui:UI4CodeEditor x:Name="BodyEditor"
                           Grid.Row="1"
                           Margin="16,8,16,8"
-                          FontSize="14"
+                          FontSize="{DynamicResource UI4.Font.Size.Code}"
                           WordWrap="True"/>
 
         <!-- 未选中条目时的空态提示（盖在编辑区上，不吃鼠标事件） -->
@@ -99,7 +99,7 @@
                    Text="从左侧选择一个条目"
                    Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}"
                    Foreground="{DynamicResource UI4.Brush.Icon}"
-                   FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   FontSize="{DynamicResource App.Font.Size.Medium}" HorizontalAlignment="Center" VerticalAlignment="Center"
                    IsHitTestVisible="False"/>
 
         <!-- 底部按钮 -->

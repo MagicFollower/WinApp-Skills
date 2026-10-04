@@ -35,6 +35,7 @@ namespace PromptFavorites
             // 必须在 base.OnStartup 之后、且在第一个窗口 Show() 之前——库写回资源字典的第一句
             // 就是 Application.Current == null 则 return，早一步会静默不装字典。
             HostPalette.Apply(Settings.ThemeMode);
+            ApplyDisplaySettings();
 
             string resolved;
             bool rootReady = RootPathResolver.TryEnsure(Settings.RootPath, out resolved)
@@ -76,6 +77,18 @@ namespace PromptFavorites
                 Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle,
                     new Action(PromptForRootPath));
             }
+        }
+
+        /// <summary>
+        /// 把设置里的字体族与基准字号发布成资源键（含各层级字号阶梯）。
+        /// 库自己带 <c>UI4.Font.Size.*</c> 兜底默认值，所以这里写的是覆盖值；设置面板改完会再调一次，
+        /// 界面即时跟随（DynamicResource 在应用资源根上就地替换键值）。
+        /// </summary>
+        internal static void ApplyDisplaySettings()
+        {
+            if (Settings == null) return;
+            Typography.Publish(Current, Settings.FontFamilyName,
+                Typography.ClampBase(Settings.BaseFontSize));
         }
 
         /// <summary>切换根目录：先校验可用再落盘，失败时不污染已保存的设置。</summary>
