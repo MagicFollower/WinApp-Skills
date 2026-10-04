@@ -23,3 +23,10 @@
 
 改观感配色
   只改 app\Helpers\Theme.cs 的常量，然后跑 --selftest 看对比度断言有没有红
+
+用户能自己改的东西（都已接好，改文案就改 Views\SettingsOverlay.xaml）
+  右上角齿轮 → 设置浮层：应用信息 / 配色 / 字体（族 + 正文字号）/ 全局缩放，Esc 或点遮罩关
+  落盘位置 %APPDATA%\__APPNAME__\settings.json（kv1 纯文本，能自己开编辑器改，越界值会被钳回区间）
+  默认值与允许区间只有一个出处：app\Helpers\Typography.cs（基准 15、字号 12-28、缩放 50-200）
+  可选配色档由 Helpers\Theme.cs 的 Policy 决定（both / light-only / dark-only），
+  留在 "TODO" 时 --selftest 会红并被发布脚本挡下

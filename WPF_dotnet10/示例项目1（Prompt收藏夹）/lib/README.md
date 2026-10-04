@@ -182,7 +182,7 @@ protected override void OnStartup(StartupEventArgs e)
 | 容器 | `UI4Grid` | `Grid` | 2 | 默认页面渐变底 |
 | 容器 | `UI4ScrollViewer` | `ScrollViewer` | 1 | 美化滚动条 + 平滑滚动 |
 | 列表 | `UI4ListBox` | `ListBox` | 12 | 普通 / 圆点 / 编号 |
-| 列表 | `UI4ListView` | `ListBox` | 15 | 卡片列表 |
+| 列表 | `UI4ListView` | `ListBox` | 17 | 卡片列表 |
 | 列表 | `UI4GridView` | `ListBox` | 15 | 自适应列数网格卡片 |
 | 导航 | `UI4Pivot` / `UI4PivotItem` | `Selector` / `HeaderedContentControl` | 10 / 1 | 滑动页签 |
 | 导航 | `UI4Tab` / `UI4TabItem` | `Selector` / `HeaderedContentControl` | 11 / 6 | 浏览器风格标签 |
@@ -776,8 +776,10 @@ Grid PART_Grid                    ← ScaleTransform 挂这里（悬浮缩放整
 | `ItemWidth` / `ItemHeight` | `double` | `NaN` | — | 项尺寸，`NaN` = 自适应 |
 | `ItemCornerRadius` | `CornerRadius` | `12` | — | 卡片圆角 |
 | `ItemBackground` | `Brush` | `White` | `UI4.Brush.Surface` | 卡片背景 |
-| `ItemBorderBrush` | `Color` | `#3C788CC8` | `UI4.Color.PanelBorder` | 卡片边框色（静止与悬浮同色，悬浮不换色） |
+| `ItemBorderBrush` | `Color` | `#3C788CC8` | `UI4.Color.PanelBorder` | 卡片边框色（静止态） |
 | `ItemBorderThickness` | `Thickness` | `1` | — | 边框厚度 |
+| `HoverBorderBrush` | `Color` | `#FF0078D4` | `UI4.Color.BorderHover` | 鼠标经过时的卡片描边色（构造函数挂令牌，宿主本地赋值即退订） |
+| `SelectedBorderBrush` | `Color` | `#FF2563EB` | `UI4.Color.ListSelected` | 选中卡片的描边色。与 `HoverBorderBrush` 分开给，否则鼠标一压就分不清选的是哪张 |
 | `ItemPadding` | `Thickness` | `0` | — | 卡片内边距 |
 | `ItemMargin` | `Thickness` | `10` | — | 卡片外边距，**同时是悬浮放大的可用余量** |
 | `HoverScale` | `double` | `1.01` | — | 悬浮缩放倍率（上限） |
@@ -816,11 +818,13 @@ allowed = min(HoverMaxGrow, sideSlack + ContentPadding − EdgeReserve)   // sid
 
 #### UI4GridView（`UI4GridView.cs`，基类 `ListBox`）
 
-属性面与 `UI4ListView` 同构——同样 15 个 DP、同名同类型：
+属性面与 `UI4ListView` 同构——同名同类型的那 15 个 DP：
 `ItemWidth` `ItemHeight` `ItemCornerRadius` `ItemBackground` `ItemBorderBrush` `ItemBorderThickness`
 `ItemPadding` `ItemMargin` `HoverAnimationDuration` `ShadowColor` `ShadowBlurRadius` `ShadowDepth`
 `ShadowOpacity` `HoverScale` `HoverMaxGrow`；跟随的令牌也一一对应（`ItemBackground`→`Surface`、
-`ItemBorderBrush`→`PanelBorder`、`ShadowColor`→`Shadow`）。差别只在**尺寸语义**与**列数**：
+`ItemBorderBrush`→`PanelBorder`、`ShadowColor`→`Shadow`）。**但不含 `UI4ListView` 的 `HoverBorderBrush` /
+`SelectedBorderBrush`**（那 2 个只加在 `UI4ListView` 上，网格卡片仍是静止与悬浮同一支 `ItemBorderBrush`），
+所以两类的 DP 数是 15 对 17。差别只在**尺寸语义**与**列数**：
 
 | 属性 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
@@ -1341,8 +1345,16 @@ UI4Theme.SetTheme / Apply / SetAccent / Register
    而宿主直接写的是 `Application.Resources` 自身的键——按 WPF 的查找顺序，同一层的自有项优先于 MergedDictionaries，
    所以覆盖值是稳定生效的（这条是实测结论，见 `ThemeSelfTest` 的 `字体覆盖值在换档后仍解析到宿主值`）。
    反过来，宿主若把键写进那份共享字典**内部**（例如 `UI4Theme.SharedResourcesFor` 返回的实例），就会被下次重写顶掉。
-3. **只有这 6 处引用点**是本地改动，上游 `src/StartUI4Controls` 里字号是字面常量（`FontSize = 15d` / `14`）。
+3. **排印通路的本地改动只有上表那 6 处引用点**，上游 `src/StartUI4Controls` 里字号是字面常量（`FontSize = 15d` / `14`）。
    上表 §4.2 的"实测口径"统计的是上游那份树，不含这 6 处。
+4. **本包相对上游另有 4 处非排印改动**（都在 `lib/` 里，与字号无关）：`UI4ListView` 新增 `HoverBorderBrush` /
+   `SelectedBorderBrush` 两个 `Color` DP（§3.7 的属性表已收，DP 数 15 → 17）；`UI4NavigationView` 把五处
+   背景/前景回调里的 `if (_listBox != null)` 换成 `ForEachListBox`（`:207,240,263,286,309`），
+   让折叠面板与菜单里的每个列表都吃到同一份色；
+   `UI4Panel` 的 `HoverBorderBrush` 改挂 `UI4.Brush.BorderHover` 令牌；`UI4ListBox` 悬浮/选中触发器里的
+   `Foreground` 由 `SolidColorBrush` 快照改成绑定到宿主的 `HoverForeground` / `PressedForeground`——
+   使用方（`UI4NavigationView`）把 `ItemContainerStyle` 赋成本地值之后再重建 Style 也覆盖不回来，
+   快照会永久冻在首次取值那一刻，表现为"换了主题列表文字色不动"。
 
 ### 4.3 UI4Theme API 一览
 
@@ -1706,14 +1718,15 @@ WPF 的属性、`DynamicResource`、控件模板全都够不着它。程序只�
 
 ### 4.11 主题盲区与已知限制
 
-**① 有 8 个令牌库内没人消费。** 用固定串 grep 全部 `.cs`（含 `Internal/`，排除 `UI4Theme*` 自身）实测：
-38 个令牌里 **30 个被库内引用，8 个只定义不使用**——它们照样写进每份共享字典，宿主可以直接
+**① 有 7 个令牌库内没人消费。** 用固定串 grep 全部 `.cs`（含 `Internal/`，排除 `UI4Theme*` 自身）实测：
+38 个令牌里 **31 个被库内引用，7 个只定义不使用**——它们照样写进每份共享字典，宿主可以直接
 `{DynamicResource}` 取用，但改它们不会让任何库内控件变脸。
+（原来这项是 30 / 8：`ListSelected` 自 2026-10-04 起被 `UI4ListView.SelectedBorderBrush` 消费，见 §4.2.1 第 4 条。）
 
 | 令牌 | 内置 light 值 | 设计意图（注释） | 库内现状 |
 |---|---|---|---|
 | `TextSecondary` | `#000000` | 次级文字 | 无消费者 |
-| `ListSelected` | `#2563EB` | 列表选中底 | 无消费者（`UI4ListBox` 用 `PressedBackground` 字面值） |
+| `ListSelected` | `#2563EB` | 列表选中底 | **有消费者**：`UI4ListView` 构造函数把它挂给 `SelectedBorderBrush`（选中卡片描边）。`UI4ListBox` 那边仍用 `PressedBackground` 字面值，不跟它走 |
 | `HeaderBackground` | `#F5F5F5` | 表头底色 | 无消费者（原为 `UI4DataGrid` 预留，该文件已在 net10 删除） |
 | `HeaderForeground` | `#1E1E1E` | 表头文字 | 同上 |
 | `RowHoverBackground` | `#F0F0F5` | 行悬浮底 | 同上 |
@@ -1721,7 +1734,9 @@ WPF 的属性、`DynamicResource`、控件模板全都够不着它。程序只�
 | `GridLine` | `#E6E6EB` | 网格线 | 同上 |
 | `Separator` | `#DCDCDC` | 分隔线（菜单分隔、翻牌中缝） | 无消费者；`UI4MenuSeparatorElement.SeparatorColor` 用的是字面值 |
 
-**② 20 个颜色类依赖属性没挂令牌。** 它们在深色 / 高对比度下不会自动变，宿主可按下表自救
+**② 19 个颜色类依赖属性没挂令牌。**（原来是 20 个：`UI4Panel.HoverBorderBrush` 现在由构造函数挂
+`UI4.Brush.BorderHover`，已从本表删去；`UI4ListView` 新增的 `HoverBorderBrush` / `SelectedBorderBrush` 两个 DP
+同样在构造函数里挂了 `UI4.Color.BorderHover` / `UI4.Color.ListSelected`，不进本表。）它们在深色 / 高对比度下不会自动变，宿主可按下表自救
 （`{DynamicResource …}` 或 `{Binding Source={x:Static ui:UI4Theme.Current}}`）：
 
 | 属性 | 当前字面默认值 | 建议接的令牌 |
@@ -2114,7 +2129,7 @@ bool isDark = 0.299 * bg.R + 0.587 * bg.G + 0.114 * bg.B < 128;   // 与 UI4Wind
 
 | # | 项 | 旧说法（根 README / 源码注释） | 现说法（对源码核对） | 依据 |
 |---|---|---|---|---|
-| 1 | 对外依赖属性规模 | 「250+ 个依赖属性对外开放」 | **234 个注册 DP**（232 Register + 2 RegisterAttached）+ 1 个别名 | `grep -c 'public static readonly DependencyProperty'` = 235，其中 `UI4CheckBox.BoxCornerRadiusProperty = CornerRadiusProperty` 是别名不另计 |
+| 1 | 对外依赖属性规模 | 「250+ 个依赖属性对外开放」 | **236 个注册 DP**（234 Register + 2 RegisterAttached）+ 1 个别名 | `grep -c 'public static readonly DependencyProperty'` = 237，其中 `UI4CheckBox.BoxCornerRadiusProperty = CornerRadiusProperty` 是别名不另计。2026-10-04 的 2 个增量来自 `UI4ListView` 的 `HoverBorderBrush` / `SelectedBorderBrush` |
 | 2 | 主题接线规模 | `UI4ThemeScope` 类注释与根 README 均写「26 个文件 / 89 处引用」 | **25 个文件 / 95 处** `SetResourceReference`（89 处挂控件自身属性，6 处挂内部元素） | 逐文件 grep 计数；那 6 处是 `_mainContainer.SetResourceReference(Border.BackgroundProperty, …)` 形式 |
 | 3 | `UI4Button` 前景规则 | 「按背景 WCAG **相对亮度**阈值（<0.45）选白字，否则正文色」 | 在 `OnAccent` 与 `TextForeground` 之间**取与底色对比度更高者**，无亮度阈值 | `UI4Button.cs:218-231`，注释直接说明阈值判法在 HC 亮黄上会选出白字（1.07:1） |
 | 4 | `UI4Button` 禁用态底色 | 「背景取主题令牌 `BorderNormal`」 | `UI4.Brush.OffBackground` + 前景 `UI4.Brush.TextMuted`，`BorderThickness=0` | `UI4Button.cs:195-198`；注释点名"不能用 BorderNormal——HC 下它是纯白"。同时根 README 那三行实测对比度表属旧实现口径 |
@@ -2132,7 +2147,7 @@ bool isDark = 0.299 * bg.R + 0.587 * bg.G + 0.114 * bg.B < 128;   // 与 UI4Wind
 | 16 | 预置套装套数 | 主题章节一处写「6 套」，表格列 8 行 | **8 套**（亮 5 + 暗 3），`UI4ThemePacks.Keys` 返回 8 个 | `UI4ThemePacks.cs:75-81` |
 | 17 | 版本口径 | 简介写「版本 2.0.0」、构建产物 `StartUI4.WPF.2.0.0.nupkg` | csproj 的 `Version` / `AssemblyVersion` / `FileVersion` 均为 **3.0.0** | `StartUI4Controls.csproj` |
 | 18 | 「别对当前生效键重复 Register」 | 主题章节列为必须遵守的告诫 | **已由库内处理**：`Register` 覆盖当前键时会置空 `_current` 并整体 `ApplyResolved` | `UI4Theme.cs:171-175` 及其注释 |
-| 19 | 令牌覆盖度 | 只说「38 个颜色令牌」 | 38 个里 **30 个被库内消费、8 个只定义不使用**；另有 20 个颜色类 DP 未挂令牌 | 固定串 grep `UI4.Color.X` / `UI4.Brush.X`（排除 `UI4Theme*`），见 [§4.11](#411-主题盲区与已知限制) 两张表 |
+| 19 | 令牌覆盖度 | 只说「38 个颜色令牌」 | 38 个里 **31 个被库内消费、7 个只定义不使用**；另有 19 个颜色类 DP 未挂令牌（两项原为 30 / 8 与 20，2026-10-04 因 `UI4ListView` 两个描边 DP 与 `UI4Panel.HoverBorderBrush` 挂上令牌而变） | 固定串 grep `UI4.Color.X` / `UI4.Brush.X`（排除 `UI4Theme*`），见 [§4.11](#411-主题盲区与已知限制) 两张表 |
 | 20 | `Separator` 令牌用途 | 注释写「菜单分隔、翻牌中缝」 | 两处都没接：`UI4MenuSeparatorElement.SeparatorColor` 用字面 `#DCDCDC`，翻牌中缝硬编码 `#33000000` | `UI4Menu.cs:364`、`UI4FlipTextBlock.cs:259` |
 
 另有两处**根 README 引用了不存在的章节**（历史文档被删），已随本次瘦身一并处理：

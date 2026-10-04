@@ -158,7 +158,7 @@ namespace StartUI4Controls
 
         public UI4TextBox()
         {
-            FontSize = 15d;
+            SetResourceReference(FontSizeProperty, "UI4.Font.Size.Base");
             Cursor = Cursors.IBeam;
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
 

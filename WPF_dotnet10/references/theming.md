@@ -14,7 +14,7 @@
 | 别名 `UI4.Brush.Border` | → `BorderNormal` 的画刷 | |
 | 别名 `UI4.Brush.Accent` | 就是 `Accent` 本体，不是别名 | |
 
-一个主题键对应**一份共享 `ResourceDictionary`**（`UI4Theme.SharedResourcesFor(key)`），内含 38×2 键 + 3 个别名。它同时挂在 `Application.Resources.MergedDictionaries`、被库内控件的 `SetResourceReference` 引用、被 `UI4ThemeScope` 插进子树——**同一实例**，所以切主题是原地重写，不是换字典。
+一个主题键对应**一份共享 `ResourceDictionary`**（`UI4Theme.SharedResourcesFor(key)`），内含 38×2 键 + 3 个别名 + **3 个排印默认值**（`UI4.Font.*`，见下一节）。它同时挂在 `Application.Resources.MergedDictionaries`、被库内控件的 `SetResourceReference` 引用、被 `UI4ThemeScope` 插进子树——**同一实例**，所以切主题是原地重写，不是换字典。
 
 资源键拼错**不报编译错、不抛异常**（`DynamicResource` 解析不到就回落到控件代码里的字面默认色），运行时只表现为「这处颜色没跟着主题变」。用 `FindResource` 时注意它**会抛**，取不到要 `?? ` 兜底。
 
@@ -31,7 +31,23 @@
 
 `#AARRGGBB` 前两位是 alpha，叠加色（`HoverOverlay`/`SelectedOverlay`/`Shadow`）靠它表达半透明。完整取值表：内置三套见手册 §4.4，8 套预置见 §4.5。
 
-**8 个令牌库内无人消费**：`TextSecondary` `ListSelected` `HeaderBackground` `HeaderForeground` `RowHoverBackground` `RowSelectedBackground` `GridLine` `Separator`（后 5 个是原 `UI4DataGrid` 预留，该文件已在 net10 删除）。它们照样进共享字典，宿主可直接取用，但改它们不会让任何库内控件变脸——别把它们当成「列表/表头配色开关」。
+**7 个令牌库内无人消费**：`TextSecondary` `HeaderBackground` `HeaderForeground` `RowHoverBackground` `RowSelectedBackground` `GridLine` `Separator`（后 5 个是原 `UI4DataGrid` 预留，该文件已在 net10 删除）。它们照样进共享字典，宿主可直接取用，但改它们不会让任何库内控件变脸——别把它们当成「列表/表头配色开关」。**`ListSelected` 自 2026-10-04 起有人消费了**：`UI4ListView` 构造函数把它挂给新加的 `SelectedBorderBrush`，所以改它会让学生卡片的选中描边变脸（`UI4ListBox.PressedBackground` 那类仍是不接主题的老 DP，见 `controls.md`）。
+
+## 排印键 `UI4.Font.*`（不在令牌表里，但住在同一份共享字典）
+
+字号与字体族是 3 个**固定键**，由 `UI4Theme.WriteTokens` 随每份主题字典一起发布，不是从令牌派生的：
+
+| 键 | 类型 | 库内默认 | 库内引用点 |
+|---|---|---|---|
+| `UI4.Font.Size.Base` | `double` | `15`（`UI4Theme.DefaultFontSizeBase`） | `UI4Button.cs:137`（样式 Setter 挂 `DynamicResourceExtension`）、`UI4TextBox.cs:161`、`UI4ComboBox.cs:193`、`UI4ListBox.cs:239`、`UI4PasswordBox.cs:237` |
+| `UI4.Font.Size.Code` | `double` | `14`（`DefaultFontSizeCode`） | `UI4CodeEditor.cs:37` |
+| `UI4.Font.Family` | `FontFamily` | `Segoe UI`（`DefaultFontFamily`） | 库内无人引用（字体族是继承性属性，宿主设 `Window.FontFamily` 即可），只作兜底键供宿主绑 |
+
+三条口径（第三条是本包相对上游的改动，别当成上游契约）：
+
+1. **这 3 个键永远解析得到**，因为每份主题字典都带库内默认值。宿主不覆盖就是 15/14/Segoe UI；缺键的写法（早期分叉版让控件引用这三个键却没人发布）会让所有 `UI4*` 控件静默掉到 WPF 裸默认 **12 px**，不报编译错也不抛异常——`DisplaySelfTest` 那条"库没有发布 UI4.Font.Size.Base 的兜底默认值"就是钉这个的。
+2. **要改就在应用资源根的自有项上覆盖**：`Application.Resources["UI4.Font.Size.Base"] = 17d`（宿主自己的 `Helpers/Typography.cs` 之类集中发布）。WPF 在同一层先查 `Application.Resources` 的自有项、再查 `MergedDictionaries`，所以**切主题不会把覆盖值冲掉**（库原地重写的是 MergedDictionaries 里那份）。反过来，把键写进 `UI4Theme.SharedResourcesFor(key)` 返回的那份字典**内部**，下次重写就没了。
+3. 层级字号（标题/标签/图标各一档）不是库的事：库里只有 `Base` 与 `Code` 两档，其余档位由宿主发布自己的 `App.Font.Size.*` 键（见 SKILL.md Step 4.5）。
 
 ## UI4Theme API
 

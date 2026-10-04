@@ -23,11 +23,11 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
 | 进度 | `UI4ProgressRing` | `ContentControl` | 13 | 确定弧 / 旋转弧 / 中心数值 |
 | 滑块 | `UI4Slider` | `Slider` | 6 | 线性滑块，带数值行 |
 | 滑块 | `UI4CircleSlider` | `ContentControl` | 10 | 环形滑块，拖拽改值 |
-| 容器 | `UI4Panel` | `ContentControl` | 10 | 阴影 + 悬浮缩放卡片；`BorderColor`/`HoverBorderBrush` 默认字面值不跟主题 |
+| 容器 | `UI4Panel` | `ContentControl` | 10 | 阴影 + 悬浮缩放卡片；`BorderColor` 默认字面值不跟主题（`HoverBorderBrush` 自 2026-10-04 起由构造函数挂 `UI4.Brush.BorderHover`） |
 | 容器 | `UI4Grid` | `Grid` | 2 | 默认铺 `BackgroundGradientStart → End`；**它的 `Background` 会被 `UpdateBackground()` 写回**，主题切换即覆盖宿主赋值 |
 | 容器 | `UI4ScrollViewer` | `ScrollViewer` | 1 | 美化滚动条 + 滚轮平滑滚动 |
 | 列表 | `UI4ListBox` | `ListBox` | 12 | `ListStyleType`：普通 / 圆点 / 编号 |
-| 列表 | `UI4ListView` | `ListBox` | 15 | 卡片式列表，单列，悬浮放大不越界 |
+| 列表 | `UI4ListView` | `ListBox` | 17 | 卡片式列表，单列，悬浮放大不越界；`HoverBorderBrush`/`SelectedBorderBrush` 分别挂 `BorderHover`/`ListSelected` |
 | 列表 | `UI4GridView` | `ListBox` | 15 | 网格卡片，按宽度自适应列数；`ItemWidth` 是**算列数的基准单元**不是卡片宽度；另有只读 `ComputedColumns` |
 | 导航 | `UI4Pivot` / `UI4PivotItem` | `Selector` / `HeaderedContentControl` | 10 / 1 | 滑动切换页签 |
 | 导航 | `UI4Tab` / `UI4TabItem` | `Selector` / `HeaderedContentControl` | 11 / 6 | 浏览器风格标签；关闭事件参数是 `TabCloseRoutedEventArgs` |
@@ -45,9 +45,11 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
 
 `UI4Button : Button`、`UI4TextBox : TextBox`、`UI4ComboBox : ComboBox` 这些是原生子类，Style/Trigger/Binding 语义照旧。`UI4TextBlock`、`UI4Panel`、`UI4ListView` 等**不是**同名原生类的子类，靠名字猜基类会写错。宿主自己的 `TextBlock`/`Border`/`Grid`/`DockPanel` 可以随意混用，只要颜色走 `{DynamicResource UI4.*}` 就一样跟主题。
 
-## 不接主题的 20 个颜色 DP（深色/高对比度下要宿主自救）
+## 不接主题的 19 个颜色 DP（深色/高对比度下要宿主自救）
 
 这些属性是字面默认值，`SetTheme` 不会改它们。宿主显式接令牌即可（写法：`Xxx="{DynamicResource UI4.Color.<令牌>}"`）：
+原来是 20 个，`UI4Panel.HoverBorderBrush` 已在构造函数里挂上 `UI4.Brush.BorderHover` 所以从本表移出；
+`UI4ListView` 新增的 `HoverBorderBrush`/`SelectedBorderBrush` 也是挂令牌的一方，不进本表。
 
 | 属性 | 当前默认 | 建议接的令牌 |
 |---|---|---|
@@ -66,7 +68,6 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
 | `UI4NavigationView.ItemPressedBackground` | `White` | `Surface` |
 | `UI4NavigationView.ItemPressedForeground` | `Black` | `TextForeground` |
 | `UI4Panel.BorderColor` | `#3C788CC8` | `PanelBorder` |
-| `UI4Panel.HoverBorderBrush` | `#46788CC8` | `PanelBorder`（alpha 略高） |
 | `UI4Radio.DotColor` | `White` | `OnAccent` |
 | `UI4Switch.ThumbColor` | `White` | `OnAccent` |
 | `UI4Tab.TabBackground` | `Transparent` | 保持 |
@@ -79,8 +80,34 @@ XAML 前缀固定写：`xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartU
                PressedForeground="{DynamicResource UI4.Color.OnAccent}" />
 ```
 
+## 字号与字体族：这 6 个控件跟 `UI4.Font.Size.*` 走
+
+库里只有两档字号键（契约全文见 `theming.md` 的「排印键」节）：
+
+| 控件 | 位置 | 读的键 | 库内兜底 |
+|---|---|---|---|
+| `UI4Button` | 样式 Setter（`UI4Button.cs:137`） | `UI4.Font.Size.Base` | `15` |
+| `UI4TextBox` | `UI4TextBox.cs:161` | 同上 | `15` |
+| `UI4ComboBox` | `UI4ComboBox.cs:193` | 同上 | `15` |
+| `UI4ListBox` | `UI4ListBox.cs:239` | 同上 | `15` |
+| `UI4PasswordBox` | `UI4PasswordBox.cs:237` | 同上 | `15` |
+| `UI4CodeEditor` | `UI4CodeEditor.cs:37` | `UI4.Font.Size.Code` | `14` |
+
+三条实际影响：
+
+1. 宿主在**应用资源根**上写 `UI4.Font.Size.Base` 就能整体改这 6 类控件的字号，切主题不会被冲掉；实例上本地赋 `FontSize` 仍是退订（照旧是设计）。
+2. **另有一批控件把字号写成了本地字面值，它们不读这两个键**：`UI4CheckBox.cs:165`、`UI4GridView.cs:231`、
+   `UI4ListView.cs:256` 都是 `FontSize = 15`，`UI4Menu` 的内联 XAML 是 13，`UI4MessageBox`/`UI4ColorPicker`
+   按像素定标题与表单字号，`UI4CircleSlider` 用自家的 `ValueFontSize`（默认 30）。本地值既不跟排印键、
+   也不跟 `Window.FontSize` 继承。真正"继承"的是那些压根没赋字号的（`UI4TextBlock`、`UI4Panel`、
+   `UI4FlipTextBlock` 除默认 metadata 外）。所以宿主做"调全局字号"时，要么只承诺这 6 个控件，
+   要么显式给那几类实例赋 `FontSize="{DynamicResource UI4.Font.Size.Base}"`（赋了就是退订，之后不再跟键）。
+3. **钉死尺寸的图标钮会被字号撑爆**：`UI4Button` 默认 `Padding=10,0,10,0`，宿主给 `Width=28 Height=28` 时内容区只剩 8 px，字号一大文字就从左上角起画、看着像"没居中"。尺寸随字号长（`App.Size.RoundButton` 之类由宿主派生），别去加 `HorizontalContentAlignment`——`ContentPresenter` 本来就是 `Center`。
+
 ## 逐条实测过的限制
 
+- WPF 的 `Popup`（`UI4ComboBox` 下拉、`UI4ContextMenu` 右键菜单）住在自己的可视根里，**不吃祖先的 `LayoutTransform`**：宿主用 `LayoutTransform` 做全局缩放时，非 100% 档下弹层内容仍按 100% 渲染（位置对、字不跟着大）。`RenderTransform` 同样不解决，这是 WPF 机制不是库缺陷。
+- `UI4ListBox` 悬浮/选中触发器里的 `Foreground` 是**绑定**到宿主的 `HoverForeground`/`PressedForeground`（2026-10-04 起）。原因：使用方（`UI4NavigationView`）把 `ItemContainerStyle` 赋成本地值后，重建 Style 也覆盖不回来，触发器里放 `SolidColorBrush` 快照就会永久冻在首次取值那一刻，表现为"切了主题列表文字色不动"。宿主给这两个 DP 赋字面值 = 又回到快照行为。
 - `UI4FlipTextBlock` 翻牌中缝硬编码 `#33000000`，不跟令牌。
 - `UI4ListBox` 编号角标数字色在 `Dispatcher.BeginInvoke` 里重绘，**局部作用域**（`UI4ThemeScope`）下这一处可能取到全局色。
 - `UI4ComboBox` 宽度只增不减：样式把 `MinWidth` 自绑到自身 `ActualWidth`。

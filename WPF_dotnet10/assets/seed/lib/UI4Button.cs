@@ -134,7 +134,7 @@ namespace StartUI4Controls
             style.Setters.Add(new Setter(ForegroundProperty, ForegroundFor(Blend(GradientStart, GradientEnd))));
             style.Setters.Add(new Setter(PaddingProperty, new Thickness(10, 0, 10, 0)));
             style.Setters.Add(new Setter(BorderThicknessProperty, new Thickness(0)));
-            style.Setters.Add(new Setter(FontSizeProperty, 15d));
+            style.Setters.Add(new Setter(FontSizeProperty, new DynamicResourceExtension("UI4.Font.Size.Base")));
             style.Setters.Add(new Setter(FontWeightProperty, FontWeights.SemiBold));
             style.Setters.Add(new Setter(CursorProperty, Cursors.Hand));
             var gradient = new LinearGradientBrush

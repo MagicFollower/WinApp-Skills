@@ -191,7 +191,12 @@ New-AppIcon $iconScript (Join-Path $appDir 'AppIcon.ico') $Name
 $appCsproj = Join-Path $appDir ($Name + '.csproj')
 foreach ($p in @($appCsproj, (Join-Path $appDir 'App.xaml'), (Join-Path $appDir 'App.xaml.cs'),
                  (Join-Path $appDir 'MainWindow.xaml'), (Join-Path $appDir 'Helpers\Theme.cs'),
-                 (Join-Path $appDir 'Services\SelfTest.cs'), (Join-Path $libDir 'StartUI4Controls.csproj'),
+                 (Join-Path $appDir 'Helpers\Typography.cs'), (Join-Path $appDir 'Converters\Converters.cs'),
+                 (Join-Path $appDir 'Services\SelfTest.cs'), (Join-Path $appDir 'Services\SettingsService.cs'),
+                 (Join-Path $appDir 'Services\SettingsCodec.cs'), (Join-Path $appDir 'Services\ThemeService.cs'),
+                 (Join-Path $appDir 'ViewModels\MainViewModel.cs'),
+                 (Join-Path $appDir 'Views\SettingsOverlay.xaml'), (Join-Path $appDir 'Views\SettingsOverlay.xaml.cs'),
+                 (Join-Path $libDir 'StartUI4Controls.csproj'),
                  (Join-Path $libDir 'LICENSE.txt'), (Join-Path $Path 'publish.cmd'),
                  (Join-Path $Path 'publish_no_runtime.cmd'), (Join-Path $appDir 'AppIcon.ico'),
                  (Join-Path $Path 'doc\运行与构建（T0Level）.md'))) {
@@ -215,7 +220,9 @@ Write-Output ("     lib/   {0} 个文件（StartUI4Controls v3.0.0 源码自包�
 Write-Output "     属性名/默认值/枚举/事件查 lib/README.md；主题实测数据查 lib/架构审计报告-3.0.0主题机制评审.md"
 Write-Output ("     app/   占位符替换 {0} 个文件；RootNamespace/AssemblyName = {1}；AppIcon.ico {2} 字节（字母「{3}」像素图标，7 档尺寸）" -f $touched, $Name, $icoSize, $Name.Substring(0,1).ToUpperInvariant())
 Write-Output "     下一步：dotnet build `"$appCsproj`""
-Write-Output "     跑起来验收主题接线：窗口上「暗 / 跟随系统 / 灰纸套装」都要改观感，"
-Write-Output "     右下状态行生效键应从 light 变成 dark / paper-grey。只有局部在变 = 那处写了字面色。"
+Write-Output "     跑起来验收：右上角齿轮 → 设置浮层，里面「配色」四挡逐个点都要改观感（含原生标题栏），"
+Write-Output "     页脚那行的生效键要从 light 变到 dark / paper-grey；「正文字号」滑杆要带动整窗（含胶囊与圆钮尺寸），"
+Write-Output "     「全局缩放」在 150%/200% 下不裁切、窗口拖不到比折算下限更小。只有局部在变 = 那处写了字面值。"
+Write-Output "     下拉浮层与右键菜单在缩放档下不跟着放大是已知边界（Popup 不吃 LayoutTransform），要处理请单独决策。"
 Write-Output ("     还差 " + $todoCount + " 处【模板】：doc\运行与构建（T0Level）.md —— 构建与验收通过后逐条跑命令、" +
               "把真实输出贴进去，跑不了的行显式写「未验证 + 原因」，八节缺一不可")

@@ -190,7 +190,7 @@ namespace StartUI4Controls
         }
         public UI4ComboBox()
         {
-            FontSize = 15d;
+            SetResourceReference(FontSizeProperty, "UI4.Font.Size.Base");
             Style = BuildComboStyle();
 
             // 声明式跟随主题：文本/边框/编辑区底/焦点渐变两端都挂令牌，切换主题触发 OnStyleRefresh 重建

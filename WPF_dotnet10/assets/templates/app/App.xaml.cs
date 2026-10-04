@@ -11,6 +11,12 @@ namespace __APPNAME__
     public partial class App : Application
     {
         /// <summary>
+        /// 设置的真源。构造本身不碰磁盘（默认值即构造结果），Load 只在启动序列里调一次——
+        /// 这样 --selftest 里构造主窗口也不会读到用户那份文件。
+        /// </summary>
+        public static SettingsService Settings { get; private set; }
+
+        /// <summary>
         /// 启动顺序是承重的：库内写回资源字典的第一句是 Application.Current == null 就返回，
         /// 所以在构造函数或 Main 里调 Register/SetTheme 会静默不装资源，宿主 {DynamicResource UI4.*} 全空。
         /// </summary>
@@ -28,11 +34,17 @@ namespace __APPNAME__
             DispatcherUnhandledException += OnDispatcherUnhandledException;
             Exit += (s, args) => UI4Theme.ReleaseSystemFollow();
 
+            Settings = new SettingsService();
+            Settings.Load();
+
             RegisterAppTheme();
             // 套装键（"paper-grey" 等 8 套）必须先注册，否则 UI4Theme.Apply 认不出键、
             // 只返回 false 且不抛异常。内置 light/dark/highcontrast 由静态构造自带，不注册也能用。
             UI4ThemePacks.RegisterAll();
-            UI4Theme.SetTheme(UI4ThemeMode.Light);
+            ThemeService.Apply(Settings.ThemeKey);
+            // 排印覆盖要在装字典之后：库写的是 MergedDictionaries 里那份，宿主写的是资源根自有项，
+            // 顺序反了不会出错（两层不同），但早于 Register 时 Application.Current 还没准备好。
+            ApplyDisplaySettings();
 
             // 启动不变量：数据准备失败也要让窗口出现，绝不留"进程存活但无窗口"
             try
@@ -46,6 +58,17 @@ namespace __APPNAME__
                 Report("创建主窗口", ex);
                 Shutdown(-2);
             }
+        }
+
+        /// <summary>
+        /// 把设置里的字体族与基准字号发布成资源键（含各层级字号阶梯与固定件尺寸）。
+        /// 库自带 UI4.Font.* 的兜底默认值，所以这里写的是覆盖值；设置面板改完会再调一次，
+        /// 界面即时跟随（DynamicResource 在应用资源根上就地替换键值）。
+        /// </summary>
+        internal static void ApplyDisplaySettings()
+        {
+            var settings = Settings ?? new SettingsService();
+            Typography.Publish(Current, settings.FontFamilyName, Typography.ClampBase(settings.BaseFontSize));
         }
 
         /// <summary>

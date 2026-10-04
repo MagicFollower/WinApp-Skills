@@ -34,7 +34,7 @@ namespace StartUI4Controls
             ShowLineNumbers = true;
             WordWrap = true;
             FontFamily = new FontFamily("Consolas");
-            FontSize = 14;
+            SetResourceReference(FontSizeProperty, "UI4.Font.Size.Code");
             Name = "codeeditor_firstreference";
             Options = new TextEditorOptions
             {

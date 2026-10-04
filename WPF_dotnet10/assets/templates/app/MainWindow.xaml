@@ -2,50 +2,85 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
-        xmlns:h="clr-namespace:__APPNAME__.Helpers"
+        xmlns:views="clr-namespace:__APPNAME__.Views"
         Title="__APPNAME__" Width="980" Height="640"
-        MinWidth="720" MinHeight="480"
+        MinWidth="{Binding ZoomFactor, Converter={StaticResource ZoomedSize}, ConverterParameter=W:720, FallbackValue=720}"
+        MinHeight="{Binding ZoomFactor, Converter={StaticResource ZoomedSize}, ConverterParameter=H:480, FallbackValue=480}"
         Icon="AppIcon.ico"
+        FontFamily="{DynamicResource UI4.Font.Family}"
+        FontSize="{DynamicResource UI4.Font.Size.Base}"
+        PreviewKeyDown="Window_PreviewKeyDown"
         Background="{DynamicResource UI4.Brush.Background}">
 
     <!-- 标题栏不要自绘：窗口里出现过 UI4 控件，库就在 Loaded 时按 DWM 把原生标题栏染好。
          完全不含 UI4 控件的窗口才需要手动 UI4WindowTitleBar.Apply(win)。 -->
-    <ui:UI4Grid>
-        <!-- 间距刻度只用 4 的倍数：4 / 8 / 12 / 16 / 20 / 24 / 32。
-             同排兄弟 ≥ 8，分组之间 ≥ 16，内容到窗口边缘 ≥ 16（这里 20 同时给 UI4Panel
-             的投影留够外溢：默认 ShadowDepth 8 + ShadowBlurRadius 5 ≈ 13，边距小于它会切边）。
-             别写 10 / 14 / 18 这类值，也别用负 Margin 或 ClipToBounds 去兜溢出。 -->
-        <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <!-- 全局缩放挂在根内容的 LayoutTransform 上：工具栏、卡片、页脚、设置浮层一起放大缩小。
+         LayoutTransform 会先把可用尺寸除以系数再交给子树，所以放大后不会裁切，只是可视设计像素变少——
+         窗口下限因此要跟着长（MinWidth/MinHeight 走 ZoomedSize 换算并钳到工作区）。
+         已知边界：WPF 的 Popup（下拉浮层、右键菜单）住在自己的可视根里，不吃这层变换，
+         缩放档下弹层内容仍按 100% 渲染。 -->
+    <Grid>
+        <Grid.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding ZoomFactor}" ScaleY="{Binding ZoomFactor}"/>
+        </Grid.LayoutTransform>
 
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-                <ui:UI4Button Content="亮" Width="76" Height="34" Margin="0,0,12,0" Click="OnLight"/>
-                <ui:UI4Button Content="暗" Width="76" Height="34" Margin="0,0,12,0" Click="OnDark"/>
-                <ui:UI4Button Content="跟随系统" Width="96" Height="34" Margin="0,0,12,0" Click="OnSystem"/>
-                <ui:UI4Button Content="灰纸套装" Width="96" Height="34" Click="OnPaperGrey"/>
-            </StackPanel>
+        <ui:UI4Grid>
+            <!-- 间距刻度只用 4 的倍数：4 / 8 / 12 / 16 / 20 / 24 / 32。
+                 同排兄弟 ≥ 8，分组之间 ≥ 16，内容到窗口边缘 ≥ 16（这里 20 同时给 UI4Panel
+                 的投影留够外溢：默认 ShadowDepth 8 + ShadowBlurRadius 5 ≈ 13，边距小于它会切边）。
+                 别写 10 / 14 / 18 这类值，也别用负 Margin 或 ClipToBounds 去兜溢出。 -->
+            <Grid Margin="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-            <ui:UI4Panel Grid.Row="1" CornerRadius="12" Padding="20" VerticalAlignment="Top">
-                <StackPanel>
-                    <ui:UI4TextBlock Text="接入自检" FontSize="20" Margin="0,0,0,16"/>
-                    <ui:UI4TextBox x:Name="SampleInput" Width="320" HorizontalAlignment="Left"
-                                   Margin="0,0,0,12"/>
-                    <ui:UI4CheckBox Content="记住这个选择" Margin="0,0,0,12"/>
-                    <ui:UI4Switch x:Name="SampleSwitch" HorizontalAlignment="Left"/>
-                    <!-- 原生控件混用是合法的：颜色走 {DynamicResource UI4.*} 就一样跟主题 -->
-                    <TextBlock Text="这段原生 TextBlock 用 UI4.Brush.TextMuted，切主题应一起变。"
-                               Foreground="{DynamicResource UI4.Brush.TextMuted}"
-                               TextWrapping="Wrap" Margin="0,12,0,0"/>
-                </StackPanel>
-            </ui:UI4Panel>
+                <!-- 明暗/字体/缩放只有一个入口：齿轮 → 设置浮层。窗口上再放一排主题按钮，
+                     同一状态就会出现两份观感（哪份是真相要靠猜）。 -->
+                <ui:UI4Button Grid.Row="0" x:Name="SettingsBtn" HorizontalAlignment="Right"
+                              Content="&#xE713;" FontFamily="Segoe MDL2 Assets"
+                              Width="{DynamicResource App.Size.RoundButton}"
+                              Height="{DynamicResource App.Size.RoundButton}"
+                              Padding="0" CornerRadius="{DynamicResource App.Radius.RoundButton}"
+                              FontSize="{DynamicResource App.Font.Size.Icon}"
+                              GradientStart="{DynamicResource UI4.Color.OffBackground}"
+                              GradientEnd="{DynamicResource UI4.Color.OffBackground}"
+                              HoverBackground="{DynamicResource UI4.Brush.AccentDark}"
+                              ToolTip="设置（Esc 关闭）"
+                              Click="SettingsBtn_Click"/>
 
-            <TextBlock x:Name="ThemeFooter" Grid.Row="2" Margin="0,16,0,0"
-                       Foreground="{DynamicResource UI4.Brush.Icon}"
-                       Text="主题: —"/>
+                <ui:UI4Panel Grid.Row="1" CornerRadius="12" Padding="20" VerticalAlignment="Top">
+                    <StackPanel>
+                        <ui:UI4TextBlock Text="接入自检" FontSize="{DynamicResource App.Font.Size.Icon}" Margin="0,0,0,16"/>
+                        <ui:UI4TextBox x:Name="SampleInput" Width="320" HorizontalAlignment="Left"
+                                       Margin="0,0,0,12"/>
+                        <ui:UI4CheckBox Content="记住这个选择" Margin="0,0,0,12"/>
+                        <ui:UI4Switch x:Name="SampleSwitch" HorizontalAlignment="Left"/>
+                        <!-- 原生控件混用是合法的：颜色走 {DynamicResource UI4.*} 就一样跟主题 -->
+                        <TextBlock Text="这段原生 TextBlock 用 UI4.Brush.TextMuted，切主题应一起变。"
+                                   Foreground="{DynamicResource UI4.Brush.TextMuted}"
+                                   TextWrapping="Wrap" Margin="0,12,0,0"/>
+                    </StackPanel>
+                </ui:UI4Panel>
+
+                <TextBlock x:Name="ThemeFooter" Grid.Row="2" Margin="0,16,0,0"
+                           Foreground="{DynamicResource UI4.Brush.Icon}"
+                           Text="主题: —"/>
+            </Grid>
+        </ui:UI4Grid>
+
+        <!-- 设置浮层：遮罩吃掉点击，卡片内容交给 SettingsOverlay；开合状态只有 IsSettingsOpen 一处 -->
+        <Grid x:Name="SettingsHost" Panel.ZIndex="90"
+              Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+            <Border Background="#80000000" MouseLeftButtonDown="SettingsOverlay_BackgroundClick"/>
+            <Border Background="{DynamicResource UI4.Brush.Surface}"
+                    BorderBrush="{DynamicResource UI4.Brush.BorderNormal}"
+                    BorderThickness="1" CornerRadius="12" Padding="24"
+                    Width="440" MaxHeight="520"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <views:SettingsOverlay DataContext="{Binding}"/>
+            </Border>
         </Grid>
-    </ui:UI4Grid>
+    </Grid>
 </Window>

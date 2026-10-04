@@ -234,7 +234,7 @@ namespace StartUI4Controls
 
         public UI4PasswordBox()
         {
-            FontSize = 15d;
+            SetResourceReference(FontSizeProperty, "UI4.Font.Size.Base");
             Cursor = Cursors.IBeam;
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
 

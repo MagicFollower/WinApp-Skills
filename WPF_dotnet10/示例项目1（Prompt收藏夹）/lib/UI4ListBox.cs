@@ -296,7 +296,14 @@ namespace StartUI4Controls
                 Property = UIElement.IsMouseOverProperty,
                 Value = true
             };
-            hoverTrigger.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(HoverForeground)));
+            // 触发器里的画刷必须走绑定而不是 SolidColorBrush 快照：使用方（如 UI4NavigationView）
+            // 会把 ItemContainerStyle 赋成本地值，之后重建 Style 也覆盖不回来，快照就永久冻在首次取值那一刻。
+            hoverTrigger.Setters.Add(new Setter(Control.ForegroundProperty,
+                new Binding(nameof(HoverForeground))
+                {
+                    RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UI4ListBox), 1),
+                    Converter = Internal.ColorToBrushConverter.Instance
+                }));
             itemStyle.Triggers.Add(hoverTrigger);
 
             Trigger selectedTrigger = new Trigger
@@ -304,7 +311,12 @@ namespace StartUI4Controls
                 Property = ListBoxItem.IsSelectedProperty,
                 Value = true
             };
-            selectedTrigger.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(PressedForeground)));
+            selectedTrigger.Setters.Add(new Setter(Control.ForegroundProperty,
+                new Binding(nameof(PressedForeground))
+                {
+                    RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(UI4ListBox), 1),
+                    Converter = Internal.ColorToBrushConverter.Instance
+                }));
             itemStyle.Triggers.Add(selectedTrigger);
 
             itemStyle.Setters.Add(new Setter(ListBoxItem.TagProperty, string.Empty));

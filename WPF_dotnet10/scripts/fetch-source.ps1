@@ -2,17 +2,20 @@
 .SYNOPSIS
     确保 StartUI4Controls 源码种子完整：本地命中就零联网，有缺口才按 manifest 从 GitHub 回源并写回种子目录。
 .DESCRIPTION
-    种子 = 上游仓库 MagicFollower/WinApp-Skills 里 WPF_dotnet10/componentSourceCode/StartUI4Controls 的整份拷贝（48 个文件：44 个 .cs + csproj + LICENSE.txt + README.md + 架构审计报告）。
+    种子 = StartUI4Controls 的 48 个文件（44 个 .cs + csproj + LICENSE.txt + README.md + 架构审计报告）。
+    **2026-10-04 起种子是自持基线**（清单里的 upstream.baseline.selfHosted = true）：它比 fetchedFrom 那份多了排印三键
+    （UI4.Font.Size.Base / Code / Family）与三处控件修复，那些改动只存在于本仓库的两个示例工程 lib/ 里。
     三挡语义（与其它"工程内种子"约定一致）：
       默认        本地优先。清单齐 → 直接返回，不发一个请求；缺文件/内容不符 → 回源补齐并写回 -SeedDir。
       -Offline    有缺口就逐名列出后失败（退 4），绝不碰网络。
-      -Refresh    忽略本地命中，强制重新取源覆盖种子（上游改版后用这挡刷新）。
+      -Refresh    忽略本地命中，强制重新取源覆盖种子。自持基线状态下**默认拒绝**（退 2），
+                  要真按 fetchedFrom 那份覆盖就再加 -AllowUpstreamReset；覆盖完必须重钉 manifest。
     取源通路按 A→B→C 依次尝试，全败才报错，并把每条通路的失败原因打出来：
       A  codeload tar.gz（curl.exe 优先，退回 Invoke-WebRequest）+ Win10 自带 tar.exe 解包
       B  同 A，但 URL 前加 -Mirror 指定的 GitHub 反代前缀（本机直连抖动时用）
       C  git clone --depth 1 --filter=blob:none --sparse + sparse-checkout 只取那个子目录
     校验：先按清单逐个比 git blob sha（把 CRLF 归一成 LF 再算，种子存 CRLF、仓库存 LF 时会假红），
-          没 git 就退化成"路径齐 + 逐文件 LF 字节数 + 内容计数"。内容计数（44 个 .cs / 38 个令牌 / 235 条 DP 声明）只告警不拦截，
+          没 git 就退化成"路径齐 + 逐文件 LF 字节数 + 内容计数"。内容计数（44 个 .cs / 38 个令牌 / 237 条 DP 声明）只告警不拦截，
           因为上游改版后这三个数本就会变；清单与 sha 不过才是硬失败。
 .PARAMETER SeedDir
     种子目录，默认 <Skill>/assets/seed/lib。
@@ -22,6 +25,8 @@
     禁网：有缺口即失败，不尝试任何通路。
 .PARAMETER Refresh
     强制重新取源，覆盖种子目录里的同名文件。
+.PARAMETER AllowUpstreamReset
+    与 -Refresh 一起给：承认"这会按 fetchedFrom 那份旧上游覆盖自持基线"并继续。单独给没有意义。
 .PARAMETER Mirror
     GitHub 反代前缀，会拼在 tar.gz 的完整 URL 之前，例如 https://gh-proxy.com/ 。
 .PARAMETER TmpDir
@@ -29,9 +34,9 @@
 .EXAMPLE
     powershell -NoProfile -ExecutionPolicy Bypass -File fetch-source.ps1
 .EXAMPLE
-    powershell -NoProfile -ExecutionPolicy Bypass -File fetch-source.ps1 -Refresh
-.EXAMPLE
     powershell -NoProfile -ExecutionPolicy Bypass -File fetch-source.ps1 -Offline
+.EXAMPLE
+    powershell -NoProfile -ExecutionPolicy Bypass -File fetch-source.ps1 -SeedDir D:\scratch\seed -Refresh -AllowUpstreamReset
 #>
 [CmdletBinding()]
 param(
@@ -39,6 +44,7 @@ param(
     [string]$Manifest,
     [switch]$Offline,
     [switch]$Refresh,
+    [switch]$AllowUpstreamReset,
     [string]$Mirror,
     [string]$TmpDir
 )
@@ -65,6 +71,22 @@ if (-not (Test-Path -LiteralPath $Manifest)) {
 $doc = Get-Content -LiteralPath $Manifest -Raw -Encoding UTF8 | ConvertFrom-Json
 $entries = @($doc.files)
 if ($entries.Count -lt 1) { Fail "清单里没有文件条目" 2 }
+
+# ---- 0.5 自持基线闸门 ------------------------------------------------------
+# 种子比 fetchedFrom 那份（WinApp-Skills@5d96442 的 componentSourceCode，main 上目录已删）多了排印三键与
+# 三处控件修复，而这些改动只在示例工程的 lib/ 里。无脑 -Refresh 会把它们静默打回去，所以默认拒绝。
+$baseline = $doc.upstream.baseline
+$selfHosted = ($null -ne $baseline) -and [bool]$baseline.selfHosted
+if ($selfHosted -and $Refresh -and -not $AllowUpstreamReset) {
+    Fail ("-Refresh 被挡：种子是自持基线（" + $baseline.since + " 起），比 fetchedFrom 那份多 " +
+          $baseline.divergentFiles + " 个文件的改动 —— " + $baseline.divergentList + "。" +
+          "按旧上游覆盖会把这条通路静默打回去（症状：所有 UI4* 控件掉到 WPF 裸默认 12 px，无编译错）。" +
+          "确实要回上游那份就再加 -AllowUpstreamReset，之后必须重跑 make-manifest.ps1") 2
+}
+if ($selfHosted -and $Refresh) {
+    Write-Output ("RESET  已授权按 fetchedFrom 覆盖自持基线（" + $baseline.divergentFiles +
+                  " 个文件的有意改动会被打回）。跑完请重钉 manifest 并再跑一次本脚本确认 VERIFY ok")
+}
 
 # ---- 1. LF 归一与 blob sha -------------------------------------------------
 # 种子存 CRLF、仓库 blob 存 LF：直接把磁盘字节喂给 git hash-object 会因行尾不同而假红，
@@ -145,6 +167,10 @@ if ($Offline) {
 
 $why = if ($Refresh) { "-Refresh 强制重新取源" } else { ("种子有 {0} 处缺口，回源补齐" -f $gapList.Count) }
 Write-Output ("FETCH  " + $why)
+if ($selfHosted -and -not $Refresh) {
+    Write-Output ("NOTE   种子为自持基线（偏离 fetchedFrom " + $baseline.divergentFiles + " 个文件）：回源取到的是基线前的上游那份，" +
+                  "缺的文件若属那 " + $baseline.divergentFiles + " 个之列会在后面的 sha 校验里点名拦下。手工通路：从示例工程的 lib/ 整文件拷 —— " + $baseline.devSource)
+}
 
 if ([string]::IsNullOrWhiteSpace($TmpDir)) {
     $TmpDir = Join-Path (Split-Path -Parent $SeedDir) '.fetch-tmp'
