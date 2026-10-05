@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>VocabDesk</RootNamespace>
+    <AssemblyName>VocabDesk</AssemblyName>
+    <!-- 版本号是发布守门的比对基准：exe 的 VersionInfo.FileVersion 由它派生（0.1.0 → 0.1.0.0）。
+         发版流程 = 改这里 → 重新打包 → 比对产物 FileVersion，不一致就是拿旧构建在交付。 -->
+    <Version>0.1.0</Version>
+    <!-- net10 的 WPF 仍按清单取 DPI 感知级别，PerMonitorV2 声明照旧生效 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- ApplicationIcon 管 exe 文件本身的图标（烤进 apphost 的 RT_GROUP_ICON）；
+         Window.Icon 走 pack URI，需要下面那条 Resource。两处都配不是为了补齐回落行为，
+         而是不把窗口外观挂在回落上。图标缺失时先删掉这两行再构建。 -->
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="AppIcon.ico" />
+  </ItemGroup>
+
+  <!-- 发布开关只在真正 publish 单文件时生效：dotnet build 因此保持轻量，
+       本机没装 win-x64 桌面运行时包也不会连开发构建都做不了 -->
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <!-- 单文件压缩只对"自带运行时"合法，框架依赖发布会 NETSDK1176 -->
+    <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
+    <!-- WPF 的 PresentationNative_* / wpfgfx_* / D3DCompiler_47_* 没法从 bundle 直接加载，
+         要让运行期解到 %TEMP%\.net\<程序集名>\ 再 LoadLibrary -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <!-- 两种发布各给产物一个后缀，互不覆盖：publish.cmd 传 -p:ArtifactLabel=self_contained，
+       publish_no_runtime.cmd 传 -p:ArtifactLabel=no_runtime。
+       数据根与设置目录用字面量 "VocabDesk"，不跟着这个名字变。 -->
+  <PropertyGroup Condition="'$(ArtifactLabel)' != ''">
+    <AssemblyName>VocabDesk_$(ArtifactLabel)</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../lib/StartUI4Controls.csproj" />
+  </ItemGroup>
+</Project>

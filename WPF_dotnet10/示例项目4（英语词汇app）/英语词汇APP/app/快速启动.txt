@@ -1,0 +1,32 @@
+开发构建（需要本机装有 .NET 10 SDK，dotnet --list-sdks 能看到 10.x）
+  dotnet build .\VocabDesk.csproj
+
+直接运行
+  dotnet run --project .\VocabDesk.csproj
+
+一键打包单 exe（上级目录两个脚本，产物文件名带模式后缀）
+  publish.cmd            → ..\publish\VocabDesk_self_contained.exe  约 60+ MB，运行时在包里，目标机免装 .NET
+  publish_no_runtime.cmd → ..\publish_no_runtime\VocabDesk_no_runtime.exe  约 2-3 MB，
+                           但目标机必须先装 .NET 10 Desktop Runtime（dotnet --list-runtimes 看得到
+                           Microsoft.WindowsDesktop.App 10.x 就行）
+
+设置自测（退出码 = 失败断言数，0 为全通过）
+  VocabDesk_self_contained.exe --selftest
+  报告写到 %APPDATA%\VocabDesk\selftest.txt
+
+换应用图标
+  覆盖 app\AppIcon.ico 即可（csproj 的 ApplicationIcon 与 Resource 两处都指它）；
+  默认图标是本地生成的首字母像素图标，换字母或配色重跑 Skill 的 make-icon.ps1：
+    powershell -NoProfile -ExecutionPolicy Bypass -File "<skill>\scripts\make-icon.ps1" -Name VocabDesk -Out app\AppIcon.ico
+  有 ImageMagick 也可以：magick 源.png -define icon:auto-resize=256,64,48,32,16 AppIcon.ico
+  换完要重新构建，并用 ExtractAssociatedIcon 取回内嵌位图逐像素比（体积不是判据）
+
+改观感配色
+  只改 app\Helpers\Theme.cs 的常量，然后跑 --selftest 看对比度断言有没有红
+
+用户能自己改的东西（都已接好，改文案就改 Views\SettingsOverlay.xaml）
+  右上角齿轮 → 设置浮层：应用信息 / 配色 / 字体（族 + 正文字号）/ 全局缩放，Esc 或点遮罩关
+  落盘位置 %APPDATA%\VocabDesk\settings.json（kv1 纯文本，能自己开编辑器改，越界值会被钳回区间）
+  默认值与允许区间只有一个出处：app\Helpers\Typography.cs（基准 15、字号 12-28、缩放 50-200）
+  可选配色档由 Helpers\Theme.cs 的 Policy 决定（both / light-only / dark-only），
+  留在 "TODO" 时 --selftest 会红并被发布脚本挡下
