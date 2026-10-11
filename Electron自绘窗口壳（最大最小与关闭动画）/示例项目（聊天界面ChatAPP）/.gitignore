@@ -1,0 +1,56 @@
+# 依赖与构建产物
+node_modules/
+dist/
+dist-electron/
+.vite/
+*.tsbuildinfo
+
+# electron-builder 打包输出
+# 默认目录是 release/;被外部进程占用时改走 release-check/(见 T0Level 8.2),
+# 所以带连字符的变体一并挡掉,免得将来加一个 release-2 就漏一次。
+release/
+release-check/
+release-*/
+builder-debug.yml
+
+# 工程内缓存与取证输出
+# .cache/electron-builder/ 是 winCodeSign 种子 + nsis(实测 35 MB),不入库;
+# .cache 下那些探针产物(png / txt / log / json,实测 642 个文件 65 MB)同样不入库。
+# 例外两条:探针脚本本体必须入库 —— 手册与 T0Level 的复现命令直接写着
+# `node .cache/g2-derive.mjs`、`.cache/cor-arc.mjs`、`.cache/win-styles.ps1` 这类路径,
+# 整目录吃掉 .cache 就等于把验收工具一起删了。
+# 写法注意:`.cache/` 整目录排除会让后面的 ! 规则失效(git 不进被排除的目录),
+# 所以必须写成 `.cache/*` + 逐条 !。
+.cache/*
+!.cache/*.mjs
+!.cache/*.ps1
+
+# 日志与重定向产物(跑取证一律 `> 文件 2>&1`,不接管道)
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-error.log*
+*-out.txt
+*-err.txt
+
+# Vite 加载 .mts 配置时生成的时间戳临时文件
+vite.config.*.timestamp-*.mjs
+
+# 本地环境与签名材料
+.env
+.env.local
+.env.*.local
+*.pfx
+*.pvk
+*.key
+*.cer
+
+# 编辑器与操作系统杂项
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+[Dd]esktop.ini

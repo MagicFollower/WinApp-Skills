@@ -1,0 +1,933 @@
+/* ===== 窗口骨架 =====
+   图层结构(对齐原型):最底是全局光影流动背景;中间聊天区直接落在背景上、
+   上下出血到窗口边缘;左右两侧为悬浮圆角卡片,压在背景与中间层之上。
+   三栏宽:左右各 --side-w(窗口 ≥1248 时钉在 300,再窄按 1/4 内容盒等比缩)、
+   中间吃剩下的 ⇒ 中间恒 ≥2× 侧栏、左右恒等宽、且永不相叠。依据 手册 2.8 */
+.window {
+  position: relative;
+  display: flex;
+  gap: var(--gap-side);
+  padding: var(--gap-window);
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-window);
+  overflow: hidden;
+  background: var(--window-bg);
+  backdrop-filter: blur(28px) saturate(1.4);
+  box-shadow: var(--shadow-window);
+  /* 窄窗退避用容器查询量真实窗口宽:浏览器预览下窗口宽 != 视口宽 */
+  container-type: inline-size;
+  /* 侧栏宽 = (内容盒 − 两条栏间隙) 的 1/4,夹在 [--col-side-min, --col-side] 之间。
+     中间区吃剩下的 ⇒ 未夹住时恰好 = 2× 侧栏,夹住(窗口 ≥1248)时 > 2×。
+     100cqw 量的就是本元素内容盒(窗口宽 − 2*--gap-window),浏览器预览下也不会错成视口宽。 */
+  --side-w: clamp(var(--col-side-min), (100cqw - 2 * var(--gap-side)) / 4, var(--col-side));
+}
+html.browser .window {
+  width: 1180px;
+  height: 760px;
+  max-width: 96vw;
+  max-height: 94vh;
+}
+
+/* ===== 自绘最小化退场 / 恢复入场 =====
+   OS 的"缩进任务栏"动画要求窗口带 WS_SYSMENU,而 Chromium 对 frame:false 的窗口不挂这条样式
+   (实测三臂:frame:false 无论透明与否都没有动画,只有 frame:true 有),所以这段只能自己画 ——
+   顺带正好满足"Win10/Win11 效果一致":它不读任何系统渲染路径,两端跑的是同一条 transition。
+   收拢方向刻意取**窗口自己的底边中心**,不去瞄任务栏那颗按钮 —— 按钮位置要按系统版本/DPI/
+   任务栏停靠边推,那正是两端会不一致的来源。
+   退场时窗口是透明的,所以收缩过程中露出来的是真桌面,观感与系统动画同向。
+   类名由 WindowChrome.tsx 挂/摘:摘掉那一刻就是恢复入场(JS 只监听一次 restore)。 */
+.window {
+  transition:
+    transform var(--t-minimize) var(--ease-exit),
+    opacity var(--t-minimize) var(--ease-exit);
+}
+.window--minimizing {
+  transform: translateY(28px) scale(0.6);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  /* 提升成独立合成层。不提升的话每一帧都要按新的缩放比重栅整窗(里面还有一块 WebGL 极光
+     画布 + 28px backdrop blur),观感就是"一格一格"。只在退场期间挂 —— 常驻 will-change
+     会一直占着一份层纹理。 */
+  will-change: transform, opacity;
+}
+/* 恢复时挂一下:让"摘掉 window--minimizing"这一步不产生过渡(见 WindowChrome.tsx 的注释) */
+.window--noanim {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .window {
+    transition: none;
+  }
+}
+
+/* 背景层容器:SoftAurora(WebGL)与静态 --flow 兜底共用同一套定位。
+   它自己不需要圆角——.window 的 overflow 裁剪按 corner-shape 走,后代一起跟着变。 */
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.soft-aurora-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* 全局光影流动背景(reduced-motion 时的静态兜底) */
+.bg-flow {
+  position: absolute;
+  inset: 0;
+  background: var(--flow);
+  background-size: 300% 300%;
+  animation: flow-pan var(--t-flow) var(--ease) infinite alternate;
+}
+.bg-flow::before,
+.bg-flow::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  mix-blend-mode: soft-light;
+}
+.bg-flow::before {
+  width: 46%;
+  height: 62%;
+  left: -6%;
+  bottom: -18%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 214, 170, 0.35) 55%, transparent 75%);
+  animation: blob-a calc(var(--t-flow) * 1.6) var(--ease) infinite alternate;
+}
+.bg-flow::after {
+  width: 40%;
+  height: 55%;
+  right: -4%;
+  top: -14%;
+  background: radial-gradient(circle, rgba(127, 216, 208, 0.85) 0%, rgba(183, 156, 232, 0.3) 60%, transparent 78%);
+  animation: blob-b calc(var(--t-flow) * 1.25) var(--ease) infinite alternate;
+}
+@keyframes flow-pan {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+@keyframes blob-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(28%, -18%, 0) scale(1.18);
+  }
+}
+@keyframes blob-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+  to {
+    transform: translate3d(-24%, 22%, 0) scale(0.92);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-flow,
+  .bg-flow::before,
+  .bg-flow::after {
+    animation: none;
+  }
+}
+
+/* ===== 会话列表栏(悬浮卡片) ===== */
+/* 宽度用 .window 上算好的 --side-w 直接钉死,不走 flex 收缩:
+   flex 的收缩量是按**内容盒**基线分配的(border-box 下要先减掉 padding),
+   右栏有 12+12 横向内边距,于是它每挡都比左栏少缩一点——实测 960 挡差到 5.9px。
+   写死宽度后两侧同源,差值恒为 0。 */
+.sidebar {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 var(--side-w);
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text-1);
+  border-radius: var(--r-window);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+}
+.sidebar-top .menu-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  color: var(--sidebar-text-1);
+}
+.sidebar-top .menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.app-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-xs);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-2));
+  flex-shrink: 0;
+}
+
+.searchbox {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--sidebar-text-2);
+}
+.searchbox input {
+  flex: 1;
+  font-size: 13px;
+  color: var(--sidebar-text-1);
+  min-width: 0;
+}
+.searchbox input::placeholder {
+  color: var(--sidebar-text-3);
+}
+.searchbox.on-light {
+  flex: none;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-bubble);
+  color: var(--text-3);
+}
+.searchbox.on-light input {
+  color: var(--text-1);
+}
+.searchbox.on-light input::placeholder {
+  color: var(--text-3);
+}
+
+/* 过滤行容器:GooeyNav 自己出 <nav>,这里只管左右留白与行的纵向节奏。
+   总高保持 52px(换件前的 2 + 40 + 10),让下面的 .chat-list 首行不位移。 */
+.filter-tabs {
+  display: flex;
+  padding: 2px 12px 10px;
+}
+
+.chat-list {
+  flex: 1;
+  padding: 2px 8px 12px;
+}
+.chat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 72px;
+  padding: 0 12px;
+  border-radius: var(--r-chip);
+  cursor: pointer;
+  transition: background var(--t-micro) var(--ease);
+}
+.chat-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.chat-item.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.chat-item .meta {
+  min-width: 0;
+}
+.chat-item .name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sidebar-text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-item .sub {
+  font-size: 12.5px;
+  color: var(--sidebar-text-2);
+  margin-top: 3px;
+}
+
+/* 50/21 = 原型实测(头像圆盘 50、条目 pitch 72 → 上下空档 11);字号按圆盘等比 19×50/44≈21。
+   头部那颗不吃这里:`.header-pill .avatar` 另有尺寸。 */
+.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* ===== 聊天主区(第三张卡:与左右卡片同 inset、同 32px G2 圆角) ===== */
+/* 中间列也是一张卡:与左右卡片同 inset(不再上下出血)、同 32px 圆角(走 corner-shape G2)、
+   同半透明底。阴影刻意不跟左右一致——中间是"更透"的洗色,压上浮影会把背景光斑压死。 */
+.chat-area {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-window);
+  overflow: hidden;
+  background: var(--chat-wash);
+  transition: background var(--t-panel) var(--ease);
+}
+
+.chat-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  padding: 12px 16px 8px;
+}
+.header-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 18px 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-float);
+  min-width: 0;
+  max-width: 100%;
+}
+.header-pill > div {
+  min-width: 0;
+}
+.header-pill .avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 15px;
+}
+.header-pill .title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-pill .subtitle {
+  font-size: 11.5px;
+  color: var(--text-2);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-actions {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  display: flex;
+  gap: 8px;
+}
+.action-pill {
+  width: 40px;
+  height: 48px;
+  border-radius: var(--r-pill);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-float);
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+  transition: color var(--t-micro) var(--ease);
+}
+.action-pill:hover {
+  color: var(--accent-orange);
+}
+
+/* 右键头部可拖区浮出的窗口控制条(最小/最大/关闭)。
+   portal 到 body 后用视口坐标定位,所以 fixed 就是光标位。 */
+/* 定位挂在包裹层上:AnimatedContent 的入场动效是在它自己的元素上做 translate/scale,
+   若把 position:fixed 留在 .win-menu 上,包裹层一带 transform 就成了 fixed 的包含块,
+   菜单位置会跟着位移抖 8px。 */
+.win-menu-wrap {
+  position: fixed;
+  z-index: 99;
+}
+.win-menu {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--r-chip);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-pop);
+}
+.win-menu-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  color: var(--text-2);
+  transition:
+    color var(--t-micro) var(--ease),
+    background var(--t-micro) var(--ease);
+}
+.win-menu-btn:hover {
+  color: var(--text-1);
+  background: rgba(30, 36, 48, 0.08);
+}
+
+/* 消息流上下穿到头部与输入栏底下:负 margin 把列表盒撑过这两条,再用等量 padding
+   把首末条推回可见区,所以滚动内容会流经头部/输入栏下方而不是被它们截断。 */
+.message-list {
+  flex: 1;
+  margin: -68px 0 -64px;
+  padding: 76px 20px 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 两条"渐变 + 模糊"带:mask-image 让 backdrop-filter 从边缘的满模糊线性衰减到内侧的零模糊,
+   background 再叠一层同方向的渐隐洗色,于是消息滑到头部/输入栏下时是先糊后淡。
+   层级:列表(静态) < 这两条(z-index 1) < 头部/输入栏(z-index 2)。pointer-events:none 不吃点击。 */
+.chat-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* 刻意不用 backdrop-filter:它按 fade 自己的矩形盒合成背景模糊,祖先 .chat-area 的
+     overflow:hidden + 圆角裁不住这一层 —— 弧外会露出一块没有转角的软方角(实测楔形点
+     饱和差 27,把它去掉后归 0;给 fade 自己挂 border-radius/clip-path 都能压住,
+     但 clip-path 也拦不住 backdrop-filter)。2026-10-11 用户口径:只留渐隐,不要模糊。 */
+}
+.chat-fade--top {
+  top: 0;
+  height: 68px;
+  background: linear-gradient(180deg, var(--chat-veil) 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.62) 42%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.62) 42%, transparent 100%);
+}
+.chat-fade--bottom {
+  bottom: 0;
+  height: 64px;
+  background: linear-gradient(0deg, var(--chat-veil) 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.62) 42%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.62) 42%, transparent 100%);
+}
+.msg-row {
+  display: flex;
+  margin-top: 8px;
+  animation: msg-in var(--t-msg) var(--ease);
+}
+.msg-row.own {
+  justify-content: flex-end;
+}
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.bubble {
+  max-width: 62%;
+  padding: 10px 14px;
+  border-radius: var(--r-card);
+  /* 尾巴角仍然只有 6px:G2 要求的是接缝处曲率为 0,不是四角等径 */
+  border-top-left-radius: var(--r-bubble-tail);
+  background: var(--bubble-in);
+  box-shadow: var(--shadow-bubble);
+  font-size: 14.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.msg-row.own .bubble {
+  background: var(--bubble-out);
+  border-top-left-radius: var(--r-card);
+  border-top-right-radius: var(--r-bubble-tail);
+}
+.bubble .sender {
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.bubble .text {
+  user-select: text;
+}
+.bubble .thumb {
+  display: block;
+  width: 300px;
+  max-width: 100%;
+  height: 170px;
+  border-radius: var(--r-thumb);
+  margin-bottom: 8px;
+  object-fit: cover;
+}
+.bubble.has-thumb {
+  padding: 6px 6px 10px;
+}
+.bubble.has-thumb .sender,
+.bubble.has-thumb .text {
+  padding: 0 8px;
+}
+
+.bigemoji {
+  display: inline-block;
+  padding: 10px 26px;
+  border-radius: var(--r-pill);
+  background: var(--bigemoji-bg);
+  color: var(--accent-blue);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  box-shadow: var(--shadow-bubble);
+  animation: pop-in 240ms var(--ease);
+}
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.quote-card {
+  max-width: 62%;
+  padding: 8px 12px;
+  border-radius: var(--r-chip);
+  background: var(--quote-bg);
+  box-shadow: var(--shadow-bubble);
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  gap: 8px;
+}
+.quote-card .qicon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.quote-card .qsender {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--quote-accent);
+  margin-bottom: 2px;
+}
+.quote-card .qtext {
+  color: var(--text-1);
+  user-select: text;
+}
+
+/* 输入工具栏 */
+.composer-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+.composer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 52px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-float);
+}
+.composer .icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+  transition: background var(--t-micro) var(--ease);
+}
+.composer .icon-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.composer-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.05);
+}
+.composer-input input {
+  flex: 1;
+  font-size: 14px;
+  min-width: 0;
+}
+.composer-input:focus-within {
+  box-shadow: 0 0 0 2px rgba(43, 182, 115, 0.35);
+}
+/* 上划后才浮出的「回到最新消息」钮:居中标在聊天区中线、输入栏上方 12px。
+   bottom 的 64 = .composer-wrap 的高(52 胶囊 + 12 下内边距),再加 12 间距;
+   锚在 .chat-area 而不是输入栏上,所以右栏展开让输入栏避让时它也不会跟着挪。
+   动画必须自带 translateX(-50%):复用 msg-in/pop-in 那种写 transform 的关键帧会在
+   播放期间顶掉居中位移,结束时又弹回来 —— 实测就是"出现后再往左偏一段"。 */
+.jump-bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 76px;
+  z-index: 3;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow-float);
+  animation: jump-in var(--t-micro) var(--ease);
+}
+@keyframes jump-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.send-btn {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  box-shadow: var(--shadow-float);
+  transition: transform var(--t-micro) var(--ease);
+}
+.send-btn:hover {
+  transform: scale(1.06);
+}
+.send-btn:active {
+  transform: scale(0.97);
+}
+
+/* ===== 右侧面板(悬浮卡片) ===== */
+.right-panel {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 var(--side-w);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  border-radius: var(--r-window);
+  box-shadow: var(--shadow-float);
+  padding: 14px 12px 10px;
+  gap: 10px;
+  overflow: hidden;
+}
+
+/* 原先这里有一整块 `@container (max-width:1100px)`:窄窗时把右栏切成 position:absolute
+   浮层、再给头部/消息/输入栏加避让 padding。2026-10-11 撤掉——浮层退出 flex 流后中间卡会把宽度
+   涨回去(实测 1120 挡:中间 512→786),右卡整张 300px 压在中间卡上面(overlap=300),
+   中间卡右侧圆角被盖住,用户看到的"两张卡合并"就是这一挡。避让只让**内容**让开、
+   没让卡片的**边界**让开,所以治不了。改成三栏 1:2:1 等比收缩后不再有浮层态,
+   --panel-footprint / --head-reserve / --actions-w / --chat-min 一并删掉。依据 手册 2.8 */
+.panel-tabs {
+  display: flex;
+  gap: 2px;
+}
+.panel-tab {
+  flex: 1;
+  height: 36px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  color: var(--text-2);
+  display: grid;
+  place-items: center;
+  transition: all var(--t-micro) var(--ease);
+}
+.panel-tab.active {
+  background: #fff;
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: var(--shadow-bubble);
+}
+.emoji-grid {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 2px;
+  /* .scroll 只写了 overflow-y:auto,按规范另一轴跟着从 visible 升成 auto ⇒
+     右栏窄到格子放不下时会浮出一条横向滚动条。这一行不许横向滚,直接裁。 */
+  overflow-x: clip;
+}
+/* minmax(0,1fr) 而不是 1fr:1fr 的隐式最小是 min-content(17px 字形 + 方格 ≈ 23px),
+   右栏跟着窗口缩到 268 以下时轨道咬不动 → 表情格横向溢出、浮出一条滚动条。
+   夹到 0 后格子跟着栏宽走(960 挡实测 19.2px,仍大于 17 字形)。 */
+.emoji-grid.cols-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.emoji-grid.cols-9 {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+.emoji-cell {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t-micro) var(--ease);
+}
+.emoji-grid.cols-6 .emoji-cell {
+  font-size: 26px;
+}
+.emoji-grid.cols-9 .emoji-cell {
+  font-size: 17px;
+}
+.emoji-cell:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.panel-section {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 8px;
+}
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-2);
+  padding: 2px 4px 6px;
+}
+.section-head .ops {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+/* 快捷短语那一节的标题行整行可点(用户口径):button 化拿键盘可达性,
+   aria-expanded 同时当折叠态的样式钩子。 */
+.section-head.collapsible {
+  width: 100%;
+  cursor: pointer;
+}
+.head-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chevron {
+  display: inline-flex;
+  transition: transform var(--t-micro) var(--ease);
+}
+.section-head.collapsible[aria-expanded='false'] .chevron {
+  transform: rotate(-90deg);
+}
+.section-head .count {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+/* 阈值:整节最多占右栏的 40%(含标题行),超出就在短语列表内滚。
+   参照是右栏**内容盒**(卡高 780 − 上下内边距 24 = 756),所以上限实测 302.4px
+   = 卡高的 38.8%;换成容器查询单位 40cqh 也是同一个数(cqh 量的同样是内容盒),
+   因此不必给 .right-panel 加 container-type(它会带尺寸包含,窄窗转浮层时多一层风险)。 */
+.phrase-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 40%;
+}
+.phrase-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px;
+  padding: 0 4px 2px;
+  flex: 1;
+  min-height: 0;
+}
+.phrase-slot {
+  display: inline-flex;
+}
+.phrase-input {
+  width: 88px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--r-md);
+  background: #fff;
+  font-size: 12.5px;
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.chip {
+  padding: 4px 12px;
+  border-radius: var(--r-md);
+  background: var(--chip-bg);
+  font-size: 13px;
+  box-shadow: var(--shadow-bubble);
+  cursor: pointer;
+}
+.chip.add {
+  background: transparent;
+  border: 1px dashed var(--text-3);
+  color: var(--text-2);
+  box-shadow: none;
+}
+
+/* ===== reactbits 动效层适配 =====
+   vendored 组件自带的外观与本工程令牌冲突的部分在这里收口,组件源码保持与上游一致。 */
+
+/* BorderGlow 曾包住输入胶囊(类名 .composer-glow),2026-10-11 撤下:
+   它的 hover 辉光会盖住整条胶囊,看着像"选中背景色",而这里只想要图标自己的 hover。
+   撤下时顺带暴露过一个真缺陷,记在这里免得再踩:BorderGlow 的 .border-glow-inner 是
+   column flex,而 .composer 的 flex:1 本意是给 .composer-wrap(行 flex)拿宽用的,
+   flex-basis:0% 顶掉 height:52 → 胶囊实测被压到 40,与内层 40 的输入胶囊帽沿同心相咬,
+   两端各多出一道弧形亮边。现在 .composer 直接挂在 .composer-wrap 下,该路径不再存在。 */
+
+/* Magnet + ClickSpark 包住的发送钮:外层接管原 52x52 盒,内层填满保持视觉尺寸不变。
+   Magnet 的内层 div 没有高度,不补这一条会让 ClickSpark 的 height:100% 链断掉,
+   发送钮被压成 52x22(实测)。 */
+.send-magnet {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.send-magnet > div {
+  height: 100%;
+}
+.send-magnet .send-btn {
+  width: 100%;
+  height: 100%;
+}
+
+/* AnimatedContent 的包裹层要继续右栏的纵向 flex,否则 emoji-grid 的 flex:1 失效 */
+.panel-anim {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* HoldButton(快捷短语那颗):上游只有 sm/md/lg 三档,sm 也是 36px 高 + 16px 内边距,
+   比原型里那颗 chip(28 高 / 12 内边距)明显胖。按用户口径压回 chip 尺寸——
+   液面与波纹的几何是组件自己 offsetWidth/Height 实量写进 --hb-w/--hb-h 的(带 ResizeObserver),
+   所以压小安全,不用改组件源码。颜色不在这里改:那四个 --hb-* 是内联 style,CSS 类盖不住,走 props。 */
+.phrase-chips .hold-button {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+
+/* 刻意不进文末那条 corner-shape(G2)清单:HoldButton 的液面与外框共用
+   clip-path: inset(0 round var(--hb-radius)),而 corner-shape 不改 clip-path 的角形。
+   只把盒体换成超椭圆,按住时液面边缘就会与盒体角错开 —— 宁可让 chip 保持 G1 圆角。 */
+
+/* GooeyNav(左栏过滤行):上游按内容宽排格,md 档带图标每格 ≈84px,
+   4 格 348px > 侧栏可用 276px,而它的 list 是 flex-wrap:wrap → 不换尺寸必换行(实测判据见 T0Level 12 节)。
+   这里把它拉成等宽铺满:nav 满宽、每格 flex:1、link 撑满并居中,字号与内边距收到
+   "内容 61px ≤ 每格 64.5px"。pill 几何是按 li 的 getBoundingClientRect 量的,所以拉伸安全。 */
+.filter-nav.gooey-nav {
+  width: 100%;
+  --gn-font: 13px;
+  --gn-x: 8px;
+  --gn-y: 5px;
+  --gn-pad: 4px;
+  --gn-gap: 2px;
+}
+/* stage 是 nav(inline-flex)的 flex 子级,默认 flex:0 1 auto = 按 max-content 收缩,
+   于是"每格 flex:1"拿不到可分配的确定宽度:实测四格各 60.9px、末格 right=275.8,
+   而 nav 内沿在 294 —— 右侧 18.2px 空档就是它留的。把它拉满,等分才生效。 */
+.filter-nav .gooey-nav__stage {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.filter-nav .gooey-nav__item {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.filter-nav .gooey-nav__link {
+  width: 100%;
+  justify-content: center;
+  /* 上游 8px:图标与文字离得远,选中时视觉上像左右不匀(实测两舷 padding 都是 8.00px) */
+  gap: 4px;
+}
+
+/* FoldText(头部群名):组件自带 line-height:0.95 / letter-spacing:-0.04em / white-space:pre-wrap,
+   那是给 80px 大标题调的,落在 48px 高的胶囊里会把行高压扁、CJK 挤紧,所以拉回 .header-pill 的排印。
+   display:block 是必须的:根元素默认 inline-block = 按内容收缩,永远不会"溢出"自己,
+   于是 .title 上的 overflow:hidden 根本不生效——960 挡实测群名戳出胶囊右沿 47.6px。
+   字号/字重/颜色不在这里改:组件把它们写成内联自定义属性(--fold-text-*),CSS 类盖不住,走 props。
+   注意 text-overflow:ellipsis 在这里仍不生效(子级是一串 inline-block 面板),长名到边硬切。 */
+.header-pill .fold-text {
+  display: block;
+  line-height: 1.2;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
+/* ===== G2(曲率连续)圆角 =====
+   border-radius 只有 G1:接缝处曲率从 0 跳到 1/r,32px 这种量级能看出"突然圆起来"的折角感。
+   这里用原生 corner-shape 把形状换成超椭圆 |a/r|^p+|b/r|^p=1(p = 2^v,v=2 → p=4 即 squircle,
+   取值走 --g2-shape);角部沿对角朝盒角外扩 0.18921r(r=32 → 6.05px)。
+   覆盖面 = 所有圆角矩形。--r-pill 与 50% 圆形不在此列:它们没有"直线→圆弧"的接缝可谈曲率连续。
+   引擎门槛:corner-shape 自 Chromium 139 起支持(本工程 Electron 44.7 = Chromium 152);
+   不支持的内核整条忽略,画面自动退回圆弧 —— 不需要 JS,也不需要 @supports 分支。
+   为什么不用 clip-path:试过两条路都不划算。shape() 在 Chromium 150 仍读不回值(12 种写法全 none);
+   JS 生成 path() 能出形,但 clip-path 会把元素自己的 box-shadow 一起裁掉,也不带着 overflow 裁切
+   一起变形,于是要给每个带阴影的表面加一层伪元素重画(实测还会踩 background:inherit 叠两层、
+   自定义属性继承把磨砂传进子伪元素、共享规则的特异度盖掉 @container 三个坑)。
+   corner-shape 是连 background/border/box-shadow/backdrop-filter/overflow 裁切一起变的,
+   所以 border-radius 与阴影照原样写,零结构改动。否决细节见 手册 4.1.1。 */
+.window,
+.sidebar,
+.right-panel,
+.chat-area,
+.bubble,
+.thumb,
+.quote-card,
+.chip,
+.chat-item,
+.emoji-cell,
+.menu-btn,
+.win-menu,
+.win-menu-btn,
+.app-badge {
+  corner-shape: var(--g2-shape, round);
+}

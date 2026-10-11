@@ -1,0 +1,82 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  font-size: 14px;
+  color: var(--text-1);
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 纯浏览器预览(非 Electron)时铺上桌面渐变,便于核验悬浮窗口效果 */
+html.browser body {
+  background: var(--desktop-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+input::placeholder {
+  color: var(--text-3);
+}
+
+/* overlay 自绘滚动条 */
+.scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+.scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 3px;
+}
+.scroll.on-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ===== 窗口拖拽带 =====
+   原先这两条是 -webkit-app-region: drag / no-drag。2026-10-11 撤掉那个属性:它把区域变成
+   OS 的 HTCAPTION,右键就被 DefWindowProc 接走、弹深色系统菜单(六项、条目应用侧改不了),
+   和界面不协调又关不掉。现在 .drag-region 只是"能从这儿起手拖窗"的标记,
+   拖拽由 WindowChrome.tsx 在 pointerdown 时经 IPC 交给主进程移窗;
+   .no-drag 是它的反向标记(纯 JS 契约,CSS 侧不需要声明,类留在元素上就是给 JS 读的)。 */
+.drag-region {
+  user-select: none;
+}

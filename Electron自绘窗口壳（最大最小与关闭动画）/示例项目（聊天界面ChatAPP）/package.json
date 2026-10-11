@@ -1,0 +1,30 @@
+{
+  "name": "chatapp",
+  "version": "0.1.0",
+  "private": true,
+  "productName": "ChatAPP",
+  "description": "Windows desktop IM, pixel-faithful replica of the prototype",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "ensure-electron": "install-electron",
+    "dev": "node bin/dev.mjs",
+    "build": "node bin/build.mjs",
+    "dist": "node bin/build.mjs && electron-builder --win",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p electron/tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^44.0.0",
+    "electron-builder": "^25.1.8",
+    "gsap": "^3.15.0",
+    "motion": "^12.43.0",
+    "ogl": "^1.0.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.2",
+    "vite": "^7.1.0",
+    "zustand": "^5.0.2"
+  }
+}

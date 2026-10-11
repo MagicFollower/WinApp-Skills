@@ -1,0 +1,123 @@
+:root {
+  /* 基底 */
+  --desktop-bg: radial-gradient(120% 120% at 20% 10%, #ffd9a0 0%, #ff9e7a 45%, #f7c8d8 100%);
+  --window-bg: rgba(255, 255, 255, 0.55);
+  --sidebar-bg: linear-gradient(180deg, #2b2340 0%, #3d2b56 100%);
+  --panel-bg: rgba(255, 255, 255, 0.72);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  /* 快捷短语那颗 chip:HoldButton 的颜色只能走 props(它写成内联 --hb-*),
+     所以这里给它一个单点令牌,组件侧经 lib/palette.ts 取值,保持 CSS 是唯一真源。 */
+  --chip-bg: rgba(255, 255, 255, 0.9);
+
+  /* 强调色 */
+  --accent: #2bb673;
+  --accent-2: #1fb6a6;
+  --accent-blue: #3b9df8;
+  --accent-orange: #f5a623;
+  --accent-red: #e5533d;
+
+  /* 气泡与卡片 */
+  --bubble-in: rgba(255, 255, 255, 0.92);
+  --bubble-out: #cdeebd;
+  --quote-bg: #d6f0e0;
+  --quote-accent: #2bb673;
+  --bigemoji-bg: #d7f3f0;
+
+  /* 文字 */
+  --text-1: #1e2430;
+  --text-2: #5b6472;
+  --text-3: #98a0ad;
+  --sidebar-text-1: #ffffff;
+  --sidebar-text-2: rgba(255, 255, 255, 0.62);
+  --sidebar-text-3: rgba(255, 255, 255, 0.4);
+  --text-on-accent: #ffffff;
+
+  /* 圆角:border-radius 全部生效,它决定盒子的尺寸与阴影基准半径,也是 corner-shape 不支持时的兜底轮廓 */
+  --r-window: 32px;
+  --r-card: 16px;
+  --r-bubble-tail: 6px;
+  --r-chip: 12px;
+  --r-pill: 999px;
+  --r-thumb: 14px;
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+
+  /* G2(曲率连续)圆角:把 border-radius 的圆弧换成超椭圆 |a/r|^p+|b/r|^p=1。
+     corner-shape 的指数是 p = 2^v,所以 superellipse(2) = p4(squircle)、(3) = p8 更方、
+     round = p2 就是原来的圆弧(等价于不开)。p=4 时角部沿对角朝盒角外扩 0.18921r
+     (r=32 → 6.05px,r=16 → 3.03,r=8 → 1.51)。
+     内核门槛 Chromium 139+;不支持时声明整条被忽略,画面自动退回圆弧。
+     作用在哪些元素上见 app.css 文末的 G2 小节。 */
+  --g2-shape: superellipse(2);
+
+  /* 阴影 */
+  --shadow-window: 0 24px 64px rgba(60, 20, 40, 0.28);
+  --shadow-float: 0 8px 24px rgba(30, 20, 50, 0.16);
+  --shadow-bubble: 0 1px 2px rgba(30, 20, 50, 0.08);
+  --shadow-pop: 0 12px 32px rgba(30, 20, 50, 0.22);
+
+  /* 动效 */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  /* 退场专用:--ease 是强减速(入场手感),用在"缩走"上会把大部分位移挤进头几十毫秒,
+     末尾那一段几乎不动 ⇒ 看着像掉帧。退场要加速离开。 */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --t-micro: 150ms;
+  --t-panel: 220ms;
+  --t-msg: 180ms;
+  --t-flow: 22s;
+  /* 自绘最小化退场/恢复入场。OS 那段"缩进任务栏"要求窗口带 WS_SYSMENU,
+     frame:false 拿不到(实测三臂只有 frame:true 那颗有动画),所以整段自己画。
+     时长只写在 CSS 里,JS 靠 transitionend 收尾,不复制第二份常数。 */
+  --t-minimize: 180ms;
+
+  /* 布局间隔与栏宽 */
+  --gap-window: 10px;
+  --gap-side: 14px;
+  /* 侧栏基线宽:窗口 ≥1248 时左右卡各 300(原型实测)、中间 ≥600;
+     再窄就三栏按 300:600:300 的比例一起缩,所以不需要再单独写 --chat-min。 */
+  --col-side: 300px;
+  /* 侧栏下限:窗口最小宽 960 那一挡按比例算出来是 226,还咬不住;它只挡 dev 预览
+     (html.browser 的 96vw)那种比 960 更窄的情况。低于 4*220+2*14+2*10=928 三栏会溢出被裁。 */
+  --col-side-min: 220px;
+
+  /* 全局光影流动背景 */
+  --flow: linear-gradient(120deg, #ffe0ae 0%, #ffb37a 22%, #f7a8c4 42%, #b79ce8 62%, #7fd8d0 80%, #ffe0ae 100%);
+
+  /* reactbits 动效层调色板。JS 侧要读成字符串传进组件 props,
+     所以这里写字面量而不是 var() 引用;改色时与上方 --accent* 同步。 */
+  --aurora-1: #ffd9a0;
+  --aurora-2: #f7a8c4;
+  --glow-1: #2bb673;
+  --glow-2: #1fb6a6;
+  --glow-3: #3b9df8;
+  --spark: #ffffff;
+
+  /* 聊天主题(默认暖,按会话切换):叠在全局背景上的半透明色相,底部收淡以透出流动光 */
+  --chat-wash: linear-gradient(165deg, rgba(255, 236, 198, 0.68) 0%, rgba(255, 216, 170, 0.42) 45%, rgba(203, 175, 255, 0.22) 100%);
+  /* 头部/输入栏底下那两条渐隐带的洗色,取各自 wash 首色提不透明度。
+     这里也有下限,而且它才是"中间卡看不见圆角"的成因:洗色是渐变,卡片最外一圈由 veil 说了算,
+     旧值 (255,240,214,.82) 压在窗口底上得到 ~251,而窗口底本身就是 255 → 弧两侧同亮,
+     左下角实测弧对比 mean 15.9 / p10 4.0 / min 2.8(右卡基准 16.3 / 15.3 / 15.3)。
+     换更深一档的色而不是加 alpha:(255,226,186,.90) → 26.8 / 16.5 / 16.4,每一行都过基准。
+     两条弯路记着:① 补 `--shadow-float` 会把弧外压暗到与洗色同调,弧对比掉到 3.8 / 2.5;
+     ② 提 `--chat-wash` 底部 alpha 到 .42 只把 mean 推到 15.9、p10 反而掉到 4.0(弧那几行被 veil 盖着,不吃洗色)。
+     判据算法见 T0Level 16 节。 */
+  --chat-veil: rgba(255, 226, 186, 0.9);
+}
+
+:root[data-chat-theme='mint'] {
+  --chat-wash: linear-gradient(165deg, rgba(214, 242, 229, 0.68) 0%, rgba(196, 236, 228, 0.42) 45%, rgba(168, 206, 255, 0.22) 100%);
+  --chat-veil: rgba(176, 226, 212, 0.92);
+  --bubble-out: #cdeebd;
+  --quote-bg: #d6f0e0;
+  --bigemoji-bg: #d7f3f0;
+}
+
+:root[data-chat-theme='warm'] {
+  --chat-wash: linear-gradient(165deg, rgba(255, 236, 198, 0.68) 0%, rgba(255, 216, 170, 0.42) 45%, rgba(203, 175, 255, 0.22) 100%);
+  --chat-veil: rgba(255, 226, 186, 0.9);
+  --bubble-out: #cdeebd;
+  --quote-bg: #d6f0e0;
+  --bigemoji-bg: #d7f3f0;
+}
