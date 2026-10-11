@@ -1,0 +1,26 @@
+/* offline-emoji-picker 需要的最小样式。宿主已有的排版规则不要搬进来。
+   令牌都挂在 .ep-picker 作用域上，不污染 :root；宿主想换色只需在外面定义 --ep-*。 */
+
+.ep-picker {
+  /* 库自己拥有的外观令牌（这三个在 dist 里 grep 得到，别自己发明第四个） */
+  --epr-picker-border-color: transparent;
+  --epr-bg-color: var(--ep-surface, #ffffff);
+  --epr-category-label-bg-color: var(--ep-surface, #ffffff);
+
+  /* 弹层是宿主绝对定位的，宽高由这里给死，否则库会按内容撑开 */
+  width: 100% !important;
+  height: 360px !important;
+}
+
+/* 雪碧图格子。库的 cell 是 flex 容器，不加 flex:none 时固定的 30px 会被压缩成 24px，
+   字形右侧被切掉；display 必须是块级，行内 span 的宽高不生效（这条最容易漏）。 */
+.ep-glyph {
+  display: block;
+  flex: none;
+}
+
+/* 消费方自绘的 cell 是裸 <button>，会继承 UA 边框。这里只重置 border——
+   background/hover 归库所有，靠 --epr-hover-bg-color 走，别抢。 */
+.ep-picker [data-epr-part='emoji'] {
+  border: 0;
+}

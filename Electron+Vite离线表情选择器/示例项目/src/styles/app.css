@@ -1,0 +1,181 @@
+/* 单明暗工程：只写浅色一套 token，不建 prefers-color-scheme 分支。
+   主进程把 nativeTheme.themeSource 钉成 light，两侧保持一致。 */
+:root {
+  color-scheme: light;
+
+  --ep-surface: #ffffff;
+  --ep-page: #eef1f3;
+  --ep-border: #dfe3e6;
+  --ep-text: #17191b;
+  --ep-text-dim: #6b7378;
+  --ep-accent: #2f7a55;
+  --ep-shadow: 0 10px 30px rgba(20, 30, 40, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--ep-text);
+  background: var(--ep-page);
+}
+
+.chat {
+  position: relative;
+  /* The popover is absolutely positioned, so the shell has to be its anchor
+     rather than the viewport. */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+  gap: 8px;
+}
+
+.chat__log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.bubble {
+  max-width: 70%;
+  align-self: flex-start;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ep-surface);
+  border: 1px solid var(--ep-border);
+  /* Without this an emoji-only or unbroken long string pushes the bubble past
+     max-width instead of wrapping. */
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.recent {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: var(--ep-surface);
+  border: 1px solid var(--ep-border);
+  overflow-x: auto;
+}
+
+.recent__item {
+  flex: none;
+  padding: 3px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.recent__item:hover {
+  background: rgba(47, 122, 85, 0.12);
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--ep-surface);
+  border: 1px solid var(--ep-border);
+}
+
+.composer__trigger {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ep-text-dim);
+  border: 1px solid var(--ep-border);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.composer__trigger.is-open {
+  color: var(--ep-accent);
+  border-color: var(--ep-accent);
+}
+
+.composer__input {
+  flex: 1;
+  min-height: 34px;
+  max-height: 120px;
+  padding: 7px 9px;
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--ep-border);
+  border-radius: 8px;
+  background: var(--ep-surface);
+  resize: none;
+}
+
+.composer__send {
+  flex: none;
+  height: 34px;
+  padding: 0 14px;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ep-accent);
+  cursor: pointer;
+}
+
+.composer__send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.popover {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 92px;
+  z-index: 10;
+  border-radius: 14px;
+  background: var(--ep-surface);
+  box-shadow: var(--ep-shadow);
+  overflow: hidden;
+}
+
+/* The library owns layout; only the sprite box and the picker's outer
+   metrics are ours. */
+.ep-picker {
+  --epr-picker-border-color: transparent;
+  --epr-bg-color: var(--ep-surface);
+  --epr-category-label-bg-color: var(--ep-surface);
+  width: 100% !important;
+  height: 360px !important;
+}
+
+.ep-glyph {
+  display: block;
+  /* The library's cell is a flex container; without this the fixed 30px
+     sprite box shrinks to 24px and the glyph gets clipped. */
+  flex: none;
+}
+
+/* A consumer-supplied cell is a bare <button>, so it inherits the UA border.
+   The library keeps ownership of background/hover through --epr-hover-bg-color,
+   which is why only `border` is reset here. */
+.ep-picker [data-epr-part='emoji'] {
+  border: 0;
+}

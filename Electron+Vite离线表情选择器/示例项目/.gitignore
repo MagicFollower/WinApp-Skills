@@ -1,0 +1,71 @@
+# ── 依赖与包管理 ───────────────────────────────────────────────
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+# package-lock.json 必须提交：这套数据层靠钉死的版本才能重跑出同一份 atlas
+*.lcov
+
+# ── 构建产物（npm run build 能重建的都算）──────────────────────
+dist/
+dist-electron/
+# release / release-check / release-asar / release-net 都是交付或自证输出目录
+release*/
+*.tsbuildinfo
+.vite/
+.vite-temp/
+vite.config.mts.timestamp-*.mjs
+.cache/
+coverage/
+.nyc_output/
+# 用 gen 脚本试跑时临时开的输出前缀
+.skill-gen-tmp/
+
+# ── 脚本与自证产生的临时物 ─────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
+*-out.txt
+*-err.txt
+*-probe*.txt
+*.tmp
+*.pid
+*.seed
+
+# ── 环境与本地覆盖 ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.local
+
+# ── 编辑器 / 工具 ──────────────────────────────────────────────
+.vscode/*
+# 只共享"推荐装哪些扩展"这一份；settings.json/launch.json 属个人配置，要共享就自己加反向放行
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# ── 操作系统垃圾（宿主是 Windows，这几条真会出现）──────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.Spotlight-V100
+.TemporaryItems
+# 重定向写错时留下的空文件
+nul
+
+# ── 源数据反向放行：这段必须留在文件末尾 ───────────────────────
+# 下面三条保护的是"资产不是产物"的文件：
+#   src/emoji/atlas/*.webp + index.json   雪碧图与坐标层
+#   src/emoji/data/picker.json            烘好拼音/英文/别名的词表
+#   electron/icon.ico                     打包用图标（就近放主进程目录，不进 dist）
+# gitignore 是**最后匹配生效**，所以反向放行只有放在最末尾才压得住上面的宽规则
+# （实测：*.webp 写在 !src/emoji/atlas/** 之前能救回来，写在之后就把它盖掉）。
+# 因此：以后往这个文件里追加规则一律追加在这三条之前；也别加 *.webp / *.ico /
+# src/**/dist 这类宽规则 —— 反向放行救不出"父目录本身已被忽略"的文件。
+!src/emoji/atlas/**
+!src/emoji/data/**
+!electron/icon.ico

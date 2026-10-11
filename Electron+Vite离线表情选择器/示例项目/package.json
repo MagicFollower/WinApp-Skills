@@ -1,0 +1,37 @@
+{
+  "name": "emoji-picker",
+  "productName": "EmojiPicker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Offline emoji picker for Electron + React: local sprite atlas, pinyin search index",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "ensure-electron": "install-electron",
+    "dev": "node bin/dev.mjs",
+    "build": "node bin/build.mjs",
+    "dist": "node bin/build.mjs && electron-builder --win",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p electron/tsconfig.json",
+    "gen:atlas": "node bin/gen-atlas.mjs",
+    "gen:index": "node bin/gen-index.mjs",
+    "gen": "node bin/gen-atlas.mjs && node bin/gen-index.mjs",
+    "verify:atlas": "node bin/verify-atlas.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@electron/asar": "^3.4.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3",
+    "emoji-datasource-apple": "16.0.0",
+    "emoji-picker-react": "5.0.0",
+    "pinyin-pro": "3.29.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sharp": "0.35.5",
+    "typescript": "5.9.3",
+    "vite": "8.3.4"
+  }
+}

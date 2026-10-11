@@ -1,0 +1,115 @@
+{
+ "capturedFrom": "C:UserswebtuDesktopemoji前端组件",
+ "capturedAt": "2026-10-11",
+ "emojiDatasourceApple": "16.0.0",
+ "emojiPickerReact": "5.0.0",
+ "pinyinPro": "3.29.5",
+ "sharp": "0.35.5",
+ "atlas": {
+  "pages": 10,
+  "glyphs": 3778,
+  "cell": 64,
+  "maxEdgePx": 2048
+ },
+ "picker": {
+  "records": 1903,
+  "categories": 10
+ },
+ "files": [
+  {
+   "path": "data/aliases.json",
+   "bytes": 168,
+   "sha256": "a9e9bb97a3fe116a"
+  },
+  {
+   "path": "data/atlas/activities.webp",
+   "bytes": 163352,
+   "sha256": "54d9117c5f9fec80"
+  },
+  {
+   "path": "data/atlas/animals_nature.webp",
+   "bytes": 338194,
+   "sha256": "71e3eacf238241e0"
+  },
+  {
+   "path": "data/atlas/flags.webp",
+   "bytes": 258782,
+   "sha256": "b954677e55ab7e7f"
+  },
+  {
+   "path": "data/atlas/food_drink.webp",
+   "bytes": 236954,
+   "sha256": "6adb66fc4bd3fcad"
+  },
+  {
+   "path": "data/atlas/index.json",
+   "bytes": 164707,
+   "sha256": "923956c994d4c886"
+  },
+  {
+   "path": "data/atlas/objects.webp",
+   "bytes": 463124,
+   "sha256": "483c07fbe8768f93"
+  },
+  {
+   "path": "data/atlas/smileys_people-p2.webp",
+   "bytes": 1485412,
+   "sha256": "ed964c5258210a4d"
+  },
+  {
+   "path": "data/atlas/smileys_people-p3.webp",
+   "bytes": 567820,
+   "sha256": "2027103a4011d2dc"
+  },
+  {
+   "path": "data/atlas/smileys_people.webp",
+   "bytes": 1430124,
+   "sha256": "b7b5f50f9495c0f2"
+  },
+  {
+   "path": "data/atlas/symbols.webp",
+   "bytes": 227984,
+   "sha256": "68bf9cefab3ec3a0"
+  },
+  {
+   "path": "data/atlas/travel_places.webp",
+   "bytes": 401556,
+   "sha256": "8485655ff824d5f1"
+  },
+  {
+   "path": "data/picker.json",
+   "bytes": 580819,
+   "sha256": "7d6d5532b8bc3792"
+  },
+  {
+   "path": "snippets/host-usage.tsx",
+   "bytes": 4041,
+   "sha256": "9603b695eb952733"
+  },
+  {
+   "path": "snippets/offline-guard.ts",
+   "bytes": 2693,
+   "sha256": "71fe503926e10860"
+  },
+  {
+   "path": "src/Picker.tsx",
+   "bytes": 2688,
+   "sha256": "d60e295dc9a1fa90"
+  },
+  {
+   "path": "src/SpriteCell.tsx",
+   "bytes": 653,
+   "sha256": "a0f5931081f0e6b2"
+  },
+  {
+   "path": "src/atlas.ts",
+   "bytes": 1325,
+   "sha256": "eebe9b614b05b446"
+  },
+  {
+   "path": "src/picker.css",
+   "bytes": 1124,
+   "sha256": "1bab16bbaf8f6bf8"
+  }
+ ]
+}
