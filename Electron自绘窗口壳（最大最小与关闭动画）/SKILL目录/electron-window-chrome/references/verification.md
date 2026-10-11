@@ -94,7 +94,7 @@ clickLog: { start: 1, move: 0, end: 1 }   // 证明这一枪开过,不是空跑
 
 采到的两组数:
 
-1. **呈现帧下限**:动画期间循环 `capturePage({x:470,y:300,width:160,height:160})`,`img.toBitmap()` 哈希去重 → `distinct/calls`。实测 off 11/16、on(入场曲线)11/16、on(退场曲线+will-change) **15/18**。
+1. **呈现帧下限**:动画期间循环 `capturePage({x:470,y:300,width:160,height:160})`,`img.toBitmap()` 哈希去重 → `distinct/calls`。两轮实测:`off`(撤优化)11/16 与 13/16,`on`(退场曲线 + `will-change`)15/18 与 17/19。**绝对值随取图吞吐抖 ±2 帧,只能当同一轮内的相对次序用**。
 2. **曲线形状**:在 20/60/100/140/180ms 采样 `getComputedStyle(root).transform` 的 scale。强减速曲线在 60ms 就已经走完 ~85%,这是"看着掉帧"的真凶。
 
 两个必须防的假绿:

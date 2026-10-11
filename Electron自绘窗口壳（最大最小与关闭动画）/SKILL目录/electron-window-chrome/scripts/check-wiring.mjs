@@ -344,7 +344,7 @@ function f_mount_hint(list) {
     if (/transform-origin\s*:\s*50%\s+100%/.test(body)) PASS('exit-origin', '收拢点取窗口自身底边中心(不瞄任务栏按钮 ⇒ Win10/Win11 同一条 transition)');
     else FAIL('exit-origin', '.window--minimizing 没写 transform-origin: 50% 100% —— 默认 50% 50% 会原地缩,观感是"卡片变小"而不是"收下去"', `${h.file}:${h.line}`);
     if (/will-change\s*:\s*transform/.test(body)) PASS('exit-layer', '退场期间提升合成层');
-    else WARN('exit-layer', '.window--minimizing 没有 will-change —— 整窗按新缩放比重栅,里面有 WebGL 或 backdrop blur 时会明显掉帧(实测呈现帧 15/18 → 11/16)', `${h.file}:${h.line}`);
+    else WARN('exit-layer', '.window--minimizing 没有 will-change —— 整窗按新缩放比重栅,里面有 WebGL 或 backdrop blur 时会明显掉帧(两轮实测:有 will-change 时呈现帧 15-17/18-19,去掉后 11-13/16)', `${h.file}:${h.line}`);
   }
   const tr = hit(css, /\.window\s*\{[^}]*transition[^}]*transform[^}]*\}/s);
   if (tr) PASS('exit-transition', '根元素上有 transform 的 transition', `${tr.file}:${tr.line}`);
