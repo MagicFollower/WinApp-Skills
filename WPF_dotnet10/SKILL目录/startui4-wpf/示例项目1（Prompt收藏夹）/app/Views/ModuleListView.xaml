@@ -1,0 +1,94 @@
+<UserControl x:Class="PromptFavorites.Views.ModuleListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+             xmlns:h="clr-namespace:PromptFavorites.Helpers"
+             Background="{DynamicResource UI4.Brush.Surface}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏：内缩与中栏统一为 12（水平）/ 8（垂直），两栏的「+」到列边距离才一致 -->
+        <Border Grid.Row="0" Padding="12,8">
+            <StackPanel>
+                <!-- LastChildFill=False：末子不再被拉成整行宽，标题按内容收 -->
+                <DockPanel LastChildFill="False">
+                    <!-- 用 MDL2 的 Add 字形而不是文本 "+"：加号在 Segoe UI 里墨迹本就低于 em 框中心
+                         （实测 16 px 时偏下 1.5~2 px，字号越大越明显），图标字体是按光学居中设计的 -->
+                    <ui:UI4Button DockPanel.Dock="Right"
+                                  Content="&#xE710;"
+                                  FontFamily="Segoe MDL2 Assets"
+                                  Width="{DynamicResource App.Size.RoundButton}"
+                                  Height="{DynamicResource App.Size.RoundButton}"
+                                  Padding="0"
+                                  CornerRadius="{DynamicResource App.Radius.RoundButton}"
+                                  FontSize="{DynamicResource App.Font.Size.Icon}"
+                                  Margin="4,0,0,0"
+                                  GradientStart="{DynamicResource UI4.Color.Accent}"
+                                  GradientEnd="{DynamicResource UI4.Color.Accent}"
+                                  Command="{Binding AddModuleCommand}"
+                                  ToolTip="新建模块"/>
+                    <TextBlock DockPanel.Dock="Left" Text="模块"
+                               FontSize="{DynamicResource App.Font.Size.Lead}"
+                               Foreground="{DynamicResource UI4.Brush.Text}"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
+
+                <!-- 排序：与中栏排序条同款胶囊 -->
+                <WrapPanel Margin="0,4,0,0">
+                    <ui:UI4Button x:Name="SortCreatedAtBtn" Content="创建日期"
+                                  Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
+                                  Click="SortCreatedAt_Click"/>
+                    <ui:UI4Button x:Name="SortNameBtn" Content="名称"
+                                  Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
+                                  Click="SortName_Click"/>
+                    <ui:UI4Button x:Name="SortCustomBtn" Content="自定义"
+                                  Height="{DynamicResource App.Size.Chip}" Padding="8,0"
+                                  CornerRadius="{DynamicResource App.Radius.Chip}"
+                                  FontSize="{DynamicResource App.Font.Size.Caption}" Margin="0,4,4,0"
+                                  Click="SortCustom_Click"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 模块列表 -->
+        <ui:UI4ListBox x:Name="ModuleList"
+                       Grid.Row="1"
+                       Margin="8,0"
+                       ListStyleType="None"
+                       PressedBackground="{DynamicResource UI4.Color.RowSelectedBackground}"
+                       PressedForeground="{DynamicResource UI4.Color.TextForeground}"
+                       ItemsSource="{Binding Modules}"
+                       SelectedItem="{Binding SelectedModule}"
+                       h:ReorderBehavior.Enabled="{Binding CanReorder}"
+                       h:ReorderBehavior.CommitCommand="{Binding ReorderCommand}">
+            <ui:UI4ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="4,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Name}"
+                                   Foreground="{DynamicResource UI4.Brush.Text}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding EntryCount}"
+                                   Foreground="{DynamicResource UI4.Brush.Icon}"
+                                   FontSize="{DynamicResource App.Font.Size.Small}"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"/>
+                    </Grid>
+                </DataTemplate>
+            </ui:UI4ListBox.ItemTemplate>
+        </ui:UI4ListBox>
+    </Grid>
+</UserControl>

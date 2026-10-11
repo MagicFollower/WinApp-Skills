@@ -1,0 +1,62 @@
+<Window x:Class="MemoTask.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+        xmlns:v="clr-namespace:MemoTask.Views"
+        Title="备忘待办 MemoTask" Width="1080" Height="700"
+        MinWidth="720" MinHeight="480"
+        Icon="AppIcon.ico"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        Background="{DynamicResource UI4.Brush.Background}">
+
+    <!-- 标题栏不自绘：窗口里有 UI4 控件，库会在 Loaded 时按 DWM 把原生标题栏染好。
+         左栏导航 + 底部状态条用 DockPanel 分，中间 * 留给 UI4NavigationView 的内容区。 -->
+    <ui:UI4Grid>
+        <DockPanel>
+            <Border DockPanel.Dock="Bottom" Padding="20,8,20,12"
+                    BorderBrush="{DynamicResource UI4.Brush.BorderWeak}" BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding Footer}"
+                               FontSize="12" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource UI4.Brush.Icon}"/>
+                    <TextBlock Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center"
+                               FontSize="12" Text="Ctrl+N 新建 · Ctrl+F 搜索 · Ctrl+S 保存 · Ctrl+1/2/3 切页"
+                               Foreground="{DynamicResource UI4.Brush.Placeholder}"/>
+                </Grid>
+            </Border>
+
+            <ui:UI4NavigationView x:Name="Nav" Header="备忘待办" LeftPanelWidth="96"
+                                  ItemForeground="{DynamicResource UI4.Brush.Text}"
+                                  ItemHoverColor="{DynamicResource UI4.Color.HoverOverlay}"
+                                  ItemHoverForeground="{DynamicResource UI4.Color.TextForeground}"
+                                  ItemPressedBackground="{DynamicResource UI4.Color.Surface}"
+                                  ItemPressedForeground="{DynamicResource UI4.Color.TextForeground}">
+                <!-- 这五个 Item* 属性的字面默认值没接令牌（组件手册 §4.11），深色下会黑字压黑底，宿主显式接上。 -->
+                <ui:UI4NavigationViewItem x:Name="NavNotes" Tag="notes" Header="备忘录"
+                                          TextIcon="&#xE70F;"
+                                          TextIconFontFamily="Segoe Fluent Icons, Segoe MDL2 Assets">
+                    <v:NotesView DataContext="{Binding Notes}"/>
+                </ui:UI4NavigationViewItem>
+
+                <ui:UI4NavigationViewItem x:Name="NavTodos" Tag="todos" Header="待办"
+                                          TextIcon="&#xE787;"
+                                          TextIconFontFamily="Segoe Fluent Icons, Segoe MDL2 Assets">
+                    <v:TodosView DataContext="{Binding Todos}"/>
+                </ui:UI4NavigationViewItem>
+
+                <ui:UI4NavigationViewBottomItem x:Name="NavSettings" Tag="settings" Header="设置"
+                                                TextIcon="&#xE713;"
+                                                TextIconFontFamily="Segoe Fluent Icons, Segoe MDL2 Assets">
+                    <v:SettingsView DataContext="{Binding SettingsVm}"/>
+                </ui:UI4NavigationViewBottomItem>
+            </ui:UI4NavigationView>
+        </DockPanel>
+    </ui:UI4Grid>
+</Window>

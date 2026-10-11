@@ -1,0 +1,13 @@
+<Application x:Class="MemoTask.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:StartUI4Controls;assembly=StartUI4Controls"
+             xmlns:conv="clr-namespace:MemoTask.Converters"
+             ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <!-- 只放跨页共用的转换器。颜色一律在 Helpers/Theme.cs（固定色）或 UI4.Brush.*（跟主题）取，
+             这里不再抄一份色值，免得两处漂移。 -->
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBooleanToVisibilityConverter x:Key="InvBoolToVis"/>
+    </Application.Resources>
+</Application>
