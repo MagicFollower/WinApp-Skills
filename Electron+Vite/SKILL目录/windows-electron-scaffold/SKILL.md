@@ -1,6 +1,6 @@
 ---
 name: windows-electron-scaffold
-description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面应用的可复现流程——显式获取 Electron 二进制、默认注入下载镜像、主进程与 preload 走 CJS + sandbox、Vite 用 .mts 配置与相对 base、electron-builder 同时产出 portable/nsis/dir、按 src/ + electron/ + bin/ + doc/（用外部色板时再加 100themes/）的目录约定收敛工程、把窗口尺寸与字体明暗自适应当编码期约束、交付 doc/运行与构建（T0Level）.md。当出现 npm install 退出码 0 但 node_modules/electron/dist/electron.exe 缺失、Electron 或 electron-builder 从 GitHub Releases 下载失败、需要配置 Windows 打包目标、打包产物秒退需要排查、要把既有 Electron 工程按目录约定重新整理、要写运行与构建/发布文档、要判定桌面端自适应是否达标、或要把外部色板库（如 100-themes）离线固化进工程时使用。不用于普通 Web/React 页面开发。
+description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面应用的可复现流程——显式获取 Electron 二进制、默认注入下载镜像、主进程与 preload 走 CJS + sandbox、Vite 用 .mts 配置与相对 base、electron-builder 同时产出 portable/nsis/dir、按 src/ + electron/ + bin/ + doc/（用外部色板时再加 100themes/）的目录约定收敛工程、把窗口尺寸与字体明暗自适应当编码期约束、交付 doc/运行与构建（T0Level）.md，并可在 bin/ 下交付启动/停止/构建安装包/构建便携版四个双击 bat 脚本。当出现 npm install 退出码 0 但 node_modules/electron/dist/electron.exe 缺失、Electron 或 electron-builder 从 GitHub Releases 下载失败、需要配置 Windows 打包目标、打包产物秒退需要排查、要把既有 Electron 工程按目录约定重新整理、要写运行与构建/发布文档、要判定桌面端自适应是否达标、要把外部色板库（如 100-themes）离线固化进工程、或要写双击即跑的 .bat 且它出现注释残片被当命令执行/某行 echo 没打印却把别的文件截断/批处理内 call npm.cmd 报 MODULE_NOT_FOUND 时使用。不用于普通 Web/React 页面开发。
 ---
 
 # Windows Electron 工程搭建与打包
@@ -22,6 +22,7 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 - 桌面端要窗口尺寸/字体/明暗自适应——这属于写代码前的口径决定，不是收尾补丁。
 - 要把外部主题/色板库（例：`bjarneo/100-themes`，100 主题 × 5 变体 = 500 个 `colors.toml`）离线固化进工程，别让每次生成都去仓库拉几百个小文件。
 - 给桌面端定 `.ico` 图标：默认本地生成像素风字母 monogram（不联网、不依赖 ImageMagick/Python），只有要品牌 logo 时才查 selfh.st/icons——见 Step 5。
+- 给不打开终端的人交付「双击即跑」的 `bin\*.bat`（启动 / 停止 / 构建安装包 / 构建便携版）——bat 有四条静默咬人的硬坑，见 Step 9。
 
 ## 目录布局（新建工程先定）
 
@@ -34,7 +35,7 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 ├── vite.config.mts  tsconfig.json  electron-builder.yml  .gitignore
 ├── src/                      渲染层：组件、样式、lib、内容
 ├── electron/                 主进程 + preload + tsconfig.json + icon.ico
-├── bin/                      脚本：dev.mjs、build.mjs、*.ps1
+├── bin/                      脚本：dev.mjs、build.mjs、*.ps1；可选四个双击 *.bat（见 Step 9）
 ├── 100themes/                可选：外部色板种子（manifest.json + raw/），见 Step 7b
 ├── doc/                      运行与构建（T0Level）.md（必交）+ README、设计方案
 └── dist/  dist-electron/  release/   产物；node_modules/ 保留
@@ -232,6 +233,63 @@ PowerShell 5.1 侧实测踩到的三个坑：变量名不区分大小写，`$bg 
 
 自查口径：`ls` 结果里除 `node_modules/` 与 `release/` 外，每一项都应能归进“代码 / 文档 / 脚本 / 配置 / 产物”五类之一；归不进去的就是残留。
 
+## Step 9 — bin/ 四个双击脚本（bat）：四条会静默咬人的硬坑
+
+给不打开终端的人交付四个 `.bat`，双击即跑。它们只是薄封装，真逻辑仍在前八步的脚本里，额外参数用 `%*` 原样转递：
+
+| 文件 | 封装的命令 | 脚本里自带的判据 |
+| --- | --- | --- |
+| `start.bat` | `npm run dev` | 先判 `node_modules\electron\dist\electron.exe` 是否存在（判文件不判码，见 Step 2），缺了才 `run ensure-electron`；再 `call "<npm 绝对路径>" run dev`，末尾按 `%RC%` 报告 |
+| `stop.bat` | `bin\stop-dev.ps1` | 打 `killed=N remaining=M`，M 不为 0 提示再双击一次 |
+| `build-setup.bat` | `bin\electron-win-build.ps1 -Target nsis %*` | 数 `release\*_setup.exe`，为 0 直接 `exit /b 1`；否则逐个打 名字 / `%%~zF` 字节 / `%%~tF` 改动时间 |
+| `build-portable.bat` | 同上 `-Target portable` | 同上，通配换 `*_portable.exe`；并提醒便携版 stdout 不冒泡、启动比 dir 口径慢 12–13 倍（Step 6） |
+
+骨架（`build-setup.bat` 的核对段；四个文件同构，首行都 `cd /d "%~dp0.."` 落到工程根）：
+
+```bat
+@echo off
+setlocal EnableExtensions
+chcp 65001 >nul
+cd /d "%~dp0.." || (echo FAIL cannot reach project root & pause & exit /b 1)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "bin\electron-win-build.ps1" -Target nsis %*
+set "RC=%ERRORLEVEL%"
+if not "%RC%"=="0" (
+  echo !! build failed, exit code %RC%
+  pause
+  exit /b %RC%
+)
+set "N=0"
+for %%F in ("release\*_setup.exe") do set /a N+=1
+if "%N%"=="0" (
+  echo FAIL no *_setup.exe under release\
+  pause
+  exit /b 1
+)
+for %%F in ("release\*_setup.exe") do echo   %%~nxF   %%~zF bytes   modified %%~tF
+pause
+exit /b 0
+```
+
+四条硬规矩都是实测撞出来的，违反时**没有语法错误、只有错行为**：
+
+1. **整个文件不许有任何非 ASCII 字节**，`rem` 注释也算，硬编码的含中文工程路径也算。默认代码页非 65001 的机器（实测本机 936）上 `chcp` 属于中途换页，cmd 可能按字符数而非字节数重定位后续行，注释残片被当命令执行（实测打出 `'：npm' is not recognized`），且**非确定性**——同一文件跑 3 次只有 1 次坏；另一例：探针文件唯一一处中文是写死的 `cd /d "…\emoji前端组件"`（nonAscii=12），执行在第二条 echo 之后就悄悄断了。工程根一律用 `%~dp0..` 取，提示文字用英文。
+2. **`echo` 文本里不许出现裸 `>`**，`==>` 和 `-->` 都算。cmd 在 `>` 处切行、把后一个 token 当文件名、剩下的当载荷写进去。实测两个后果：一个 957 字节的 `.ps1` 被截成 4 字节（内容 `==`），以及在工程根造出 `running`（21 字节，内容 `-- bin\stop-dev.ps1`）。这一行本身什么都不打印，所以"没看到输出"不等于"没执行"。动作行前缀改 `[*]`、失败行用 `!!`；判据就是那行 echo 有没有出现在输出里。
+3. **`(` 块内不 `goto`，块内 `echo` 不带 `)`**。右括号提前闭合块：实测 `if "%RC%"=="0" ( echo ok dev exited cleanly (0) ) else (…)` 两个分支全打，且文本被截成 `ok  dev exited cleanly (0`。改成两条单行 `if`，或写 `^)`。
+4. **bat 里调 npm 必须用绝对路径**。裸名 `call "npm.cmd"` 时，npm.cmd 自己的 `%~dp0` 展开成**调用方的 cwd**（arg0 没有目录部分），于是它去工程目录找 `node_modules\npm\bin\npm-prefix.js` 并报 MODULE_NOT_FOUND。2×2 探针（chcp 开/关 × ASCII/中文 cwd）四格全灭，而同一条命令在顶层 `cmd /c "call npm.cmd run dev"` 里是好的——差别只在"是否在批处理内用裸名调用"，所以别拿"手工那条能跑"当结论。取绝对路径：
+
+```bat
+set "NPMCMD="
+for /f "delims=" %%P in ('where npm.cmd 2^>nul') do if not defined NPMCMD set "NPMCMD=%%P"
+if defined NPMCMD goto :check_npm
+set "NPMCMD=C:\Program Files\nodejs\npm.cmd"
+:check_npm
+if not exist "%NPMCMD%" ( echo FAIL npm.cmd not found & pause & exit /b 1 )
+```
+
+停止侧口径：`stop-dev.ps1` 只按「映像路径是否落在工程目录下」筛进程，绝不 `taskkill /IM electron.exe`（会连坐别的工程与编辑器）。实测 `killing pid=… ×4` → `killed=4 remaining=0`，随后 node / npm / cmd 全归零、Vite 端口释放——杀掉 Electron 主进程后 `bin/dev.mjs` 的子进程退出回调自己关服务器，级联成立，不必在 ps1 里再按命令行匹配 node（它的 `node.exe` 在 Program Files，路径过滤本来抓不到）。
+
+bat 自己也要跑，不能只静态看：产物核对那段拿一个有匹配、一个没匹配的目录各跑一次（实测 `found 2 installer(s)` 并正确跳过 `not_an_installer.txt` / `FAIL-branch-taken` 且退出码 1）。取退出码时别接管道——`cmd | tr` 之后的 `$?` 是 `tr` 的（实测把 rc=1 读成 rc=0），一律 `> file 2>&1` 落盘再读。
+
 ## 故障速查
 
 | 症状 | 真因 | 处置 |
@@ -258,6 +316,10 @@ PowerShell 5.1 侧实测踩到的三个坑：变量名不区分大小写，`$bg 
 | `themes.css` 整份变成只含一个主题 | 带主题名跑了子集，产物被覆写 | 补种子用 `--fetch-only`，收尾再跑一次全量 |
 | 包体多出十几 MB，`listPackage` 的顶层族多了 `node_modules` | dev 依赖被错登进 `dependencies`，builder 按生产依赖自动附带 | 移回 `devDependencies`，删空 `release/` 重打包，族数回到三族 |
 | `npm run dev` 正常，装出来的包报 `Cannot find module 'x'` | x 是主进程运行时依赖，却被放进 `devDependencies`，builder 不附带 | 移到 `dependencies`，再用 `--selftest` 断言它真能 require 到 |
+| bat 双击后打出 `'：xxx' is not recognized`，且同一文件时好时坏 | 默认代码页非 65001 时 `chcp` 是中途换页，cmd 按字符数重定位后续行 | bat 全文 ASCII-only，提示文字用英文，工程根用 `%~dp0..`（Step 9） |
+| bat 里某行 echo 没打印，而它提到的那个文件被截断成几个字节 | `echo` 文本里的裸 `>` 被当重定向（`==>`、`-->` 都算） | 动作行用 `[*]`；判据看那行 echo 有没有出现在输出里（Step 9） |
+| if/else 两个分支都打印，或末行文本被截断 | `(` 块内的 `echo` 载荷带了 `)`，提前闭合了块 | 改两条单行 `if`，或写 `^)`（Step 9） |
+| bat 里 `call npm.cmd` 报 `Cannot find module '<工程根>\node_modules\npm\bin\npm-prefix.js'`，同一条命令在命令行直接跑却好的 | 批处理内用裸名调用时，npm.cmd 的 `%~dp0` 等于调用方 cwd | bat 里一律用 `where npm.cmd` 取到的绝对路径（Step 9） |
 
 ## 验收清单
 
@@ -272,6 +334,7 @@ PowerShell 5.1 侧实测踩到的三个坑：变量名不区分大小写，`$bg 
 9. 按 Step 8 收敛目录：删掉 `dist/`、`dist-electron/` 与临时输出后，已打好的包仍能自证通过，再用 `-SkipInstall` 重建能全部产出；`ls` 清单里每一项都归得了类。
 10. 用了外部色板库的工程（Step 7b）：`--offline` 生成零联网全绿，产物与联网版按行排序 md5 相同；`100themes/raw/` 文件数等于 manifest 里的 themes × variants（实测 500）；再删一个种子文件验证兜底能取回并写回，md5 与删除前一致。
 11. 依赖分栏核对：`npm ls --omit=dev --depth=0` 只剩交付物真需要的运行时包（Vite + tsc 这条路径上通常为空），且 `app.asar` 的顶层族没有多余的 `node_modules`；有则顺着 `dependencies` 找错栏的那个包（成因见 Step 1）。
+12. 交付了四个双击 bat（Step 9）时：`start.bat` 要看到 Vite 本地地址 + `window-shown` + IPC 往返标记，`stop.bat` 要看到 `killed=N remaining=0` 且随后 node/electron/cmd 归零、端口释放；两个构建 bat 至少各验一条分支（真失败时 `!!` + 退出码非 0；产物核对段用有匹配/没匹配的构造目录各跑一次，实测 `found 2` 与 `FAIL-branch-taken` rc=1）。退出码一律落盘再读，别接管道。静态审四个文件：非 ASCII 字节 = 0、`CR==LF`、括号配平、`echo` 载荷里没有裸 `>`、块内没有 `goto`。
 
 ## doc/运行与构建（T0Level）.md（新工程必交）
 
@@ -279,7 +342,7 @@ PowerShell 5.1 侧实测踩到的三个坑：变量名不区分大小写，`$bg 
 
 模板里的 `bin/dev.mjs`、`bin/smoke.ps1`、`bin/smoke-marked.ps1`、`bin/verify-icon.ps1`、`bin/verify-geometry.ps1`、`bin/publish.ps1` 都是新工程自己落地的脚本（本文 Resources 只附了打包主脚本），落的时候照本文各自的判据写；文件名不必完全一致，但六节与“每条命令带判据”不能缩。
 
-六节之外再附一小节「交付前精简」：按 Step 8 删完中间目录与临时输出后，把 `ls` 清单与“删完仍能一把重建”的结果写进去。用了外部色板库的工程（Step 7b）再加一小节「换主题 / 补色板」，写清三条命令与离线判据。
+六节之外再附一小节「交付前精简」：按 Step 8 删完中间目录与临时输出后，把 `ls` 清单与“删完仍能一把重建”的结果写进去。用了外部色板库的工程（Step 7b）再加一小节「换主题 / 补色板」，写清三条命令与离线判据。交付了 Step 9 的四个 bat 时，在第 1/2/3 节的命令行下面各补一行「或直接双击 `bin\build-setup.bat` / `bin\start.bat`」，并把「双击脚本的判据与四条硬规矩」链到 Step 9——bat 的提示文字是英文这件事也要写明，别让人以为可以随手改成中文。
 
 ```markdown
 # <项目名> 零基础上手
