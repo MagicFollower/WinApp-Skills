@@ -1,0 +1,127 @@
+/* ============================================================================
+   窗口壳样式。拷进目标工程后 @import 一次即可。
+   两段各自独立:①拖拽带标记 ②退场动画 + 右键控制条。
+   ========================================================================== */
+
+/* ---- 令牌:全部带默认值,工程里已有同名变量就在 :root 覆盖 ---- */
+:root {
+  /* 退场时长与曲线。曲线刻意用"强加速"的 cubic-bezier(.4,0,1,1):
+     入场曲线(强减速)拿去做退场会把 85% 的位移压进头 60ms,观感就是"帧率太低"。
+     实测换曲线 + 下面的 will-change 之后,呈现帧 11/16 → 15/18,rAF 间隔 p95 13 → 7ms。 */
+  --chrome-t: 180ms;
+  --chrome-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --chrome-menu-bg: rgba(255, 255, 255, 0.86);
+  --chrome-menu-radius: 14px;
+  --chrome-btn-radius: 9px;
+  --chrome-menu-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+  --chrome-ink: #4a5160;
+  --chrome-ink-hi: #141821;
+  --chrome-hover: rgba(30, 36, 48, 0.08);
+}
+
+/* ===== ① 拖拽带 =====
+   原先这里是 -webkit-app-region: drag / no-drag。撤掉那个属性是因为它把区域变成 OS 的
+   HTCAPTION,右键被 DefWindowProc 接走弹深色系统菜单(六项、条目应用侧改不了,
+   而且 webContents 的 context-menu 事件一次都不发)。
+   现在 .drag-region 只是"能从这儿起手拖窗"的标记,拖拽由 WindowChrome.tsx 在
+   pointerdown 时经 IPC 交给主进程移窗。
+   .no-drag 是它的反向标记 —— 纯 JS 契约,CSS 侧不需要声明,类留在元素上就是给 JS 读的。 */
+.drag-region {
+  user-select: none;
+}
+
+/* ===== ② 自绘最小化退场 =====
+   OS 的"缩进任务栏"动画要求窗口带 WS_SYSMENU,而 Chromium 对 frame:false 的窗口不挂这条
+   样式(实测三臂:frame:false 无论透明与否都没有动画,只有 frame:true 有),所以这段只能
+   自己画 —— 顺带正好满足"Win10/Win11 效果一致":它不读任何系统渲染路径,两端跑的是同一条
+   transition。收拢方向刻意取**窗口自己的底边中心**,不去瞄任务栏那颗按钮 —— 按钮位置要按
+   系统版本/DPI/任务栏停靠边推,那正是两端会不一致的来源。
+   退场时窗口是透明的,所以收缩过程中露出来的是真桌面,观感与系统动画同向。
+   类名由 WindowChrome.tsx 挂/摘:摘掉那一刻就是恢复(且不再反向播,原因见那文件的注释)。 */
+.window {
+  transition:
+    transform var(--chrome-t) var(--chrome-ease-exit),
+    opacity var(--chrome-t) var(--chrome-ease-exit);
+}
+.window--minimizing {
+  transform: translateY(28px) scale(0.6);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  /* 提升成独立合成层。不提升的话每一帧都要按新的缩放比重栅整窗(若里面有 WebGL 画布或
+     backdrop blur 更明显),观感就是"一格一格"。只在退场期间挂 —— 常驻 will-change
+     会一直占着一份层纹理。 */
+  will-change: transform, opacity;
+}
+/* 恢复时挂一下:让"摘掉 window--minimizing"这一步不产生过渡 */
+.window--noanim {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .window {
+    transition: none;
+  }
+  .win-menu-wrap {
+    animation: none;
+  }
+}
+
+/* ===== 右键浮出的窗口控制条(最小 / 最大 / 关闭) =====
+   portal 到 body 后用视口坐标定位,所以 fixed 就是光标位。
+   fixed 必须在包裹层上:入场动效是在包裹层自己元素上做 translate/scale,若 fixed 留在
+   .win-menu 上,包裹层一带 transform 就成了 fixed 的包含块,菜单会跟着位移抖 8px。 */
+.win-menu-wrap {
+  position: fixed;
+  z-index: 99;
+  animation: win-menu-in 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes win-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* 盒尺寸 = 2*5 + 3*34 + 2*4 = 120 宽,5 + 34 + 5 = 44 高。
+   WindowChrome.tsx 里的 WIN_MENU_W / WIN_MENU_H 是同一笔账的两半,改这里要改那边,
+   否则贴屏幕边缘右键会画到屏幕外。 */
+.win-menu {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--chrome-menu-radius);
+  background: var(--chrome-menu-bg);
+  box-shadow: var(--chrome-menu-shadow);
+  /* 可选:与宿主主题一致的毛玻璃。注意 backdrop-filter 是按自己的**矩形** border-box
+     合成到身后的内容上的,祖先的圆角裁切和 clip-path 都拦不住它溢出 ——
+     如果窗口根元素有圆角且菜单可能贴边,先确认溢出的是桌面而不是圆角外的漏光。 */
+  backdrop-filter: blur(20px);
+}
+.win-menu-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--chrome-btn-radius);
+  color: var(--chrome-ink);
+  transition:
+    color 120ms ease,
+    background 120ms ease;
+}
+.win-menu-btn:hover {
+  color: var(--chrome-ink-hi);
+  background: var(--chrome-hover);
+}
+
+/* 深色主题:整块按需保留,或直接删掉并在宿主的 [data-theme=dark] 里覆盖那 5 个 --chrome-* 令牌。 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --chrome-menu-bg: rgba(30, 33, 41, 0.86);
+    --chrome-menu-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    --chrome-ink: #aeb6c4;
+    --chrome-ink-hi: #f2f4f8;
+    --chrome-hover: rgba(255, 255, 255, 0.1);
+  }
+}
