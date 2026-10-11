@@ -1,6 +1,6 @@
 ---
 name: windows-electron-scaffold
-description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面应用的可复现流程——显式获取 Electron 二进制、默认注入下载镜像、主进程与 preload 走 CJS + sandbox、Vite 用 .mts 配置与相对 base、electron-builder 同时产出 portable/nsis/dir、按 src/ + electron/ + bin/ + doc/（用外部色板时再加 100themes/）的目录约定收敛工程、把窗口尺寸与字体明暗自适应当编码期约束、交付 doc/运行与构建（T0Level）.md，并可在 bin/ 下交付启动/停止/构建安装包/构建便携版四个双击 bat 脚本。当出现 npm install 退出码 0 但 node_modules/electron/dist/electron.exe 缺失、Electron 或 electron-builder 从 GitHub Releases 下载失败、需要配置 Windows 打包目标、打包产物秒退需要排查、要把既有 Electron 工程按目录约定重新整理、要写运行与构建/发布文档、要判定桌面端自适应是否达标、要把外部色板库（如 100-themes）离线固化进工程、或要写双击即跑的 .bat 且它出现注释残片被当命令执行/某行 echo 没打印却把别的文件截断/批处理内 call npm.cmd 报 MODULE_NOT_FOUND 时使用。不用于普通 Web/React 页面开发。
+description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面应用的可复现流程——显式获取 Electron 二进制、默认注入下载镜像、主进程与 preload 走 CJS + sandbox、Vite 用 .mts 配置与相对 base、electron-builder 同时产出 portable/nsis/dir、按 src/ + electron/ + bin/ + doc/（用外部色板时再加 100themes/）的目录约定收敛工程、把窗口尺寸与字体明暗自适应当编码期约束、交付 doc/运行与构建（T0Level）.md，并可在 bin/ 下交付启动/停止/构建安装包/构建便携版四个双击 bat 脚本、把 .gitignore 补成七组（依赖/构建产物/临时物/环境/编辑器/OS 垃圾 + 末尾反向放行）。当出现 npm install 退出码 0 但 node_modules/electron/dist/electron.exe 缺失、Electron 或 electron-builder 从 GitHub Releases 下载失败、需要配置 Windows 打包目标、打包产物秒退需要排查、要把既有 Electron 工程按目录约定重新整理、要写运行与构建/发布文档、要判定桌面端自适应是否达标、要把外部色板库（如 100-themes）离线固化进工程、工程缺 .gitignore 或交付资产被通配规则误伤、或要写双击即跑的 .bat 且它出现注释残片被当命令执行/某行 echo 没打印却把别的文件截断/批处理内 call npm.cmd 报 MODULE_NOT_FOUND 时使用。不用于普通 Web/React 页面开发。
 ---
 
 # Windows Electron 工程搭建与打包
@@ -23,6 +23,7 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 - 要把外部主题/色板库（例：`bjarneo/100-themes`，100 主题 × 5 变体 = 500 个 `colors.toml`）离线固化进工程，别让每次生成都去仓库拉几百个小文件。
 - 给桌面端定 `.ico` 图标：默认本地生成像素风字母 monogram（不联网、不依赖 ImageMagick/Python），只有要品牌 logo 时才查 selfh.st/icons——见 Step 5。
 - 给不打开终端的人交付「双击即跑」的 `bin\*.bat`（启动 / 停止 / 构建安装包 / 构建便携版）——bat 有四条静默咬人的硬坑，见 Step 9。
+- 工程没有 `.gitignore`，或有但漏了产物 / 临时物 / OS 垃圾，或交付资产（雪碧图、图标）被 `release*/`、`*.webp` 这类规则误伤——见 Step 8b。
 
 ## 目录布局（新建工程先定）
 
@@ -32,7 +33,7 @@ description: 在 Windows 上从零搭建、整理并打包 Electron 44+ 桌面�
 <proj>/
 ├── index.html                Vite 入口，必须在根
 ├── package.json  package-lock.json
-├── vite.config.mts  tsconfig.json  electron-builder.yml  .gitignore
+├── vite.config.mts  tsconfig.json  electron-builder.yml  .gitignore（缺了按 Step 8b 补七组）
 ├── src/                      渲染层：组件、样式、lib、内容
 ├── electron/                 主进程 + preload + tsconfig.json + icon.ico
 ├── bin/                      脚本：dev.mjs、build.mjs、*.ps1；可选四个双击 *.bat（见 Step 9）
@@ -233,6 +234,30 @@ PowerShell 5.1 侧实测踩到的三个坑：变量名不区分大小写，`$bg 
 
 自查口径：`ls` 结果里除 `node_modules/` 与 `release/` 外，每一项都应能归进“代码 / 文档 / 脚本 / 配置 / 产物”五类之一；归不进去的就是残留。
 
+## Step 8b — .gitignore：没有就补一份完整的，有就在原文件上补缺
+
+先 `Test-Path .gitignore`。有则**只追加补缺，不整份覆写**——宿主自己已有的规则是信息，不是待清理的脏数据；先读原文件、把缺的分组补进去、再把反向放行挪到末尾。没有才按下面的七组从零写。落盘口径：LF、UTF-8 无 BOM；`git` 对编码不敏感，但 Windows 编辑器会顺手加 BOM/CRLF，别用它保存这份文件。
+
+七组，顺序固定（宽泛规则在前，反向放行在最后）：
+
+1. 依赖：`node_modules/`
+2. 构建产物：`dist/`、`dist-electron/`、`release*/`、`*.tsbuildinfo`、`.vite*/`。`release*` 带星号是有讲究的：一次盖住 `release-check/`、`release-asar/` 这类换过输出目录名的临时打包树（写死 `release/` 就漏）。
+3. 临时物：`*.log`、`*-out.txt`、`*-err.txt`、`*.tmp`、`*.pid`、`*-probe*.txt`（自证产生的回显文件），再按本工程脚本名枚举一遍 `vite.config.mts.timestamp-*.mjs` 这类工具副产物。
+4. 环境：`.env`、`.env.local`、`.env.production`
+5. 编辑器：`.vscode/`、`.idea/`、`*.swo`、`*.swp`
+6. OS 垃圾：`Thumbs.db`、`desktop.ini`、`$RECYCLE.BIN/`、`.DS_Store`，以及 `nul`——`>nul` 的目标写错就会在目录里落一个真叫 `nul` 的文件，Windows 普通 API 认它是保留名、删不掉，得走 `del "\\?\C:\路径\nul"`。
+7. **末尾反向放行块**：被构建/打包引用但属于交付物的资产，例：`!src/emoji/atlas/**`、`!src/emoji/data/**`、`!electron/icon.ico`。
+
+`package-lock.json` 不忽略，并在注释里写明原因（这套 atlas / 拼音索引靠钉死的依赖版本才能重跑出同一份产物）。
+
+第 7 组必须待在文件最后几行——`.gitignore` 是后匹配者赢。实测同一份文件两种摆放：`*.webp` 加在中部那份 `!src/emoji/atlas/**` **之后**，`git check-ignore -v src/emoji/atlas/flags.webp` 打出 `.gitignore:70:*.webp`（资产被吃掉）；把三条反向放行挪到末尾（此时落在 68 行），同一命令打出 `.gitignore:68:!src/emoji/atlas/**`。所以注释里要钉一句「以后追加规则一律加在这三条之前」。
+
+核对方法（不碰用户仓库）：在 `%TEMP%` 建同形空树——`git init -q .` + 拷进待验的 `.gitignore` + 两份清单。清单 A 由真工程 `find` 出「必须被跟踪」的文件（排除 `node_modules`、`dist`、`dist-electron`、`release*`），这份清单本身就是首次提交该有的一切；清单 B 手写一批「必须被忽略」的合成路径，覆盖面要从产物形态取（`release/win-unpacked/resources/app.asar`、`release-asar/probe/electron.exe`、`dist/assets/flags-*.webp`、`node_modules/.vite/deps/react.js`、`tsconfig.tsbuildinfo`、`npm-debug.log.12345`、`bin/smoke-out.txt`、`net-selftest-err.txt`、`.skill-gen-tmp/…`、`.env.production`、`Thumbs.db`、`nul`、`vite.config.mts.timestamp-*.mjs`）。两份各跑一次 `git check-ignore -q --no-index "$p"`：退出码 0 = 被忽略、非 0 = 不忽略，方向不符就计一条误判。实测 47 条必须跟踪 + 35 条必须忽略，两个方向都是 0 误判。
+
+判据本身有个坑：**别拿 `check-ignore` 的退出码当"被忽略"**。不带 `-q` 时它对反向放行也打印匹配行并返回 0（实测上面两种摆放都返回 0）——「有条规则匹配上了」不等于「文件被忽略」。判忽略只用 `-q --no-index` 的退出码，`-v` 只用来回答「是哪条规则赢了」。
+
+最后一句要交代给使用者：`.gitignore` 只对未跟踪文件生效，`git init` 之前或之后已经 `git add` 过的文件，得 `git rm --cached <path>` 才退出索引。
+
 ## Step 9 — bin/ 四个双击脚本（bat）：四条会静默咬人的硬坑
 
 给不打开终端的人交付四个 `.bat`，双击即跑。它们只是薄封装，真逻辑仍在前八步的脚本里，额外参数用 `%*` 原样转递：
@@ -320,6 +345,10 @@ bat 自己也要跑，不能只静态看：产物核对那段拿一个有匹配�
 | bat 里某行 echo 没打印，而它提到的那个文件被截断成几个字节 | `echo` 文本里的裸 `>` 被当重定向（`==>`、`-->` 都算） | 动作行用 `[*]`；判据看那行 echo 有没有出现在输出里（Step 9） |
 | if/else 两个分支都打印，或末行文本被截断 | `(` 块内的 `echo` 载荷带了 `)`，提前闭合了块 | 改两条单行 `if`，或写 `^)`（Step 9） |
 | bat 里 `call npm.cmd` 报 `Cannot find module '<工程根>\node_modules\npm\bin\npm-prefix.js'`，同一条命令在命令行直接跑却好的 | 批处理内用裸名调用时，npm.cmd 的 `%~dp0` 等于调用方 cwd | bat 里一律用 `where npm.cmd` 取到的绝对路径（Step 9） |
+| 写了 `!` 放行，交付资产（雪碧图 / 图标）还是没进提交 | `.gitignore` 后匹配者赢，中部的 `!` 块被后面的规则盖掉 | 反向放行挪到文件末尾，并注释禁止在其后追加（Step 8b） |
+| `git check-ignore -v` 返回 0 就断定「这文件被忽略了」 | 不带 `-q` 时反向放行同样打印匹配行且退出码 0；「有规则匹配」≠「被忽略」 | 判忽略只用 `git check-ignore -q --no-index` 的退出码，`-v` 只用来查哪条规则赢（Step 8b） |
+| 目录里多出一个叫 `nul` 的文件，资源管理器删不掉 | `>nul` 的目标写错，落成真实存在的保留名文件 | `del "\\?\C:\路径\nul"`；同时把 `nul` 写进 `.gitignore` 的 OS 垃圾组（Step 8b） |
+| `git init` 后发现 `dist/` 仍在待提交列表里 | `.gitignore` 只对未跟踪文件生效，已被 `git add` 的不受管 | `git rm --cached -r dist dist-electron release` 再提交（Step 8b） |
 
 ## 验收清单
 
@@ -335,6 +364,7 @@ bat 自己也要跑，不能只静态看：产物核对那段拿一个有匹配�
 10. 用了外部色板库的工程（Step 7b）：`--offline` 生成零联网全绿，产物与联网版按行排序 md5 相同；`100themes/raw/` 文件数等于 manifest 里的 themes × variants（实测 500）；再删一个种子文件验证兜底能取回并写回，md5 与删除前一致。
 11. 依赖分栏核对：`npm ls --omit=dev --depth=0` 只剩交付物真需要的运行时包（Vite + tsc 这条路径上通常为空），且 `app.asar` 的顶层族没有多余的 `node_modules`；有则顺着 `dependencies` 找错栏的那个包（成因见 Step 1）。
 12. 交付了四个双击 bat（Step 9）时：`start.bat` 要看到 Vite 本地地址 + `window-shown` + IPC 往返标记，`stop.bat` 要看到 `killed=N remaining=0` 且随后 node/electron/cmd 归零、端口释放；两个构建 bat 至少各验一条分支（真失败时 `!!` + 退出码非 0；产物核对段用有匹配/没匹配的构造目录各跑一次，实测 `found 2` 与 `FAIL-branch-taken` rc=1）。退出码一律落盘再读，别接管道。静态审四个文件：非 ASCII 字节 = 0、`CR==LF`、括号配平、`echo` 载荷里没有裸 `>`、块内没有 `goto`。
+13. `.gitignore` 到位（Step 8b）：在 `%TEMP%` 同形空树里跑 `git check-ignore -q --no-index` 对两份清单双向核对，「必须跟踪」与「必须忽略」两条都 0 误判（实测 47 + 35），且「必须跟踪」那份清单逐条看一眼——它就是首次提交该有的一切；反向放行三条必须在文件末尾（用 `check-ignore -v` 打出赢的那条规则行号自证）。
 
 ## doc/运行与构建（T0Level）.md（新工程必交）
 
@@ -350,7 +380,7 @@ bat 自己也要跑，不能只静态看：产物核对那段拿一个有匹配�
 ## 0. 前置
 - Node <实测版本>（装在哪、不靠 PATH 时脚本怎么用全路径）
 - registry 是否可达；二进制实际走的源（默认镜像，`-NoMirror` 才官方源），以及本次跑出来的那一行提示
-- 仓库里不应该提交的：node_modules、dist、dist-electron、release
+- 仓库里不应该提交的：node_modules、dist、dist-electron、release*（完整七组与末尾反向放行见 Step 8b；带星号才盖得住换名的临时打包树）
 
 ## 1. 项目启动（首次构建）
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File bin\electron-win-build.ps1 -Target dir
