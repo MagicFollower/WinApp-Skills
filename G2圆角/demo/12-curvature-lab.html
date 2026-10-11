@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景12 · 曲率实验室：从浏览器光栅化结果反解 κ，并出一张回归报表</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  canvas { display:block; background:#fff; border:1px solid var(--line); image-rendering:pixelated; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  label { display:block; margin:6px 0; font-size:13px; }
+</style>
+</head>
+<body>
+<h1>场景 12 · 量化验收：先证明"反解"本身可信，再拿浏览器像素当独立真值</h1>
+<p class="note">前 11 个场景的 κ 全是<b>模型算的</b>。这一页把浏览器真正画出的轮廓从像素里取回来（亚像素边缘定位），用同一套差分公式反解 κ，与模型对表。<b>第一步永远是噪声地板</b>：平直边的反解结果就是这套方法的分辨率下限，任何 G1/G2 判定都必须显著高过它，否则是在读噪声。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>角半径 r <input id="r" type="range" min="12" max="40" value="32" step="2"><b id="rv"></b> px</label>
+    <label>SCALE（设备 px / 模型 px） <input id="sc" type="range" min="4" max="8" value="8" step="1"><b id="scv"></b>×</label>
+    <label>差分步长 h <input id="hh" type="range" min="2" max="12" value="6" step="1"><b id="hhv"></b> px</label>
+    <label>被检对象</label>
+    <select id="mode" style="font:inherit;padding:4px">
+      <option value="flat">平直边（噪声对照）</option>
+      <option value="arc">浏览器 roundRect（圆弧）</option>
+      <option value="super">超椭圆 n=5 折线（80 段/角）</option>
+      <option value="cubic">平端三次贝塞尔</option>
+    </select>
+    <label style="margin-top:8px"><input id="pts" type="checkbox" checked> 叠出反解到的边界点（红）</label>
+  </div>
+  <div class="cell">
+    <canvas id="cv" width="640" height="640" style="width:300px;height:300px"></canvas>
+    <p class="note">模型框 80×80 设备 640×640（显示按 300px 缩），保证 <code>2r ≤ 80</code> ⇒ <code>roundRect</code> 不会自己把半径钳小。红点压在黑色轮廓上沿 ⇒ 提取没错位。</p>
+  </div>
+  <div class="cell"><div id="rep"></div></div>
+</div>
+
+<h2>反解 κ vs 模型 κ（s = 离开接缝的弧长，顶边近似水平故 s ≈ r − x）</h2>
+<div id="cmp"></div>
+
+<h2>J1–J4 回归报表（全场景汇总，现场重算）</h2>
+<div id="gate"></div>
+
+<script>
+(function () {
+  'use strict';
+  function val(id) { var e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : Number(e.value); }
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  // 角部补丁：圆心 (R,R)，θ=0 → (0,R)（左边接缝），θ=π/2 → (R,0)（顶边接缝）
+  function patchSuper(n, R) {
+    var m = 2 / n;
+    return function (t) {
+      var c = Math.max(0, Math.cos(t)), s = Math.max(0, Math.sin(t));
+      return [R - R * Math.pow(c, m), R - R * Math.pow(s, m)];
+    };
+  }
+  function patchArc(R) { return function (t) { return [R - R * Math.cos(t), R - R * Math.sin(t)]; }; }
+  function patchCubic(R) { return function (u) { var m = 1 - u; return [R * u * u * u, R * m * m * m]; }; }
+
+  // 非均匀 θ 网格：s ∝ θ^(2/n) 会把近接缝处全压到极小的 θ，均匀网格在那儿没有分辨率
+  function buildTable(f, tmax, N) {
+    var pts = [], L = 0, prev = f(0);
+    for (var i = 1; i <= N; i++) {
+      var q = i / N, t = tmax * q * q * q * q;          // θ ∝ i⁴：小 θ 处密到 1e-6 量级
+      var p = f(t);
+      L += Math.hypot(p[0] - prev[0], p[1] - prev[1]);
+      pts.push([t, L]); prev = p;
+    }
+    return pts;
+  }
+  function tAt(pts, target) {
+    var lo = 0, hi = pts.length - 1;
+    for (var q = 0; q < 60 && hi - lo > 1; q++) { var m = (lo + hi) >> 1; if (pts[m][1] < target) lo = m; else hi = m; }
+    return pts[lo][0];
+  }
+  function j1(f, tmax) {
+    var pts = buildTable(f, tmax, 6000);
+    var tA = Math.max(tAt(pts, 0.25), 1e-7), tB = Math.max(tAt(pts, 0.015625), 1e-8);
+    return kappa(f, tA, tA / 8) / Math.max(kappa(f, tB, tB / 8), 1e-18);
+  }
+  function slope2(f, tmax, ss) {
+    var pts = buildTable(f, tmax, 6000), P = ss.map(function (s) {
+      var t = Math.max(tAt(pts, s), 1e-7);
+      return [Math.log(s), Math.log(Math.max(kappa(f, t, t / 8), 1e-18))];
+    });
+    var mx = 0, my = 0; P.forEach(function (p) { mx += p[0] / P.length; my += p[1] / P.length; });
+    var num = 0, den = 0; P.forEach(function (p) { num += (p[0] - mx) * (p[1] - my); den += (p[0] - mx) * (p[0] - mx); });
+    return num / den;
+  }
+  function rayDev(R) {
+    var cub = patchCubic(R), sup = patchSuper(5, R), worst = 0;
+    for (var u = 0.02; u <= 0.98; u += 0.005) {
+      var p = cub(u), dx = R - p[0], dy = R - p[1], phi = Math.atan2(dy, dx), d = Math.hypot(dx, dy);
+      var lo = 0, hi = Math.PI / 2;
+      for (var it = 0; it < 50; it++) { var mid = (lo + hi) / 2, q = sup(mid); if (Math.atan2(R - q[1], R - q[0]) < phi) lo = mid; else hi = mid; }
+      var s2 = sup((lo + hi) / 2);
+      worst = Math.max(worst, Math.abs(d - Math.hypot(R - s2[0], R - s2[1])));
+    }
+    return worst;
+  }
+
+  function draw(g, mode, R, Wd, Ht, SC) {
+    g.setTransform(SC, 0, 0, SC, 0, 0);
+    g.fillStyle = '#fff'; g.fillRect(0, 0, Wd / SC, Ht / SC);
+    g.fillStyle = '#000'; g.beginPath();
+    if (mode === 'flat') {
+      // 故意做一条 1px/80px 的微斜直线：完全水平的线反解必为 0，量不出量化噪声
+      g.moveTo(0, 40); g.lineTo(Wd / SC, 41); g.lineTo(Wd / SC, Ht / SC); g.lineTo(0, Ht / SC); g.closePath();
+    }
+    else if (mode === 'arc') {
+      if (g.roundRect) { g.roundRect(0, 0, Wd / SC, Ht / SC, [R, 0, 0, 0]); }
+      else { g.moveTo(0, 0); g.lineTo(R, 0); g.lineTo(Wd / SC, 0); g.lineTo(Wd / SC, Ht / SC); g.lineTo(0, Ht / SC); }
+    } else {
+      g.moveTo(0, R);                                                          // 补丁起点在左边接缝 (0,R)
+      if (mode === 'cubic') { g.bezierCurveTo(0, 0, 0, 0, R, 0); }            // 平端条件：P1=P2=盒角(0,0)
+      else { var f = patchSuper(5, R); for (var i = 1; i <= 80; i++) { var p = f(Math.PI / 2 * i / 80); g.lineTo(p[0], p[1]); } }
+      g.lineTo(Wd / SC, 0); g.lineTo(Wd / SC, Ht / SC); g.lineTo(0, Ht / SC); g.closePath();
+    }
+    g.fill();
+  }
+  // 亚像素边缘：每设备列找"覆盖度过半"的第一行
+  function extract(g, Wd, Ht, SC) {
+    var img = g.getImageData(0, 0, Wd, Ht).data, out = [];
+    for (var i = 0; i < Wd; i++) {
+      out[i] = NaN;
+      var prev = null;
+      for (var j = 0; j < Ht; j++) {
+        var L = (img[(j * Wd + i) * 4] + img[(j * Wd + i) * 4 + 1] + img[(j * Wd + i) * 4 + 2]) / 3;
+        var cov = 1 - L / 255;
+        if (prev !== null && prev < 0.5 && cov >= 0.5) { out[i] = (j - 1 + (0.5 - prev) / (cov - prev)) / SC; break; }
+        if (j === 0 && cov >= 0.5) { out[i] = 0; break; }         // 顶边贴画布上沿（圆弧接缝侧常见）
+        prev = cov;
+      }
+    }
+    return out;
+  }
+  function render() {
+    var R = val('r'), SC = val('sc'), h = val('hh'), mode = document.getElementById('mode').value;
+    document.getElementById('rv').textContent = R; document.getElementById('scv').textContent = SC; document.getElementById('hhv').textContent = h;
+    var cv = document.getElementById('cv'), g = cv.getContext('2d', { willReadFrequently: true });
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
+    draw(g, mode, R, cv.width, cv.height, SC);
+    var edge = extract(g, cv.width, cv.height, SC);
+    function E(x) { return edge[Math.round(x * SC)]; }              // 关键：edge 按设备列索引
+    if (val('pts')) {
+      g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#e0322f';
+      for (var i = 0; i < edge.length; i++) if (isFinite(edge[i])) g.fillRect(i - 0.6, edge[i] * SC - 0.6, 1.2, 1.2);
+    }
+
+    // 噪声地板：平直区 x ∈ [R+2h+2, Wd/SC−2h−2]
+    var floor = 0, nFloor = 0;
+    for (var x = R + 2 * h + 2; x < cv.width / SC - 2 * h - 2; x += 1 / SC) {
+      var ym = E(x - h), y0 = E(x), yp = E(x + h);
+      if ([ym, y0, yp].every(isFinite)) {
+        var d1 = (yp - ym) / (2 * h), d2 = (yp - 2 * y0 + ym) / (h * h);
+        var kf = Math.abs(d2) / Math.pow(1 + d1 * d1, 1.5);
+        floor = Math.max(floor, kf); nFloor++;
+      }
+    }
+    var model = mode === 'arc' ? patchArc(R) : mode === 'super' ? patchSuper(5, R) : patchCubic(R);
+    var tmax = mode === 'cubic' ? 1 : Math.PI / 2;
+    var rows = [];
+    if (mode !== 'flat') {
+      var pts = buildTable(model, tmax, 8000);
+      [2, 4, 8, 16, 24].forEach(function (s) {
+        var xv = R - s;
+        if (xv < h + 1 || xv + h > cv.width / SC - 1) return;
+        var ym2 = E(xv - h), y02 = E(xv), yp2 = E(xv + h);
+        var kR = [ym2, y02, yp2].every(isFinite)
+          ? Math.abs((yp2 - 2 * y02 + ym2) / (h * h)) / Math.pow(1 + Math.pow((yp2 - ym2) / (2 * h), 2), 1.5) : NaN;
+        var t = Math.max(tAt(pts, s), 1e-7), kM = kappa(model, t, t / 8);
+        rows.push([s, kR, kM, isFinite(kR) ? (kR - kM) / kM : NaN, isFinite(kR) && floor > 0 ? kR / floor : NaN]);
+      });
+    }
+
+    document.getElementById('rep').innerHTML =
+      '<table><tr><th>项</th><th>值</th></tr>' +
+      '<tr><td>被检对象</td><td>' + mode + '（r=' + R + '，SCALE=' + SC + '×，h=' + h + 'px）</td></tr>' +
+      '<tr><td>平直边反解 κ 上界（噪声地板）</td><td><b>' + (nFloor ? floor.toExponential(3) : 'n/a') + '</b>，样本 ' + nFloor + ' 列</td></tr>' +
+      '<tr><td>参考真值</td><td>圆弧 1/r = ' + (1 / R).toFixed(6) + '；直线 0</td></tr>' +
+      '<tr><td>地板 ÷ (1/r)</td><td>' + (nFloor ? (floor / (1 / R)).toFixed(4) : 'n/a') + '（要判 G1/G2，量级差必须显著于这个比）</td></tr>' +
+      '</table><p class="note">地板若与 1/r 同量级，说明反解分辨率不够——把 SCALE 拉到 8、h 拉到 8~10，或把 r 调到 40（角更大，曲率更小，更容易和地板分开）。</p>';
+
+    var html = '<table><tr><th>s (px)</th><th>反解 κ</th><th>模型 κ</th><th>相对偏差</th><th>反解/地板</th></tr>';
+    rows.forEach(function (r) {
+      var dev = isFinite(r[3]) ? Math.abs(r[3]) : NaN;
+      html += '<tr><td>' + r[0] + '</td><td>' + (isFinite(r[1]) ? r[1].toExponential(3) : 'n/a') + '</td>' +
+        '<td>' + (isFinite(r[2]) ? r[2].toExponential(3) : 'n/a') + '</td>' +
+        '<td class="' + (dev <= 0.3 ? 'ok' : 'bad') + '">' + (isFinite(dev) ? (dev * 100).toFixed(1) + '%' : 'n/a') + '</td>' +
+        '<td>' + (isFinite(r[4]) ? r[4].toFixed(1) + '×' : '—') + '</td></tr>';
+    });
+    html += '</table><p class="note"><b>这张表的正确读法（也是本场景的真正结论）</b>：<br>' +
+      '① 圆弧：反解 κ 与 1/r 同量级 ⇒ 光栅真值确认接缝处曲率<b>非零</b>，即 G1 成立。<br>' +
+      '② 超椭圆/贝塞尔：模型 κ 在 s≤8 时已低到 1e-5 以下，<b>低于像素反解的分辨下限</b>，反解值会贴着地板跑。所以反解能给的不是"它的 κ 等于多少"，而是<b>"κ 小于地板所对应的量级"这一上界</b>——这仍然足以与圆弧的 1/r 区分，因为两者相差 2~3 个数量级。<br>' +
+      '③ 结论口径写进验收：用反解判 G1/G2 时，比较的是"反解 κ 是否显著高于地板"以及"是否接近 1/r"，不是直接读 κ 的真值。<br>' +
+      '④ 相对误差阈值 30% 是像素级反解的方法上限；想更准只能继续加 SCALE 与 h。</p>';
+    document.getElementById('cmp').innerHTML = html;
+
+    var R2 = 24, g1 = j1(patchArc(R2), Math.PI / 2), g4 = j1(patchSuper(4, R2), Math.PI / 2), gc = j1(patchCubic(R2), 1);
+    var s4 = slope2(patchSuper(4, R2), Math.PI / 2, [0.25, 0.5, 1, 2]), sc = slope2(patchCubic(R2), 1, [0.25, 0.5, 1, 2]);
+    var gates = [
+      ['J1 圆弧 R=24（应 ≈1 ⇒ G1，对照）', g1, '≈1', g1 < 2],
+      ['J1 超椭圆 n=4 R=24（应 ≥2 ⇒ G2）', g4, '≥2', g4 >= 2],
+      ['J1 平端贝塞尔 R=24（应 ≥2 ⇒ G2）', gc, '≥2', gc >= 2],
+      ['J2 斜率 n=4（理论 n−2 = 2）', s4, '≥1.2 ⇒ 够 G3', s4 >= 1.2],
+      ['J2 斜率 贝塞尔（理论 1）', sc, '≈1 ⇒ 止于 G2', sc < 1.2],
+      ['J4 贝塞尔 vs 超椭圆 n=5 射线偏差 R=24', rayDev(R2), '≤0.2px', rayDev(R2) <= 0.2]
+    ];
+    var gh = '<table><tr><th>判据项</th><th>实测</th><th>阈值</th><th>判定</th></tr>';
+    gates.forEach(function (x) {
+      gh += '<tr><td>' + x[0] + '</td><td>' + (x[1] < 1e-3 || x[1] > 1e4 ? x[1].toExponential(3) : x[1].toFixed(4)) + '</td><td>' + x[2] + '</td>' +
+        '<td class="' + (x[3] ? 'ok' : 'bad') + '">' + (x[3] ? '符合' : '不符') + '</td></tr>';
+    });
+    document.getElementById('gate').innerHTML = gh + '</table><p class="note"><b>未覆盖项（别把这张表当全覆盖）</b>：' +
+      '① DOM 上 <code>corner-shape</code> 的光栅真值——canvas 读不到 DOM 像素，需抓屏后做同样的边界提取（本机抓屏有过 GPU 合成取不到客户区的已知问题）；' +
+      '② <code>filter: drop-shadow</code> 与 <code>box-shadow</code> 的轮廓跟随差异；③ SVG <code>mask</code> 边缘是否羽化；' +
+      '④ <code>transform: scaleX</code> 拉伸后的曲率变化；⑤ rAF 重算 path 的帧成本。' +
+      '<br>本表只覆盖 <code>ctx.roundRect</code> 这条浏览器自绘路径，它是 CSS <code>border-radius</code> 圆弧口径的最近似，但<b>不等于</b> DOM 渲染结果。</p>';
+  }
+  ['r', 'sc', 'hh', 'mode', 'pts'].forEach(function (id) {
+    var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

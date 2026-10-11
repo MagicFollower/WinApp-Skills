@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景5 · 描边与 focus ring：内边界必须走真法向偏移</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  svg { background:#fff; border:1px solid var(--line); display:block; }
+  label { display:block; margin:6px 0; font-size:13px; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .bad { color:var(--bad); font-weight:700; } .ok { color:var(--ok); font-weight:700; }
+  .ring-demo { width:150px; height:150px; border-radius:34px; background:#2f3a4b; position:relative; }
+  .ring-demo.cs { corner-shape: squircle; }
+  .ring-demo.ring:focus-visible, .ring-demo.ring:hover { outline:3px solid #ff6b3d; outline-offset:3px; }
+  .ring-demo { margin-bottom:26px; }
+</style>
+</head>
+<body>
+<h1>场景 5 · 描边/内边界：为什么"内角 = 外角 − 边框宽"在 G2 形状上是错的</h1>
+<p class="note">圆弧时它是<b>精确</b>的（同心圆弧的等距线还是同心圆弧）；一旦角部换成超椭圆或平端贝塞尔，真法向偏移的等距线<b>不再是同族曲线</b>，用"半径减一减"去近似就会出现与边框宽度成正比的系统偏差。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>外角半径 R <input id="R" type="range" min="12" max="60" value="24" step="1"><b id="Rv"></b></label>
+    <label>指数 n <input id="nn" type="range" min="2" max="8" value="5" step="0.5"><b id="nnv"></b>（n=2 是圆弧对照组）</label>
+    <label>边框宽 w <input id="w" type="range" min="1" max="20" value="3" step="1"><b id="wv"></b></label>
+    <label><input id="showNaive" type="checkbox" checked> 画"天真写法"（半径 R−w，同 n）</label>
+    <label><input id="showNorm" type="checkbox" checked> 画法线（每 12° 一根，看偏移方向）</label>
+  </div>
+  <div class="cell">
+    <svg id="view" width="420" height="360" viewBox="0 0 420 360"><g id="scene"></g></svg>
+    <div style="margin-top:8px;font-size:12px">
+      <span style="color:#1c1f24">━ 外边界</span>　
+      <span style="color:#0b6fb3">━ 真法向内边界</span>　
+      <span style="color:#b4232c">┅ 天真内边界</span>
+    </div>
+  </div>
+  <div class="cell"><div id="rep"></div></div>
+</div>
+
+<h2>outline / focus ring 跟不跟角形（真渲染，Tab 到下面的方块或悬停）</h2>
+<div class="row">
+  <div class="cell"><div class="ring-demo cs ring" tabindex="0"></div><code>corner-shape: squircle</code><br>outline 会跟角形一起变形【规】</div>
+  <div class="cell"><div class="ring-demo ring" tabindex="0"></div><code>只有 border-radius</code><br>对照：环是圆弧版</div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  function val(id) { var e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : Number(e.value); }
+  var SC = 3.2, OX = 60, OY = 330;
+  function P(x, y) { return [OX + (x - 24) * SC, OY - (y - 24) * SC]; }   // 以圆心(24,24)为参照摆到屏幕上
+  function path(f, tmax, n) {
+    var d = '';
+    for (var i = 0; i <= n; i++) {
+      var p = f(tmax * i / n), s = P(p[0], p[1]);
+      d += (i ? ' L ' : 'M ') + s[0].toFixed(2) + ',' + s[1].toFixed(2);
+    }
+    return d;
+  }
+  // 角部补丁：圆心 (R,R)，半径 rad；θ=0 → (R,0)，θ=π/2 → (0,R)
+  function patchAt(n, R, rad) {
+    var m = 2 / n;
+    return function (t) {
+      var c = Math.max(0, Math.cos(t)), s = Math.max(0, Math.sin(t));
+      return [R - rad * Math.pow(c, m), R - rad * Math.pow(s, m)];
+    };
+  }
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  // 真法向内偏移：sign=-1 朝圆心方向走 w
+  function normalOffset(base, R, w, sign) {
+    return function (t) {
+      var h = 1e-6, p = base(t), a = base(t - h), b = base(t + h);
+      var tx = (b[0] - a[0]) / (2 * h), ty = (b[1] - a[1]) / (2 * h);
+      var L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L;
+      var nx = -ty, ny = tx;
+      if ((p[0] - R) * nx + (p[1] - R) * ny < 0) { nx = -nx; ny = -ny; }   // 统一到外法向
+      return [p[0] + sign * w * nx, p[1] + sign * w * ny];
+    };
+  }
+  function radialAt(f, phi) {   // 沿圆心射线比距离；f 已平移到以 (0,0) 为圆心
+    var lo = 0, hi = Math.PI / 2;
+    for (var i = 0; i < 60; i++) {
+      var mid = (lo + hi) / 2, p = f(mid);
+      if (Math.atan2(-p[1], -p[0]) < phi) lo = mid; else hi = mid;
+    }
+    var p = f((lo + hi) / 2);
+    return Math.hypot(p[0], p[1]);
+  }
+  function render() {
+    var R = val('R'), n = val('nn'), w = val('w');
+    document.getElementById('Rv').textContent = R + ' px';
+    document.getElementById('nnv').textContent = n;
+    document.getElementById('wv').textContent = w + ' px';
+
+    var base = patchAt(n, R, R);
+    var inner = normalOffset(base, R, w, -1);
+    var naive = patchAt(n, R, R - w);
+    var innerShifted = function (t) { var p = inner(t); return [p[0] - R, p[1] - R]; };
+    var naiveShifted = function (t) { var p = naive(t); return [p[0] - R, p[1] - R]; };
+
+    var out = [];
+    // 两条直边（外边界与内边界的边都平移 w，这部分才是"天真写法"唯一对的地方）
+    out.push('<line x1="' + P(R, R + 40)[0] + '" y1="' + P(R, R + 40)[1] + '" x2="' + P(R, R + 40)[0] + '" y2="' + P(R, R - 8)[1] + '" stroke="#888" stroke-width="1"/>');
+    out.push('<path d="' + path(base, Math.PI / 2, 120) + '" fill="none" stroke="#1c1f24" stroke-width="2"/>');
+    out.push('<path d="' + path(inner, Math.PI / 2, 120) + '" fill="none" stroke="#0b6fb3" stroke-width="2"/>');
+    if (val('showNaive')) out.push('<path d="' + path(naive, Math.PI / 2, 120) + '" fill="none" stroke="#b4232c" stroke-width="2" stroke-dasharray="5 4"/>');
+    if (val('showNorm')) {
+      for (var k = 0; k <= 12; k++) {
+        var t = Math.PI / 2 * k / 12, p = base(t), q = inner(t);
+        out.push('<line x1="' + P(p[0], p[1])[0] + '" y1="' + P(p[0], p[1])[1] + '" x2="' + P(q[0], q[1])[0] + '" y2="' + P(q[0], q[1])[1] + '" stroke="#7a5cff" stroke-width="0.8" opacity="0.7"/>');
+      }
+    }
+    // 偏差填充带：把两条曲线之间的区域画出来，眼睛最省事
+    if (val('showNaive')) {
+      var band = path(inner, Math.PI / 2, 60);
+      var backPts = [];
+      for (var i = 60; i >= 0; i--) { var p2 = naive(Math.PI / 2 * i / 60), s2 = P(p2[0], p2[1]); backPts.push('L ' + s2[0].toFixed(2) + ',' + s2[1].toFixed(2)); }
+      out.push('<path d="' + band + ' ' + backPts.join(' ') + ' Z" fill="rgba(180,35,44,.14)" stroke="none"/>');
+    }
+    document.getElementById('scene').innerHTML = out.join('');
+
+    // 偏差量：沿圆心射线比距离（两条曲线都对该圆心星形）
+    var worst = 0, atDeg = 0, sum = 0, cnt = 0;
+    for (var t = 1e-3; t <= Math.PI / 2 - 1e-3; t += 5e-3) {
+      var p = innerShifted(t), phi = Math.atan2(-p[1], -p[0]);
+      var dt = Math.hypot(p[0], p[1]), dn = radialAt(naiveShifted, phi);
+      var g = Math.abs(dt - dn); sum += g * g; cnt++;
+      if (g > worst) { worst = g; atDeg = phi * 180 / Math.PI; }
+    }
+    var rms = Math.sqrt(sum / cnt);
+    // 曲率峰值 → 内偏移安全上限
+    var kmax = 0;
+    for (var t2 = 1e-3; t2 <= Math.PI / 2 - 1e-3; t2 += 2e-4) kmax = Math.max(kmax, kappa(base, t2, 1e-5));
+    var safe = 1 / kmax;
+    var folded = w >= safe;
+
+    var coeff = worst / w;
+    var coeffTxt = coeff < 1e-6 ? '0（圆弧精确成立，任何 w 都不会看见缝）'
+      : coeff.toFixed(3) + '（阈值 0.5px ⇒ w 超过约 ' + (0.5 / coeff).toFixed(1) + 'px 就该看见缝）';
+    document.getElementById('rep').innerHTML =
+      '<table><tr><th>项</th><th>值</th></tr>' +
+      '<tr><td>天真写法最大偏差</td><td>' + worst.toFixed(3) + ' px @' + atDeg.toFixed(1) + '°</td></tr>' +
+      '<tr><td>RMS 偏差</td><td>' + rms.toFixed(3) + ' px</td></tr>' +
+      '<tr><td>偏差/边框宽（系数）</td><td>' + coeffTxt + '</td></tr>' +
+      '<tr><td>内偏移安全上限 1/κ峰值</td><td>' + safe.toFixed(3) + ' px（n=2 时应等于 R=' + R + '）</td></tr>' +
+      '<tr><td>当前 w=' + w + ' 是否越界</td><td class="' + (folded ? 'bad' : 'ok') + '">' + (folded ? '越界：等距线自交，内边界会翻折' : '未越界') + '</td></tr>' +
+      '</table>' +
+      '<p class="note"><b>读法</b>：把 n 拖到 2（圆弧）看偏差那一行——它应该是 0.000，这是本台的<b>对照组</b>，用来证明"不是我的测距代码在撒谎"。' +
+      '然后把 n 拉到 5、w 拉到 3：偏差 ≈ 0.69px 量级【算，见曲率校验.mjs 第 10 节】，已经跨过半个像素阈值。<br>' +
+      '再把 w 拖到 ' + Math.ceil(safe) + ' 以上：蓝线（真法向内边界）会<b>自己绕回去</b>——那不是画错，是等距线越过曲率中心后必然自交（evolute 尖点）。</p>' +
+      '<p class="note"><b>工程结论三条</b>：① 圆弧角上 <code>内角 = 外角 − border-width</code> 可以放心用；' +
+      '② G2 角上要么让浏览器自己算（<code>corner-shape</code> 会带 border/outline/shadow 一起变形【规】），要么自己走真法向偏移，不能"减一减"；' +
+      '③ 用 ② 前先确认 <code>border-width</code>、<code>box-shadow: inset … spread</code>、<code>outline-offset</code> 都小于 1/κ峰值。</p>';
+  }
+  ['R', 'nn', 'w', 'showNaive', 'showNorm'].forEach(function (id) {
+    var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

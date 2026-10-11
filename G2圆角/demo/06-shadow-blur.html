@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景6 · 大模糊阴影：等亮度线就是外偏移线，它会把跳变稀释但永不为零</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  canvas { display:block; background:#fff; border:1px solid var(--line); }
+  label { display:block; margin:6px 0; font-size:13px; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .dark { background:#12151a; padding:26px; border-radius:14px; }
+  .sh { width:190px; height:120px; background:#e9edf3; margin:14px; display:inline-block; }
+  .sh.arc { border-radius:24px; }
+  .sh.sq  { border-radius:24px; corner-shape:squircle; }
+  .cap { display:block; font-size:12px; color:#cfd6e0; margin-top:6px; }
+  .bad { color:var(--bad); font-weight:700; } .ok { color:var(--ok); font-weight:700; }
+</style>
+</head>
+<body>
+<h1>场景 6 · 大模糊/厚描边下的角部：模糊只稀释跳变，G2 才消除跳变</h1>
+<p class="note">物理图像：<code>box-shadow</code> 的等亮度线 = 形状沿外法向的偏移线族（与圆盘做 Minkowski 和）。所以"阴影起节"不是模糊引入的，而是轮廓本身的接缝被模糊<b>放大对比</b>后更容易看见。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>外角半径 R <input id="R" type="range" min="12" max="48" value="24" step="1"><b id="Rv"></b> px</label>
+    <label>外偏移 d（≈模糊半径） <input id="d" type="range" min="0" max="60" value="24" step="1"><b id="dv"></b> px</label>
+    <label>形状 n（2=圆弧） <input id="nn" type="range" min="2" max="8" value="5" step="0.5"><b id="nnv"></b></label>
+  </div>
+  <div class="cell"><canvas id="off" width="440" height="330"></canvas><p class="note">外偏移线族 d = 0/6/12/24/48；竖线处是直边与角部的接缝</p></div>
+  <div class="cell"><canvas id="plot" width="380" height="330"></canvas><p class="note">接缝跳变 Δκ 随 d 的变化（对数轴）</p></div>
+</div>
+
+<h2>数值判据</h2>
+<div id="rep"></div>
+
+<h2>真实渲染对照【渲】</h2>
+<div class="dark">
+  <div class="sh arc" id="c1"></div>
+  <div class="sh sq" id="c2"><span class="cap">左：圆弧　右：corner-shape squircle（本机支持才看得出差别）</span></div>
+  <label style="color:#cfd6e0">模糊半径 <input id="blur" type="range" min="0" max="80" value="34" step="1"><b id="blurv"></b> px　
+    spread <input id="spread" type="range" min="-10" max="30" value="0" step="1"><b id="spreadv"></b> px　
+    <input id="inset" type="checkbox"> 改成 inset（内阴影，看自交阈值）</label>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  function val(id) { var e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : Number(e.value); }
+  function patchAt(n, R, rad) {
+    var m = 2 / n;
+    return function (t) {
+      var c = Math.max(0, Math.cos(t)), s = Math.max(0, Math.sin(t));
+      return [R - rad * Math.pow(c, m), R - rad * Math.pow(s, m)];
+    };
+  }
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  function normalOffset(base, R, d, sign) {
+    return function (t) {
+      var h = 1e-6, p = base(t), a = base(t - h), b = base(t + h);
+      var tx = (b[0] - a[0]) / (2 * h), ty = (b[1] - a[1]) / (2 * h);
+      var L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L;
+      var nx = -ty, ny = tx;
+      if ((p[0] - R) * nx + (p[1] - R) * ny < 0) { nx = -nx; ny = -ny; }
+      return [p[0] + sign * d * nx, p[1] + sign * d * ny];
+    };
+  }
+  function radialAt(f, phi) {
+    var lo = 0, hi = Math.PI / 2;
+    for (var i = 0; i < 60; i++) {
+      var mid = (lo + hi) / 2, p = f(mid);
+      if (Math.atan2(-p[1], -p[0]) < phi) lo = mid; else hi = mid;
+    }
+    var p = f((lo + hi) / 2); return Math.hypot(p[0], p[1]);
+  }
+
+  function render() {
+    var R = val('R'), n = val('nn'), d = val('d');
+    document.getElementById('Rv').textContent = R;
+    document.getElementById('nnv').textContent = n;
+    document.getElementById('dv').textContent = d;
+
+    // ---- 左图：外偏移线族 ----
+    var cv = document.getElementById('off'), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    var SC = 2.2, OX = 30, OY = cv.height - 30;
+    function P(x, y) { return [OX + x * SC, OY - y * SC]; }
+    var ds = [0, 6, 12, 24, 48];
+    ds.forEach(function (dd, i) {
+      var f = normalOffset(patchAt(n, R, R), R, dd, +1);
+      g.strokeStyle = 'hsl(' + (210 - i * 40) + ',70%,42%)'; g.lineWidth = dd === 0 ? 2.5 : 1.6;
+      g.beginPath();
+      for (var k = 0; k <= 80; k++) {
+        var p = f(Math.PI / 2 * k / 80), s = P(p[0], p[1]);
+        if (k === 0) g.moveTo(s[0], s[1]); else g.lineTo(s[0], s[1]);
+      }
+      g.stroke();
+      g.fillStyle = '#666'; g.font = '11px system-ui';
+      var e = P(R - (R + dd) * Math.pow(2, -1 / n) * 0.6, R - (R + dd) * 0.85);
+      g.fillText('d=' + dd, Math.min(e[0], cv.width - 34), Math.max(e[1], 12));
+    });
+    // 接缝位置竖线
+    var seam = P(R, 0);
+    g.strokeStyle = '#b4232c'; g.setLineDash([4, 3]); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(seam[0], seam[1] - 6); g.lineTo(seam[0], seam[1] + 10); g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = '#b4232c'; g.fillText('接缝 (R,0)', seam[0] - 20, seam[1] + 24);
+    g.strokeStyle = '#888'; g.beginPath(); g.moveTo(P(0, 0)[0], P(0, 0)[1] + 6); g.lineTo(P(R * 2.4, 0)[0], P(0, 0)[1] + 6); g.stroke();
+
+    // ---- 右图：Δκ 随 d（对数纵轴）----
+    var p2 = document.getElementById('plot'), h2 = p2.getContext('2d');
+    h2.clearRect(0, 0, p2.width, p2.height);
+    var rows = [];
+    for (var dd2 = 0; dd2 <= 60; dd2 += 2) {
+      var fa = normalOffset(patchAt(2, R, R), R, dd2, +1);
+      var fs = normalOffset(patchAt(n, R, R), R, dd2, +1);
+      rows.push([dd2, kappa(fa, 1e-3, 1e-5), kappa(fs, 1e-3, 1e-5)]);
+    }
+    var maxK = Math.max.apply(null, rows.map(function (r) { return r[1]; }));
+    function X(v) { return 46 + (v / 60) * (p2.width - 60); }
+    function Y(k) { return p2.height - 34 - (Math.log10(Math.max(k, 1e-8) / 1) - Math.log10(1e-7)) / (Math.log10(maxK) - Math.log10(1e-7)) * (p2.height - 54); }
+    h2.strokeStyle = '#999'; h2.beginPath(); h2.moveTo(X(0), Y(maxK)); h2.lineTo(X(0), 10); h2.moveTo(X(0), Y(maxK)); h2.lineTo(X(60), Y(maxK)); h2.stroke();
+    h2.font = '11px system-ui'; h2.fillStyle = '#666';
+    h2.fillText('Δκ', X(0) - 34, 14); h2.fillText('d (px)', X(55), p2.height - 16);
+    [maxK, maxK / 10, maxK / 100, maxK / 1000].forEach(function (k) {
+      if (k < 1e-7) return;
+      h2.strokeStyle = '#eee'; h2.beginPath(); h2.moveTo(X(0), Y(k)); h2.lineTo(X(60), Y(k)); h2.stroke();
+      h2.fillText(k.toExponential(1), 4, Y(k) + 3);
+    });
+    [['#b4232c', 1], ['#14663d', 2]].forEach(function (cfg) {
+      h2.strokeStyle = cfg[0]; h2.lineWidth = 2; h2.beginPath();
+      rows.forEach(function (r, i) { var x = X(r[0]), y = Y(Math.max(r[cfg[1]], 1e-8)); if (i === 0) h2.moveTo(x, y); else h2.lineTo(x, y); });
+      h2.stroke();
+    });
+    h2.fillStyle = '#b4232c'; h2.fillText('圆弧：Δκ = 1/(R+d)，恒不为 0', X(16), Y(rows[8][1]) - 8);
+    h2.fillStyle = '#14663d'; h2.fillText('n=' + n + '：Δκ ≈ 0', X(24), Y(Math.max(rows[8][2], 1e-8)) - 10);
+
+    // ---- 判据表 ----
+    var kmax0 = 0, f0 = patchAt(n, R, R);
+    for (var t = 1e-3; t <= Math.PI / 2 - 1e-3; t += 2e-4) kmax0 = Math.max(kmax0, kappa(f0, t, 1e-5));
+    var safeIn = 1 / kmax0;
+    var outer = normalOffset(f0, R, d, +1);
+    var naiveOuter = patchAt(n, R, R + d);
+    var worst = 0;
+    var shifted = function (t) { var p = naiveOuter(t); return [p[0] - R, p[1] - R]; };
+    for (var t2 = 1e-3; t2 <= Math.PI / 2 - 1e-3; t2 += 5e-3) {
+      var p = outer(t2), q = [p[0] - R, p[1] - R];
+      var phi = Math.atan2(-q[1], -q[0]);
+      worst = Math.max(worst, Math.abs(Math.hypot(q[0], q[1]) - radialAt(shifted, phi)));
+    }
+    var dSel = [0, 6, 12, 24, 48, d];
+    var html = '<table><tr><th>d (px)</th><th>圆弧接缝 Δκ</th><th>圆弧预测 1/(R+d)</th><th>n=' + n + ' 接缝 Δκ</th><th>跳变还在吗</th></tr>';
+    dSel.forEach(function (x) {
+      var ka = kappa(normalOffset(patchAt(2, R, R), R, x, +1), 1e-3, 1e-5);
+      var ks = kappa(normalOffset(patchAt(n, R, R), R, x, +1), 1e-3, 1e-5);
+      html += '<tr><td>' + x + '</td><td>' + ka.toFixed(6) + '</td><td>' + (1 / (R + x)).toFixed(6) + '</td><td>' +
+        ks.toExponential(3) + '</td><td class="' + (ka > 1e-3 ? 'bad' : 'ok') + '">圆弧：在（稀释到 1/(R+d)）／G2 形状：否</td></tr>';
+    });
+    html += '</table><p class="note"><b>三条能带走的结论</b>：<br>' +
+      '① 模糊/外扩<b>不会</b>把圆弧的接缝跳变抹掉，它只是把 Δκ 从 1/' + R + ' 稀释到 1/(' + R + '+d)。想让 Δκ=0 只能换形状。<br>' +
+      '② 外偏移 d 之后的轮廓<b>不再是同一族曲线</b>：与"天真写法（半径直接加 d）"的最大射线偏差 = <b>' + worst.toFixed(3) + 'px</b>（d=' + d + '，n=' + n + '）。所以自绘阴影/自绘描边必须走真法向偏移。<br>' +
+      '③ 内偏移（inset 阴影、粗 border、outline-offset）有硬上限 <b>1/κ峰值 = ' + safeIn.toFixed(2) + 'px</b>；超过就自交翻折。n=' + n + ' 时上限只有 R 的 ' + (safeIn / R * 100).toFixed(1) + '%，而圆弧（n=2）是 100%。</p>';
+    document.getElementById('rep').innerHTML = html;
+
+    // ---- 真实 CSS 阴影 ----
+    var blur = val('blur'), spread = val('spread'), inset = val('inset');
+    document.getElementById('blurv').textContent = blur;
+    document.getElementById('spreadv').textContent = spread;
+    var shd = (inset ? 'inset ' : '') + '0 ' + Math.round(blur / 3) + 'px ' + blur + 'px ' + spread + 'px rgba(0,0,0,' + (inset ? 0.55 : 0.5) + ')';
+    ['c1', 'c2'].forEach(function (id) { document.getElementById(id).style.boxShadow = shd; });
+  }
+  ['R', 'd', 'nn', 'blur', 'spread', 'inset'].forEach(function (id) {
+    var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

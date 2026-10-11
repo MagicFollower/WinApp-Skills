@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景1 · CSS 圆角：用过值缩放与 corner-shape</title>
+<style>
+  :root { color-scheme: light dark; --ink: #1c1f24; --bg: #f6f7f9; --card: #fff; --line: #d5d9e0; --bad: #b4232c; --ok: #14663d; }
+  @media (prefers-color-scheme: dark) { :root { --ink: #e6e8ec; --bg: #16181c; --card: #1f2228; --line: #3a4048; --ok: #67d3a3; --bad: #ff8f8f; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: var(--bg); color: var(--ink);
+    font: 14px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 28px 0 10px; border-left: 3px solid var(--ink); padding-left: 8px; }
+  p.note { margin: 4px 0 12px; opacity: .8; }
+  .row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+  .cell { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .cap { display: block; margin-top: 8px; font-size: 12px; opacity: .75; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+
+  /* ---- 被检元素：一律先给"保底层"，再用 @supports 做增强层 ---- */
+  .box { width: 160px; height: 160px; background: linear-gradient(135deg, #4c8bf5, #7ad0c2); }
+  .b-arc      { border-radius: 48px; }                                   /* 默认 corner-shape: round */
+  .b-squircle { border-radius: 48px; corner-shape: squircle; }             /* = superellipse(2) → 指数 4 */
+  .b-se14     { border-radius: 48px; corner-shape: superellipse(1.4); }
+  .b-se3      { border-radius: 48px; corner-shape: superellipse(3); }
+  .b-bevel    { border-radius: 48px; corner-shape: bevel; }
+  .b-scoop    { border-radius: 48px; corner-shape: scoop; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line); }
+  .badge.ok  { color: var(--ok);  border-color: currentColor; }
+  .badge.bad { color: var(--bad); border-color: currentColor; }
+
+  /* ---- 用过值(f)缩放实测：被检盒 + 虚线圆心覆盖 ---- */
+  .probe { position: relative; width: 100px; height: 40px; background: rgba(76,139,245,.35);
+           border: 2px solid var(--ink); }
+  .p-60 { border-radius: 60px; }
+  .p-20 { border-radius: 20px; }
+  .ring { position: absolute; border: 1px dashed var(--bad); border-radius: 50%; pointer-events: none; }
+  .legend { font-size: 12px; opacity: .8; }
+  canvas { background: var(--card); border: 1px solid var(--line); }
+  table { border-collapse: collapse; font-size: 12px; }
+  th, td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+</style>
+</head>
+<body>
+<h1>场景 1 · 纯 CSS 圆角：圆弧的天性、用过值缩放、corner-shape 渐进增强</h1>
+<p class="note">本页有两种证据，别混：<b>上半部</b>是浏览器真实渲染（所见即浏览器实现）；<b>下半部 κ 曲线</b>是本地数学模型算出来的，用来解释"为什么看起来更顺"。模型不读浏览器像素。</p>
+
+<h2>A. 角形对照（需要 corner-shape 支持才有差别）</h2>
+<p class="note">支持检测：<span id="support" class="badge">检测中</span> 当前 UA：<code id="ua"></code></p>
+<div class="row">
+  <div class="cell"><div class="box b-arc"></div><span class="cap">round（默认）<br><code>border-radius:48px</code></span></div>
+  <div class="cell"><div class="box b-squircle"></div><span class="cap">squircle<br><code>corner-shape:squircle</code></span></div>
+  <div class="cell"><div class="box b-se14"></div><span class="cap">superellipse(1.4)<br>介于 round 与 squircle</span></div>
+  <div class="cell"><div class="box b-se3"></div><span class="cap">superellipse(3)<br>比方还方</span></div>
+  <div class="cell"><div class="box b-bevel"></div><span class="cap">bevel<br>指数 1 = 直线切角</span></div>
+  <div class="cell"><div class="box b-scoop"></div><span class="cap">scoop<br>指数 0.5 = 内凹</span></div>
+</div>
+<p class="note">参数方向速记：CSS 的 <code>superellipse(v)</code> 里 v 是"指数的对数"，实际超椭圆指数 <b>p = 2<sup>v</sup></b>。所以 v=1→p=2 是正圆弧(round)，v=2→p=4 是经典 squircle，v=0→p=1 是直线切角(bevel)，v&lt;0→p&lt;1 是内凹。2023 年前后文章里"superellipse(-0.2) = squircle"的说法来自旧草案口径，与现行实现相反，别照抄。</p>
+
+<h2>B. 用过值缩放（f 规则）实测：盒 100×40，写 border-radius:60px</h2>
+<p class="note">规范规定：同一边两侧半径之和超过边长时，<b>所有</b>半径乘以同一个 f = min(1, 边长/半径和)。这里纵向 60+60=120 &gt; 40 ⇒ f=1/3 ⇒ 用过值 20px。</p>
+<div class="row">
+  <div class="cell">
+    <div class="probe p-60"><i class="ring" style="left:0;top:0;width:40px;height:40px"></i>
+      <i class="ring" style="right:0;top:0;width:40px;height:40px"></i>
+      <i class="ring" style="left:0;bottom:0;width:40px;height:40px"></i>
+      <i class="ring" style="right:0;bottom:0;width:40px;height:40px"></i></div>
+    <span class="cap">写 60px + 半径 20px 的虚线圆<br><b>判据：虚线圆与盒角完全贴合</b></span>
+  </div>
+  <div class="cell">
+    <div class="probe p-60"><i class="ring" style="left:-20px;top:-20px;width:120px;height:120px"></i></div>
+    <span class="cap">写 60px + 半径 60px 的虚线圆<br><b>判据：明显不贴合 ⇒ 60px 没有按字面生效</b></span>
+  </div>
+  <div class="cell">
+    <div class="probe p-20"><i class="ring" style="left:0;top:0;width:40px;height:40px"></i></div>
+    <span class="cap">写 20px（未被缩放）+ 半径 20px 虚线圆<br><b>判据：与左下同形</b></span>
+  </div>
+</div>
+<p class="legend">结论：<code>border-radius</code> 大于半个短边时，写进去的数字不等于生效数字。κ 也跟着变：请求 1/60=0.01667，实际 1/20=0.05000（见 <code>曲率校验.mjs</code> 第 6 节）。</p>
+
+<h2>C. 模型层：四种角部的 κ(s) 曲线（s = 距接缝的弧长，px）</h2>
+<p class="note">接缝左侧是直线边，κ=0。曲线在 s=0 处的"起跳高度"就是连续性档位：跳变 = G1，从 0 连续爬升 = G2。</p>
+<canvas id="plot" width="720" height="300"></canvas>
+<div id="metrics"></div>
+
+<script>
+(function () {
+  'use strict';
+  var ok = (window.CSS && CSS.supports) ? CSS.supports('corner-shape', 'squircle') : false;
+  var el = document.getElementById('support');
+  el.textContent = ok ? '支持 corner-shape：A 组的六种形状有真实差别' : '不支持 corner-shape：A 组六个盒子完全相同（增强层未生效）';
+  el.className = 'badge ' + (ok ? 'ok' : 'bad');
+  document.getElementById('ua').textContent = navigator.userAgent;
+
+  var R = 24;                                  // 角部补丁半径，与 .mjs 数值台同一口径
+  function m(v) { return v.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+  // 中心差分曲率（与 demo/曲率校验.mjs 同一实现，保证数字可互相对上）
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  function len(f, t0, t1, n) {
+    var L = 0, dt = (t1 - t0) / n, prev = f(t0);
+    for (var i = 1; i <= n; i++) { var p = f(t0 + i * dt); L += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prev = p; }
+    return L;
+  }
+  // 三种角部模型，统一参照系：θ=0 → (0,r)（竖直边接缝），θ=π/2 → (r,0)（水平边接缝）
+  function arcCurve(r) { return function (t) { return [r - r * Math.cos(t), r - r * Math.sin(t)]; }; }
+  function superCurve(n, r) {
+    var m = 2 / n;
+    return function (t) {
+      var c = Math.max(0, Math.cos(t)), s = Math.max(0, Math.sin(t));   // 防 π/2 越界产生 NaN
+      return [r - r * Math.pow(c, m), r - r * Math.pow(s, m)];
+    };
+  }
+  function flatCubic(r) {
+    return function (u) { var m0 = 1 - u; return [u * u * u * r, m0 * m0 * m0 * r]; };  // P0=(0,r) P1=P2=(0,0) P3=(r,0)
+  }
+  var models = [
+    { name: '圆弧 border-radius 默认', c: arcCurve(R), tmax: Math.PI / 2, color: '#b4232c', dash: [] },
+    { name: '超椭圆 n=4（CSS squircle）', c: superCurve(4, R), tmax: Math.PI / 2, color: '#14663d', dash: [6, 3] },
+    { name: '超椭圆 n=3（最小 G2）', c: superCurve(3, R), tmax: Math.PI / 2, color: '#7a5cff', dash: [2, 3] },
+    { name: '平端三次贝塞尔', c: flatCubic(R), tmax: 1, color: '#0b6fb3', dash: [1, 0] }
+  ];
+
+  var cv = document.getElementById('plot'), g = cv.getContext('2d');
+  var W = cv.width, H = cv.height, padL = 62, padB = 34, padT = 16, padR = 16;
+  var SMAX = 20;                                // 横轴：距接缝弧长 0~20px
+  function tAt(mo, s) {                        // 弧长反解参数
+    var lo = 0, hi = mo.tmax;
+    for (var it = 0; it < 44; it++) {
+      var mid = (lo + hi) / 2;
+      if (len(mo.c, 0, mid, 800) < s) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+  function slopeOf(mo, ss) {                   // log(κ)-log(s) 斜率，与 .mjs 第 2c 节同源
+    var pts = ss.map(function (s) {
+      var t = Math.max(tAt(mo, s), 1e-6);
+      return [Math.log(s), Math.log(Math.max(kappa(mo.c, t, Math.max(t / 40, 1e-6)), 1e-15))];
+    });
+    var mx = pts.reduce(function (a, p) { return a + p[0]; }, 0) / pts.length;
+    var my = pts.reduce(function (a, p) { return a + p[1]; }, 0) / pts.length, num = 0, den = 0;
+    pts.forEach(function (p) { num += (p[0] - mx) * (p[1] - my); den += Math.pow(p[0] - mx, 2); });
+    return num / den;
+  }
+  var GRID = [0.25, 0.5, 1, 2];
+  var rows = [];
+  models.forEach(function (mo) {
+    var pts = [];
+    for (var s = 0.2; s <= SMAX; s += 0.2) {
+      var t = Math.max(tAt(mo, s), 1e-6);
+      pts.push([s, kappa(mo.c, t, Math.max(t / 40, 1e-6))]);
+    }
+    // 峰值用 θ 扫描（与 .mjs 同法），不受绘图横轴上限截断
+    var kpk = 0;
+    for (var tt = 1e-3; tt <= mo.tmax - 1e-3; tt += mo.tmax / 4000) kpk = Math.max(kpk, kappa(mo.c, tt, 1e-5));
+    // G 档判据：lim(s→0)κ 是否为 0。用在 s=0.25 与 s=0.015625 两点的比值（G1→1，G2→≥2）
+    var tA = Math.max(tAt(mo, 0.25), 1e-6), tB = Math.max(tAt(mo, 0.015625), 1e-7);
+    var kA = kappa(mo.c, tA, Math.max(tA / 40, 1e-6)), kB = kappa(mo.c, tB, Math.max(tB / 40, 1e-7));
+    rows.push({ mo: mo, pts: pts, kA: kA, kB: kB, ratio: kA / kB, slope: slopeOf(mo, GRID), kpk: kpk });
+  });
+  var kmaxAll = 0;
+  rows.forEach(function (r) { kmaxAll = Math.max(kmaxAll, r.kpk); });
+
+  function X(s) { return padL + (s / SMAX) * (W - padL - padR); }
+  function Y(k) { return H - padB - (k / kmaxAll) * (H - padT - padB); }
+  g.lineWidth = 1; g.strokeStyle = '#999';
+  g.beginPath(); g.moveTo(X(0), padT); g.lineTo(X(0), H - padB); g.lineTo(X(SMAX), H - padB); g.stroke();
+  g.font = '11px system-ui'; g.fillStyle = '#888';
+  g.fillText('κ', X(0) - 28, padT + 10);
+  g.fillText('s (px，离开接缝的弧长)', X(SMAX) - 120, H - 12);
+  for (var i = 0; i <= 4; i++) {
+    var s = SMAX * i / 4;
+    g.beginPath(); g.moveTo(X(s), H - padB); g.lineTo(X(s), H - padB + 4); g.stroke();
+    g.fillText(String(s), X(s) - 6, H - padB + 16);
+  }
+  rows.forEach(function (r) {
+    g.strokeStyle = r.mo.color; g.lineWidth = 2; g.setLineDash(r.mo.dash.length ? r.mo.dash : []);
+    g.beginPath();
+    r.pts.forEach(function (p, i) { if (i === 0) g.moveTo(X(p[0]), Y(p[1])); else g.lineTo(X(p[0]), Y(p[1])); });
+    g.stroke();
+  });
+  g.setLineDash([]);
+  // 圆弧的"接缝起跳"标注
+  var arc = rows[0];
+  g.strokeStyle = '#b4232c'; g.lineWidth = 1; g.setLineDash([3, 3]);
+  g.beginPath(); g.moveTo(X(0), Y(arc.kpk)); g.lineTo(X(SMAX), Y(arc.kpk)); g.stroke();
+  g.setLineDash([]);
+  g.fillStyle = '#b4232c';
+  g.fillText('圆弧：s=0 处从 0 直接跳到 κ=' + arc.kpk.toFixed(6) + '（=1/r）', X(1) + 6, Y(arc.kpk) - 6);
+
+  var html = '<h2>D. 数值自检表（本页现场算出，应与 <code>demo/曲率校验.mjs</code> 第 2、2b、2c、3 节对上）</h2>' +
+    '<table><tr><th>模型</th><th>κ(s=0.25)</th><th>κ(s=0.0156)</th><th>两者比值</th><th>log-log 斜率</th><th>峰值 κ</th><th>接缝档位</th></tr>';
+  rows.forEach(function (r) {
+    var isG2 = r.ratio >= 2;                       // s 缩小 16 倍后 κ 明显跟着掉 ⇒ lim κ=0
+    // 阈值取 1.2 而不是 1：斜率拟合本身有 ±0.1 量级噪声，n=3 与平端贝塞尔的真值是 1（止于 G2），
+    // 只有超椭圆 n≥4（真值 n-2≥2）才够得到 G3，不能被噪声抬成 G3。
+    var grade = isG2 ? (r.slope >= 1.2 ? 'G2，且 dκ/ds→0（够到 G3）' : 'G2（止于 G2，dκ/ds 有限非零）') : 'G1：接缝处 κ 不归零';
+    html += '<tr><td>' + m(r.mo.name) + '</td><td>' + r.kA.toExponential(3) + '</td><td>' + r.kB.toExponential(3) +
+      '</td><td>' + r.ratio.toFixed(2) + '×</td><td>' + r.slope.toFixed(3) + '</td><td>' + r.kpk.toFixed(6) + '</td><td>' + grade + '</td></tr>';
+  });
+  html += '</table><p class="note">判据只用两件事：① <b>比值 ≥ 2</b> ⇔ s→0 时 κ→0 ⇔ G2（圆弧恒为 1.0×，因为它在接缝处仍是 1/r）；' +
+    '② <b>斜率 = n−2</b>（超椭圆）或 1（平端贝塞尔），来自 κ ∝ s<sup>斜率</sup> 的解析律，斜率&gt;1 时连 dκ/ds 都连续。' +
+    '斜率列同时给出"角部从平到尖"的动态范围——比值越大，越像"两段直边中间扣了一个尖"，这正是 squircle 观感的几何来源。</p>';
+  document.getElementById('metrics').innerHTML = html;
+})();
+</script>
+</body>
+</html>

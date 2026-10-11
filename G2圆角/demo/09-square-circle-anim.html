@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景9 · 方↔圆过渡：鼓不鼓包看两轴曲率不对称</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  canvas { display:block; background:#fff; border:1px solid var(--line); }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  label { font-size:13px; }
+</style>
+</head>
+<body>
+<h1>场景 9 · 方形→圆形过渡：中间态没有曲率过冲，抖的是"两轴不对称"</h1>
+<p class="note">120×80 的盒，把 <code>border-radius</code> 从 16px 动到"圆"。三种写法：S1 动到 <code>50%</code>（两轴各自算，见 §3.1b）、S2 动到 <code>40px</code>（= 半个短边，两轴同值，被 f 规则正好钳住）、S3 药丸。逐帧量与水平边/竖直边相切处的 κ。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>t <input id="t" type="range" min="0" max="100" value="60" step="1"><b id="tv"></b>　
+      <input id="play" type="checkbox"> 自动播放</label>
+    <canvas id="strip" width="430" height="230"></canvas>
+    <p class="note">胶片：t=0 / 0.25 / 0.5 / 0.75 / 1 的 S1（上排）与 S2（下排）。红点=接缝，蓝短线=该处密切圆弧（半径 1/κ，画到能看见为止）。</p>
+  </div>
+  <div class="cell"><canvas id="plot" width="380" height="230"></canvas><div id="rep"></div></div>
+</div>
+
+<h2>逐帧判据表</h2>
+<div id="rep2"></div>
+
+<script>
+(function () {
+  'use strict';
+  var W = 120, H = 80;
+  function kSeam(a, b) { return { horiz: a / (b * b), vert: b / (a * a) }; }   // 椭圆角部两处接缝 κ（§3.1b）
+  function aFor(t, mode) {   // 水平半径
+    if (mode === 'S1') return 16 + t * (W / 2 - 16);
+    if (mode === 'S2') { var r = 16 + t * (40 - 16); var f = Math.min(1, W / (2 * r), H / (2 * r)); return r * f; }
+    return Math.min(H / 2, W / 2);
+  }
+  function bFor(t, mode) {
+    if (mode === 'S1') return 16 + t * (H / 2 - 16);
+    if (mode === 'S2') { var r = 16 + t * (40 - 16); var f = Math.min(1, W / (2 * r), H / (2 * r)); return r * f; }
+    return Math.min(H / 2, W / 2);
+  }
+  function drawCorner(g, cx, cy, a, b, scale) {
+    // 用椭圆弧采样画整只盒子轮廓（不用 ctx.ellipse，好让两轴半径独立可见）
+    g.save(); g.translate(cx, cy); g.scale(scale, scale);
+    g.beginPath();
+    var corners = [[W - a, b, 0], [W - a, H - b, Math.PI / 2], [a, H - b, Math.PI], [a, b, Math.PI * 1.5]];
+    g.moveTo(a, 0); g.lineTo(W - a, 0);
+    corners.forEach(function (c) {
+      var ccx = c[0], ccy = c[1], t0 = c[2];
+      for (var k = 1; k <= 24; k++) {
+        var th = t0 + Math.PI / 2 * k / 24;
+        g.lineTo(ccx + a * Math.cos(th), ccy + b * Math.sin(th));
+      }
+    });
+    g.closePath();
+    g.restore();
+  }
+  function film() {
+    var cv = document.getElementById('strip'), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    var modes = ['S1', 'S2'];
+    modes.forEach(function (mode, row) {
+      [0, 0.25, 0.5, 0.75, 1].forEach(function (t, i) {
+        var a = aFor(t, mode), b = bFor(t, mode);
+        var ox = 12 + i * 84, oy = 18 + row * 110, sc = 0.62;
+        g.save(); g.translate(ox, oy); g.scale(sc, sc);
+        g.fillStyle = row ? 'rgba(20,102,61,.16)' : 'rgba(180,35,44,.14)';
+        g.strokeStyle = '#1c1f24'; g.lineWidth = 1 / sc;
+        drawCorner(g, 0, 0, a, b, 1); g.fill(); g.stroke();
+        // 接缝红点：右上角与水平边的切点 (W-a, 0)
+        g.fillStyle = '#b4232c'; g.beginPath(); g.arc(W - a, 0, 4 / sc, 0, Math.PI * 2); g.fill();
+        // 密切圆半径示意（水平边接缝处 κ=a/b² ⇒ R=b²/a）
+        var rho = b * b / a;
+        g.strokeStyle = '#0b6fb3'; g.setLineDash([3 / sc, 3 / sc]);
+        g.beginPath(); g.arc(W - a + 0, -rho, Math.min(rho, 220), Math.PI * 0.15, Math.PI * 0.85); g.stroke(); g.setLineDash([]);
+        g.restore();
+        g.fillStyle = '#666'; g.font = '10px system-ui';
+        g.fillText(mode + ' t=' + t.toFixed(2), ox, oy + H * sc + 12);
+        g.fillText('1/κ=' + rho.toFixed(1), ox, oy + H * sc + 23);
+      });
+    });
+  }
+  function curves() {
+    var cv = document.getElementById('plot'), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    var KMAX = 0.075;
+    function X(t) { return 40 + t * (cv.width - 56); }
+    function Y(k) { return cv.height - 30 - Math.min(k, KMAX) / KMAX * (cv.height - 48); }
+    g.strokeStyle = '#999'; g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(1), Y(0)); g.moveTo(X(0), Y(0)); g.lineTo(X(0), Y(KMAX)); g.stroke();
+    g.font = '11px system-ui'; g.fillStyle = '#666';
+    g.fillText('κ', X(0) - 24, Y(KMAX) + 8); g.fillText('t', X(1) - 4, cv.height - 12);
+    [0.02, 0.04, 0.06].forEach(function (k) { g.strokeStyle = '#eee'; g.beginPath(); g.moveTo(X(0), Y(k)); g.lineTo(X(1), Y(k)); g.stroke(); g.fillText(k.toFixed(2), 6, Y(k) + 3); });
+    [['#b4232c', 'horiz', 'S1 水平边'], ['#e07a7a', 'vert', 'S1 竖直边'], ['#14663d', 'both', 'S2 两轴（重合）']].forEach(function (cfg) {
+      g.strokeStyle = cfg[0]; g.lineWidth = 2; g.beginPath();
+      for (var t = 0; t <= 1.0001; t += 0.02) {
+        var k = cfg[1] === 'both' ? kSeam(aFor(t, 'S2'), bFor(t, 'S2')).horiz : kSeam(aFor(t, 'S1'), bFor(t, 'S1'))[cfg[1]];
+        var x = X(t), y = Y(k); if (t === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+    });
+    g.fillStyle = '#b4232c'; g.fillText('S1 水平边接缝 κ（0.0625→0.0375）', X(0.05), Y(0.052));
+    g.fillStyle = '#e07a7a'; g.fillText('S1 竖直边（0.0625→0.0111，跌 5.6×）', X(0.05), Y(0.015));
+    g.fillStyle = '#14663d'; g.fillText('S2 两轴恒等（1.00×）', X(0.42), Y(0.0635) - 12);
+  }
+  function tables() {
+    var rows = [];
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (t) {
+      var s1 = kSeam(aFor(t, 'S1'), bFor(t, 'S1')), s2 = kSeam(aFor(t, 'S2'), bFor(t, 'S2'));
+      rows.push([t, aFor(t, 'S1'), bFor(t, 'S1'), s1.horiz, s1.vert, s1.horiz / s1.vert, s2.horiz / s2.vert]);
+    });
+    var html = '<table><tr><th>t</th><th>S1 a</th><th>S1 b</th><th>水平边 κ</th><th>竖直边 κ</th><th>S1 不对称</th><th>S2 不对称</th></tr>';
+    rows.forEach(function (r) {
+      html += '<tr><td>' + r[0].toFixed(2) + '</td><td>' + r[1].toFixed(2) + '</td><td>' + r[2].toFixed(2) + '</td><td>' +
+        r[3].toFixed(6) + '</td><td>' + r[4].toFixed(6) + '</td><td class="' + (r[5] > 1.5 ? 'bad' : 'ok') + '">' + r[5].toFixed(2) + '×</td><td class="ok">' + r[6].toFixed(2) + '×</td></tr>';
+    });
+    html += '</table><p class="note"><b>判据</b>：动画全程 <b>不对称比 ≤ 1.5×</b> 且 <b>κ 单调无过冲</b> 才算"中间态不抖"。S1 末帧 3.37× ⇒ FAIL；S2 恒 1.00× ⇒ PASS。' +
+      '两处 κ 的单调性都成立（下表与 <code>曲率校验.mjs</code> 第 12d 节逐位一致），所以"鼓包"不是曲率过冲，而是<b>两轴曲率不再相等 + 接缝位置随 a、b 迁移</b>。</p>';
+    document.getElementById('rep2').innerHTML = html;
+    var mono = true, prevH = null, prevV = null;
+    for (var t = 0; t <= 1.0001; t += 0.01) {
+      var k = kSeam(aFor(t, 'S1'), bFor(t, 'S1'));
+      if (prevH !== null && k.horiz > prevH + 1e-9) mono = false;
+      if (prevV !== null && k.vert > prevV + 1e-9) mono = false;
+      prevH = k.horiz; prevV = k.vert;
+    }
+    document.getElementById('rep').innerHTML = '<table><tr><th>项</th><th>值</th></tr>' +
+      '<tr><td>S1 是否过冲</td><td class="' + (mono ? 'ok' : 'bad') + '">' + (mono ? '无（两轴 κ 均单调下降）' : '有') + '</td></tr>' +
+      '<tr><td>S1 末帧不对称</td><td class="bad">' + (kSeam(aFor(1, 'S1'), bFor(1, 'S1')).horiz / kSeam(aFor(1, 'S1'), bFor(1, 'S1')).vert).toFixed(2) + '×</td></tr>' +
+      '<tr><td>S2 末帧 a/b</td><td>' + aFor(1, 'S2').toFixed(2) + ' / ' + bFor(1, 'S2').toFixed(2) + '（被 f 钳到半高 40）</td></tr>' +
+      '<tr><td>推荐写法</td><td><code>border-radius: 16px</code> ⇄ <code>40px</code>，别让两轴分开动</td></tr></table>';
+  }
+  function render() {
+    var t = Number(document.getElementById('t').value) / 100;
+    document.getElementById('tv').textContent = t.toFixed(2);
+    film(); curves(); tables();
+  }
+  document.getElementById('t').addEventListener('input', render);
+  document.getElementById('play').addEventListener('change', function () {
+    var self = this; if (!self.checked) return;
+    (function loop() {
+      if (!self.checked) return;
+      var el = document.getElementById('t');
+      el.value = (Number(el.value) + 1) % 101; render(); setTimeout(loop, 40);
+    })();
+  });
+  render();
+})();
+</script>
+</body>
+</html>

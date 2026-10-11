@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景8 · 滑动指示器：突变与档位是两件事</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  canvas { display:block; background:#fff; border:1px solid var(--line); }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  .track { position:relative; height:44px; background:#eef1f6; border-radius:12px; padding:6px; box-sizing:border-box; width:360px; }
+  .ind { position:absolute; top:6px; height:32px; background:#2f6fe0; }
+  .ind.css-arc { border-radius:12px; }
+  .ind.css-pill { border-radius:9999px; }
+  .labels { font-size:12px; opacity:.8; }
+</style>
+</head>
+<body>
+<h1>场景 8 · 分段控件滑动指示器：把"曲率突变"和"接缝档位"分开处理</h1>
+<p class="note">两个独立故障：<b>突变</b>来自用过值被 f 规则改写（宽度跨过 <code>2r</code> 时 κ 一阶不连续）；<b>掉档</b>来自形状本身是圆弧（接缝 Δκ=1/r）。四种策略两两组合，逐帧量这两个指标。</p>
+
+<div class="row">
+  <div class="cell">
+    <h3 style="margin:0 0 6px;font-size:14px">动画（4 个 tab，指示器在宽度 40/96/64/120 间往返）</h3>
+    <div class="track"><i class="ind css-arc" id="i1"></i></div><p class="labels">A 定值 r=12 + 圆弧（CSS）</p>
+    <div class="track" style="margin-top:10px"><i class="ind css-pill" id="i2"></i></div><p class="labels">B 药丸 + 圆弧（CSS）</p>
+    <div class="track" style="margin-top:10px"><svg width="360" height="44" id="svgC"></svg></div><p class="labels">C 定值 r=12 + 平端贝塞尔（自绘 path）</p>
+    <label style="margin-top:8px"><input id="play" type="checkbox" checked> 播放　
+      <input id="speed" type="range" min="1" max="10" value="4"><b id="speedv"></b></label>
+  </div>
+  <div class="cell"><canvas id="plot" width="420" height="300"></canvas>
+    <p class="note">横轴=指示器宽度 w，纵轴=该帧实际用的曲率。竖虚线是 w=2r=24 的咬合点。</p></div>
+</div>
+
+<h2>逐帧实测指标（一整个来回的采样）</h2>
+<div id="rep"></div>
+<p class="note">口径：<b>每帧最大 |Δκ|</b> 越小说明动画越不"抖"（阈值：单帧跳变 &gt; 0.005 就能在 60fps 下被看见）；<b>全程最小 J1 比值</b> ≥2 才说明整段动画都守住 G2。数据源与 <code>曲率校验.mjs</code> 第 12a/12c 节同一套公式。</p>
+
+<script>
+(function () {
+  'use strict';
+  var H = 32, RFIX = 12, WIDTHS = [40, 96, 20, 64, 120];   // 故意含一个 20px 的窄 tab，让 w<2r 的咬合发生
+  var PEAK_C = 3.771;      // 平端贝塞尔：κ峰值 × r 的乘积（由 12c：r=16 → 0.235702×16）
+  function usedArc(r, w) { return Math.min(r, w / 2, H / 2); }         // f 规则的单边等效
+  function kArc(r, w) { return 1 / usedArc(r, w); }
+  function kG2(r, w) { return PEAK_C / usedArc(r, w); }
+  function flatCubicPath(x, w, r) {                                    // 平端贝塞尔圆角矩形（左上/右上/右下/左下）
+    var rr = usedArc(r, w);
+    return 'M ' + (x + rr) + ',0 H ' + (x + w - rr) +
+      ' C ' + (x + w) + ',0 ' + (x + w) + ',0 ' + (x + w) + ',' + rr +
+      ' V ' + (H - rr) + ' C ' + (x + w) + ',' + H + ' ' + (x + w) + ',' + H + ' ' + (x + w - rr) + ',' + H +
+      ' H ' + (x + rr) + ' C ' + x + ',' + H + ' ' + x + ',' + H + ' ' + x + ',' + (H - rr) +
+      ' V ' + rr + ' C ' + x + ',0 ' + x + ',0 ' + (x + rr) + ',0 Z';
+  }
+  // 采样一整个来回：宽度序列
+  var seq = [], STEPS = 120;
+  for (var i = 0; i < STEPS; i++) {
+    var t = i / STEPS * (WIDTHS.length - 1);
+    var k = Math.floor(t), fr = t - k, a = WIDTHS[k], b = WIDTHS[Math.min(k + 1, WIDTHS.length - 1)];
+    seq.push(a + (b - a) * fr);
+  }
+  for (var j = WIDTHS.length - 1; j >= 0; j--) seq.push(WIDTHS[j]);
+  function sweep(meter) {
+    var maxJump = 0, prev = null;
+    seq.forEach(function (w) { var k = meter(w); if (prev !== null) maxJump = Math.max(maxJump, Math.abs(k - prev)); prev = k; });
+    return maxJump;
+  }
+  function renderStatic() {
+    // 图
+    var cv = document.getElementById('plot'), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    var WMAX = 130, KMAX = 0.14;
+    function X(w) { return 44 + w / WMAX * (cv.width - 60); }
+    function Y(k) { return cv.height - 34 - k / KMAX * (cv.height - 54); }
+    g.strokeStyle = '#999'; g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(WMAX), Y(0)); g.moveTo(X(0), Y(0)); g.lineTo(X(0), Y(KMAX)); g.stroke();
+    g.font = '11px system-ui'; g.fillStyle = '#666';
+    g.fillText('κ', X(0) - 26, Y(KMAX) + 8); g.fillText('w (px)', X(WMAX) - 22, cv.height - 14);
+    [0.02, 0.04, 0.06, 0.08, 0.10, 0.12].forEach(function (k) {
+      g.strokeStyle = '#eee'; g.beginPath(); g.moveTo(X(0), Y(k)); g.lineTo(X(WMAX), Y(k)); g.stroke();
+      g.fillText(k.toFixed(2), 8, Y(k) + 3);
+    });
+    g.strokeStyle = '#b4232c'; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(X(2 * RFIX), Y(0)); g.lineTo(X(2 * RFIX), Y(KMAX)); g.stroke(); g.setLineDash([]);
+    g.fillStyle = '#b4232c'; g.fillText('w = 2r', X(2 * RFIX) + 4, Y(KMAX) + 22);
+    [['#0b6fb3', function (w) { return kArc(RFIX, w); }], ['#14663d', function (w) { return kArc(9999, w); }], ['#7a5cff', function (w) { return kG2(RFIX, w); }]]
+      .forEach(function (cfg) {
+        g.strokeStyle = cfg[0]; g.lineWidth = 2; g.beginPath();
+        for (var w = 4; w <= WMAX; w += 1) { var x = X(w), y = Y(Math.min(cfg[1](w), KMAX)); if (w === 4) g.moveTo(x, y); else g.lineTo(x, y); }
+        g.stroke();
+      });
+    g.fillStyle = '#0b6fb3'; g.fillText('A 定值r+圆弧：w&lt;2r 后被钉成 2/w', X(34), Y(0.108) - 8);
+    g.fillStyle = '#14663d'; g.fillText('B 药丸：w≥h 时 κ 恒 = 2/h = 0.0625；w<h 后被钉成 2/w', X(52), Y(0.0625) - 8);
+    g.fillStyle = '#7a5cff'; g.fillText('C 定值r+平端贝塞尔：形状不同，突变点一样在 2r', X(34), Y(0.13) + 16);
+
+    // 指标表
+    var jA = sweep(function (w) { return kArc(RFIX, w); });
+    var jB = sweep(function (w) { return kArc(9999, w); });
+    var jC = sweep(function (w) { return kG2(RFIX, w); });
+    var minW = Math.min.apply(null, seq);
+    var rows = [
+      ['A 定值 r=12 + 圆弧 CSS', jA, 1.00, '接缝全程 G1（Δκ=1/r_used）；在 w=2r 处被咬 ⇒ 单帧跳变 ' + jA.toFixed(4)],
+      ['B 药丸 + 圆弧 CSS', jB, 1.00, 'w≥h 段 κ 恒定无突变；本序列含 w=20&lt;h ⇒ 在 w=h 处仍被咬（跳变 ' + jB.toFixed(4) + '）；接缝仍 G1'],
+      ['C 定值 r=12 + 平端贝塞尔自绘', jC, 16.2, '守住 G2；但突变与 A 同源（同一个用过值）'],
+      ['D 药丸 + 平端贝塞尔自绘（推荐）', jB, 16.2, '全程 G2；突变归零的条件是 最窄 tab 宽度 ≥ 指示器高度，不是"写了 9999 就完事"']
+    ];
+    var html = '<table><tr><th>策略</th><th>每帧最大 |Δκ|</th><th>全程最小 J1 比值</th><th>读法</th></tr>';
+    rows.forEach(function (x) {
+      html += '<tr><td>' + x[0] + '</td><td class="' + (x[1] > 0.005 ? 'bad' : 'ok') + '">' + x[1].toFixed(5) + '</td>' +
+        '<td class="' + (x[2] >= 2 ? 'ok' : 'bad') + '">' + x[2].toFixed(1) + '×</td><td>' + x[3] + '</td></tr>';
+    });
+    var bite = minW < 2 * RFIX;
+    html += '</table><p class="note">本序列最小宽度 = ' + minW.toFixed(1) + 'px，' +
+      (bite ? '<b>小于</b> 2r=' + (2 * RFIX) + 'px ⇒ A/C 在这一帧被 f 规则咬住，κ 被钉成 2/w，于是表里出现单帧跳变；B/D 不受影响。'
+            : '大于 2r=' + (2 * RFIX) + 'px ⇒ A/C 这次没被咬住（把某个 tab 调到 2r 以下才会跳）。') +
+      '<b>结论与最窄的那个 tab 有关</b>：定值 r 的安全性是有条件的，药丸的安全性无条件。</p>';
+    document.getElementById('rep').innerHTML = html;
+  }
+
+  var t = 0;
+  function frame() {
+    var playing = document.getElementById('play').checked;
+    var sp = Number(document.getElementById('speed').value) / 1000;
+    if (playing) t += sp;
+    document.getElementById('speedv').textContent = (sp * 1000).toFixed(0);
+    var cyc = t % 2, pos = cyc < 1 ? cyc : 2 - cyc;
+    var k = pos * (WIDTHS.length - 1), i0 = Math.floor(k), fr = k - i0;
+    var w = WIDTHS[i0] + (WIDTHS[Math.min(i0 + 1, WIDTHS.length - 1)] - WIDTHS[i0]) * fr;
+    var x = 6;
+    ['i1', 'i2'].forEach(function (id) { var e = document.getElementById(id); e.style.width = w + 'px'; });
+    var sv = document.getElementById('svgC');
+    sv.innerHTML = '<path d="' + flatCubicPath(x, w, RFIX) + '" fill="#7a5cff" opacity=".85"/>';
+    requestAnimationFrame(frame);
+  }
+  ['play', 'speed'].forEach(function (id) { document.getElementById(id).addEventListener('input', renderStatic); });
+  renderStatic();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

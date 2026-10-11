@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景10 · 响应式圆角：定值 / 比例 / clamp 三种策略的角行为</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  canvas { display:block; background:#fff; border:1px solid var(--line); }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  .sw { width:var(--s,96px); height:var(--s,96px); background:linear-gradient(135deg,#4c8bf5,#7ad0c2); }
+  label { display:block; margin:6px 0; font-size:13px; }
+  .strip { display:flex; gap:12px; align-items:flex-end; }
+</style>
+</head>
+<body>
+<h1>场景 10 · 半径要不要随尺寸缩放</h1>
+<p class="note">三个可观测的自由度：<b>弯的程度</b>（κ=1/r_used）、<b>角的存在感</b>（r/S）、<b>能配多粗的描边</b>（n=5 时 0.308·r）。三者不可能同时随尺寸保持不变——这就是策略选择的本质。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>当前尺寸 S <input id="S" type="range" min="24" max="320" value="96" step="4"><b id="Sv"></b> px</label>
+    <label>形状 n（2=圆弧） <input id="nn" type="range" min="2" max="6" value="5" step="0.5"><b id="nnv"></b></label>
+    <label>打算配的描边 <input id="bw" type="range" min="0" max="12" value="3" step="1"><b id="bwv"></b> px</label>
+    <label>观感一致带（r/S）：<input id="lo" type="number" value="0.08" step="0.01" style="width:70px"> ~ <input id="hi" type="number" value="0.25" step="0.01" style="width:70px"></label>
+  </div>
+  <div class="cell"><canvas id="plot" width="440" height="280"></canvas>
+    <p class="note">纵轴 κ=1/r_used（对数），横轴 S。定值=水平线，比例=斜率 −1 的直线，clamp=分段。</p></div>
+  <div class="cell"><div id="tbl"></div></div>
+</div>
+
+<h2>同族并排：五种尺寸 × 四种策略</h2>
+<div class="cell"><div class="strip" id="strip"></div></div>
+
+<script>
+(function () {
+  'use strict';
+  function val(id) { return Number(document.getElementById(id).value); }
+  var C = { 2: 1.0, 3: 0.5612, 0: 0 };   // 1/κ峰值 ÷ r 的尺度无关系数（数值台第 13 节量得）
+  function coef(n) {                     // 线性内插给定 n 的系数（表值来自数值台 13）
+    var tab = [[2, 1.0], [3, 0.5612], [4, 0.3964], [5, 0.3078], [6, 0.252]];
+    for (var i = 0; i < tab.length - 1; i++) {
+      if (n <= tab[i + 1][0]) {
+        var a = tab[i], b = tab[i + 1];
+        return a[1] + (b[1] - a[1]) * (n - a[0]) / (b[0] - a[0]);
+      }
+    }
+    return tab[tab.length - 1][1];
+  }
+  var STRAT = [
+    ['定值 12', function (S) { return 12; }],
+    ['定值 16', function (S) { return 16; }],
+    ['比例 12.5%', function (S) { return S * 0.125; }],
+    ['clamp(8, 12.5%, 24)', function (S) { return Math.min(24, Math.max(8, S * 0.125)); }]
+  ];
+  function used(spec, S) { var f = Math.min(1, S / (2 * spec)); return { f: f, r: spec * f }; }
+  function render() {
+    var S = val('S'), n = val('nn'), bw = val('bw'), lo = val('lo'), hi = val('hi');
+    document.getElementById('Sv').textContent = S;
+    document.getElementById('nnv').textContent = n;
+    document.getElementById('bwv').textContent = bw;
+
+    var cv = document.getElementById('plot'), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    var SMIN = 24, SMAX = 320, KMIN = 0.02, KMAX = 0.5;
+    function X(s) { return 46 + Math.log(s / SMIN) / Math.log(SMAX / SMIN) * (cv.width - 62); }
+    function Y(k) { return cv.height - 32 - (Math.log(Math.min(Math.max(k, KMIN), KMAX)) - Math.log(KMIN)) / (Math.log(KMAX) - Math.log(KMIN)) * (cv.height - 52); }
+    g.strokeStyle = '#999'; g.beginPath(); g.moveTo(X(SMIN), Y(KMIN)); g.lineTo(X(SMAX), Y(KMIN)); g.moveTo(X(SMIN), Y(KMIN)); g.lineTo(X(SMIN), Y(KMAX)); g.stroke();
+    g.font = '11px system-ui'; g.fillStyle = '#666';
+    [0.02, 0.05, 0.1, 0.2, 0.5].forEach(function (k) {
+      g.strokeStyle = '#eee'; g.beginPath(); g.moveTo(X(SMIN), Y(k)); g.lineTo(X(SMAX), Y(k)); g.stroke();
+      g.fillText(k.toString(), 8, Y(k) + 3);
+    });
+    [32, 48, 96, 192, 320].forEach(function (s) { g.fillText(String(s), X(s) - 8, cv.height - 16); });
+    g.fillText('κ = 1/r_used', X(SMIN) - 6, Y(KMAX) - 6); g.fillText('S (px，对数)', X(SMAX) - 60, cv.height - 16);
+    var cols = ['#b4232c', '#e07a7a', '#0b6fb3', '#14663d'];
+    STRAT.forEach(function (st, i) {
+      g.strokeStyle = cols[i]; g.lineWidth = 2; g.beginPath();
+      for (var s = SMIN; s <= SMAX; s += 2) {
+        var u = used(st[1](s), s), x = X(s), y = Y(1 / u.r);
+        if (s === SMIN) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+      g.fillStyle = cols[i]; g.fillText(st[0], X(60) + i * 4, Y(1 / used(st[1](60), 60).r) - 6 - i * 2);
+    });
+    g.strokeStyle = '#7a5cff'; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X(SMIN), Y(1 / used(Math.min(24, Math.max(8, val('S') * 0.125)).r, val('S')).r * 1)); g.lineTo(X(SMAX), Y(1 / used(Math.min(24, Math.max(8, val('S') * 0.125)).r, val('S')).r)); g.stroke(); g.setLineDash([]);
+
+    var kS = coef(n), html = '<table><tr><th>策略</th><th>指定 r</th><th>f</th><th>r_used</th><th>κ</th><th>r/S</th><th>带内?</th><th>描边上限</th><th>配 ' + bw + 'px</th></tr>';
+    STRAT.forEach(function (st, i) {
+      var spec = st[1](S), u = used(spec, S), ratio = u.r / S, band = ratio >= lo && ratio <= hi;
+      var maxBw = u.r * kS, fits = bw <= maxBw;
+      html += '<tr><td>' + st[0] + '</td><td>' + spec.toFixed(2) + '</td><td>' + u.f.toFixed(4) + '</td><td>' + u.r.toFixed(2) +
+        '</td><td>' + (1 / u.r).toFixed(6) + '</td><td>' + ratio.toFixed(3) + '</td>' +
+        '<td class="' + (band ? 'ok' : 'bad') + '">' + (band ? '在带内' : '出带') + '</td><td>' + maxBw.toFixed(2) + 'px</td>' +
+        '<td class="' + (fits ? 'ok' : 'bad') + '">' + (fits ? '放得下' : '会自交') + '</td></tr>';
+    });
+    document.getElementById('tbl').innerHTML = html + '</table><p class="note">判据两条：<b>r/S 落在观感带</b>（默认 0.08–0.25，带由设计定，本文不替你决定）与 <b>描边 ≤ 0.308·r（n=5）</b>。<br>' +
+      '把 S 拖到 24–48、描边保持 3px：比例策略的描边那列会变成"会自交"——小尺寸配比例半径会先把描边挤死。</p>';
+
+    var strip = '';
+    [32, 48, 96, 192, 320].forEach(function (s) {
+      var spec = STRAT[3][1](s), u = used(spec, s);
+      var cs = n > 2.001 && CSS.supports('corner-shape', 'squircle') ? 'corner-shape:superellipse(' + Math.log2(n).toFixed(3) + ');' : '';
+      strip += '<div style="text-align:center"><div class="sw" style="--s:' + s + 'px;border-radius:' + u.r.toFixed(2) + 'px;' + cs + '"></div>' +
+        '<div style="font-size:11px;opacity:.75;margin-top:4px">S=' + s + '<br>r=' + u.r.toFixed(1) + ' · κ=' + (1 / u.r).toFixed(4) + '<br>r/S=' + (u.r / s).toFixed(3) + '</div></div>';
+    });
+    document.getElementById('strip').innerHTML = strip + '<div style="align-self:center;font-size:12px;max-width:180px">这条带用的是 clamp(8, 12.5%, 24)：注意 κ 在两端被"钉住"，中段才跟随。</div>';
+  }
+  ['S', 'nn', 'bw', 'lo', 'hi'].forEach(function (id) {
+    var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景2 · SVG 角部：A 弧命令 vs 平端三次贝塞尔</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code, pre { font-family:Consolas,"Courier New",monospace; font-size:12px; }
+  pre { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px; overflow:auto; }
+  .grid { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  svg { display:block; background:#fff; border:1px solid var(--line); }
+  label { display:block; margin:6px 0; font-size:13px; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .sw { display:inline-block; width:10px; height:10px; border:1px solid #000; margin-right:6px; vertical-align:-1px; }
+</style>
+</head>
+<body>
+<h1>场景 2 · 同一个圆角，SVG 里三种写法：A 弧 / 平端三次贝塞尔 / 超椭圆折线</h1>
+<p class="note">统一的角部参照系：盒角在原点，两条直边沿坐标轴，补丁从 (0,&nbsp;r) 走到 (r,&nbsp;0)，与两轴各切于端点。屏幕上放大 10 倍显示，便于盯住接缝。</p>
+
+<div class="grid">
+  <div class="cell">
+    <label>r（模型 px） <input id="r" type="range" min="8" max="40" value="24" step="1"><b id="rv"></b></label>
+    <label>n（超椭圆指数） <input id="nn" type="range" min="3" max="8" value="5" step="0.5"><b id="nnv"></b></label>
+    <label>折线样本数 / 角 <input id="nseg" type="range" min="4" max="60" value="26" step="1"><b id="nsegv"></b></label>
+    <label><input id="tanb" type="checkbox" checked> 画切线短棒（端点／中点／另一端）</label>
+    <label><input id="osc" type="checkbox"> 标注接缝两侧的 1/κ</label>
+    <label><input id="grid" type="checkbox"> 画 1px 网格</label>
+  </div>
+  <div class="cell">
+    <svg id="view" width="500" height="420" viewBox="0 0 500 420"><g id="scene"></g></svg>
+    <div style="margin-top:8px">
+      <span class="sw" style="background:#b4232c"></span>A 弧（圆弧，G1）
+      <span class="sw" style="background:#0b6fb3;margin-left:10px"></span>平端三次贝塞尔（G2）
+      <span class="sw" style="background:#14663d;margin-left:10px"></span>超椭圆折线（G2）
+    </div>
+  </div>
+</div>
+
+<h2>可直接抄的 path（局部坐标：元素左上角为原点，y 朝下）</h2>
+<pre id="dsrc"></pre>
+
+<h2>数值判据（本页现场算出）</h2>
+<div id="tbl"></div>
+
+<script>
+(function () {
+  'use strict';
+  // ---- 参照系：屏幕原点在左下区，y 轴朝上；OX/OY 是盒角(0,0)的屏幕位置 ----
+  var SCALE = 10, OX = 60, OY = 380;
+  function P(x, y) { return [OX + x * SCALE, OY - y * SCALE]; }
+  function seg(a, b) { var p = P(a[0], a[1]), q = P(b[0], b[1]); return 'x1="' + p[0].toFixed(2) + '" y1="' + p[1].toFixed(2) + '" x2="' + q[0].toFixed(2) + '" y2="' + q[1].toFixed(2) + '"'; }
+  function circ(cx, cy, rr) { var p = P(cx, cy); return 'cx="' + p[0].toFixed(2) + '" cy="' + p[1].toFixed(2) + '" r="' + (rr * SCALE).toFixed(2) + '"'; }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function val(id) { var e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : Number(e.value); }
+
+  // ---- 三条角部曲线，θ=0 → (0,r)（竖直边接缝），θ=π/2 → (r,0)（水平边接缝）----
+  function arcOf(r) { return function (t) { return [r - r * Math.cos(t), r - r * Math.sin(t)]; }; }
+  function superOf(n, r) {
+    var m = 2 / n;
+    return function (t) {
+      // 钳位：t 略越过 π/2 时 cos 会变负，pow(负, 0.4) = NaN（浮点边界，实测会把整张表打成 NaN）
+      var c = Math.max(0, Math.cos(t)), s = Math.max(0, Math.sin(t));
+      return [r - r * Math.pow(c, m), r - r * Math.pow(s, m)];
+    };
+  }
+  // 平端三次贝塞尔：P0=(0,r) P1=P2=(0,0)（盒角） P3=(r,0) → B(u) = (u³r, (1-u)³r)
+  function cubicOf(r) { return function (u) { var m = 1 - u; return [u * u * u * r, m * m * m * r]; }; }
+
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  function kmax(f, t0, t1, step) { var k = 0; for (var t = t0; t <= t1; t += (step || 1e-3)) k = Math.max(k, kappa(f, t, 1e-5)); return k; }
+  function len(f, t0, t1, n) {
+    var L = 0, dt = (t1 - t0) / n, prev = f(t0);
+    for (var i = 1; i <= n; i++) { var p = f(t0 + i * dt); L += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prev = p; }
+    return L;
+  }
+
+  // ---- 折线到密采参照的最大偏离：每个参照点取"到最近线段"的距离，再对所有点取最大 ----
+  //（曾经写成对所有线段取最大，等于在量"到最远线段的距离"，数值会飙到几十 px —— 测量学错误）
+  function polyMaxDeviation(f, tmax, segs) {
+    var ref = [], N = 1200, arr = [], worst = 0;
+    for (var i = 0; i <= N; i++) ref.push(f(tmax * i / N));
+    for (var j = 0; j < segs; j++) {
+      var a = f(tmax * j / segs), b = f(tmax * (j + 1) / segs);
+      arr.push([a[0], a[1], b[0] - a[0], b[1] - a[1]]);
+    }
+    for (var k = 0; k < ref.length; k++) {
+      var p = ref[k], dmin = Infinity;
+      for (var q = 0; q < arr.length; q++) {
+        var S = arr[q], L2 = S[2] * S[2] + S[3] * S[3];
+        var t = L2 ? ((p[0] - S[0]) * S[2] + (p[1] - S[1]) * S[3]) / L2 : 0;
+        t = Math.max(0, Math.min(1, t));
+        dmin = Math.min(dmin, Math.hypot(p[0] - (S[0] + t * S[2]), p[1] - (S[1] + t * S[3])));
+      }
+      worst = Math.max(worst, dmin);
+    }
+    return worst;
+  }
+  // 贝塞尔与超椭圆沿"补丁中心 (r,r) 射线"的距离偏差
+  function radialDev(cub, sup, r) {
+    var worst = 0, sum = 0, n = 0;
+    for (var u = 0.02; u <= 0.98; u += 0.005) {
+      var p = cub(u), dx = r - p[0], dy = r - p[1], d = Math.hypot(dx, dy);
+      var phi = Math.atan2(dy, dx);
+      var q = null, lo = 0, hi = Math.PI / 2;
+      for (var it = 0; it < 50; it++) {
+        var mid = (lo + hi) / 2, s = sup(mid), sx = r - s[0], sy = r - s[1];
+        if (Math.atan2(sy, sx) < phi) lo = mid; else hi = mid;
+      }
+      var sp = sup((lo + hi) / 2), dn = Math.hypot(r - sp[0], r - sp[1]);
+      var g = d - dn; worst = Math.max(worst, Math.abs(g)); sum += g * g; n++;
+    }
+    return { worst: worst, rms: Math.sqrt(sum / n) };
+  }
+
+  function render() {
+    var r = val('r'), N = val('nn'), nseg = val('nseg');
+    document.getElementById('rv').textContent = ' ' + r + ' px';
+    document.getElementById('nnv').textContent = ' ' + N;
+    document.getElementById('nsegv').textContent = ' ' + nseg;
+
+    var arc = arcOf(r), sup = superOf(N, r), cub = cubicOf(r);
+    var out = [];
+    if (val('grid')) {
+      for (var gx = 0; gx <= 500; gx += 20) out.push('<line x1="' + gx + '" y1="0" x2="' + gx + '" y2="420" stroke="#eee" stroke-width="1"/>');
+      for (var gy = 0; gy <= 420; gy += 20) out.push('<line x1="0" y1="' + gy + '" x2="500" y2="' + gy + '" stroke="#eee" stroke-width="1"/>');
+    }
+    // 直边
+    out.push('<line ' + seg([0, 0], [0, r * 1.6]) + ' stroke="#666" stroke-width="2"/>');
+    out.push('<line ' + seg([0, 0], [r * 1.6, 0]) + ' stroke="#666" stroke-width="2"/>');
+    out.push('<circle cx="' + OX + '" cy="' + OY + '" r="3" fill="#000"/>');
+    out.push('<text x="' + (OX - 46) + '" y="' + (OY + 18) + '" font-size="12">盒角 (0,0)</text>');
+    out.push('<text x="' + (OX - 8) + '" y="' + (OY - r * SCALE - 6) + '" font-size="12">接缝 (0,' + r + ')</text>');
+    out.push('<text x="' + (OX + r * SCALE - 10) + '" y="' + (OY + 18) + '" font-size="12">接缝 (' + r + ',0)</text>');
+
+    // ① 圆弧
+    out.push('<path d="M ' + P(0, r).join(',') + ' A ' + (r * SCALE) + ',' + (r * SCALE) + ' 0 0 1 ' + P(r, 0).join(',') + '" fill="none" stroke="#b4232c" stroke-width="2.5"/>');
+    // ② 平端贝塞尔
+    out.push('<path d="M ' + P(0, r).join(',') + ' C ' + P(0, 0).join(',') + ' ' + P(0, 0).join(',') + ' ' + P(r, 0).join(',') + '" fill="none" stroke="#0b6fb3" stroke-width="2.5"/>');
+    // ③ 超椭圆折线
+    var dp = 'M ' + P(sup(0)[0], sup(0)[1]).join(',');
+    for (var i = 1; i <= nseg; i++) { var q = sup(Math.PI / 2 * i / nseg); dp += ' L ' + P(q[0], q[1]).join(','); }
+    out.push('<path d="' + dp + '" fill="none" stroke="#14663d" stroke-width="2" stroke-dasharray="5 3"/>');
+    out.push('<circle cx="' + P(sup(0)[0], sup(0)[1])[0] + '" cy="' + P(sup(0)[0], sup(0)[1])[1] + '" r="2.5" fill="#14663d"/>');
+
+    if (val('tanb')) {
+      [[arc, Math.PI / 2, '#b4232c'], [cub, 1, '#0b6fb3'], [sup, Math.PI / 2, '#14663d']].forEach(function (mk) {
+        var f = mk[0], tmax = mk[1], col = mk[2];
+        [1e-3, tmax / 2, tmax - 1e-3].forEach(function (t) {
+          var h = 1e-5, a = f(t - h), b = f(t + h), c = f(t);
+          var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, k = 5;
+          out.push('<line ' + seg([c[0] - dx / L * k, c[1] - dy / L * k], [c[0] + dx / L * k, c[1] + dy / L * k]) + ' stroke="' + col + '" stroke-width="1.5"/>');
+        });
+      });
+    }
+    if (val('osc')) {
+      var ka = kappa(arc, 1e-3, 1e-5), kc = kappa(cub, 1e-3, 1e-6), ks = kappa(sup, 1e-3, 1e-5);
+      out.push('<circle ' + circ(r, r, r) + ' fill="none" stroke="#b4232c" stroke-width="1" stroke-dasharray="3 3"/>');
+      out.push('<text x="10" y="24" font-size="12" fill="#b4232c">圆弧：接缝处 1/κ = ' + (1 / ka).toFixed(3) + 'px（= r，从直边的 ∞ 跳下来）</text>');
+      out.push('<text x="10" y="42" font-size="12" fill="#0b6fb3">贝塞尔：θ=1e-3 处 1/κ = ' + (1 / kc).toExponential(2) + 'px → 直边侧 1/κ = ∞，不跳</text>');
+      out.push('<text x="10" y="60" font-size="12" fill="#14663d">超椭圆 n=' + N + '：θ=1e-3 处 1/κ = ' + (1 / ks).toExponential(2) + 'px，峰值 κ = ' + kmax(sup, 1e-3, Math.PI / 2 - 1e-3).toFixed(6) + '</text>');
+    }
+    document.getElementById('scene').innerHTML = out.join('');
+
+    var dArc = '<path d="M 0,' + r + ' A ' + r + ',' + r + ' 0 0 1 ' + r + ',0" />',
+        dCub = '<path d="M 0,' + r + ' C 0,0 0,0 ' + r + ',0" />',
+        dPol = '<path d="M 0,' + r;
+    for (var i2 = 1; i2 <= nseg; i2++) { var p2 = sup(Math.PI / 2 * i2 / nseg); dPol += ' L ' + p2[0].toFixed(2) + ',' + p2[1].toFixed(2); }
+    dPol += '" />（完整矩形需要 4 个角，见下）';
+    document.getElementById('dsrc').textContent =
+      '① 圆弧（默认观感，G1）\n  ' + dArc + '\n\n' +
+      '② 平端三次贝塞尔（G2，单段，只多两个坐标）\n  ' + dCub + '\n\n' +
+      '③ 超椭圆折线 n=' + N + '（G2，' + nseg + ' 段/角，共 ' + nseg * 4 + ' 段）\n  ' + dPol + '\n\n' +
+      '④ 整只圆角矩形用 ②：四段贝塞尔 + 四条直边，M/C/L 全绝对坐标\n  <path d="M ' + r + ',0 H w-' + r + ' C w,0 w,' + r + ' w,' + r + ' V h-' + r + ' C w,h w-' + r + ',h w-' + r + ',h H ' + r + ' C 0,h 0,' + r + ',0 0,' + r + ' V? …" />\n' +
+      '   ↑ 上面是示意；下面的"完整可跑 path"由脚本生成：\n\n' + fullRect(r, N, nseg);
+
+    var dev = radialDev(cub, sup, r);
+    var pd = polyMaxDeviation(sup, Math.PI / 2, nseg);
+    var kSup = kmax(sup, 1e-3, Math.PI / 2 - 1e-3);
+    var sag = kSup * Math.pow(len(sup, 0, Math.PI / 2, 2000) / nseg, 2) / 8;
+    var rows = [
+      ['A 弧（圆弧）', kappa(arc, 1e-3, 1e-5).toFixed(6), (1 / kappa(arc, 1e-3, 1e-5)).toFixed(3), kmax(arc, 1e-3, Math.PI / 2 - 1e-3).toFixed(6), 'G1：κ 从 0 跳到 1/r'],
+      ['平端贝塞尔', kappa(cub, 1e-3, 1e-6).toExponential(3), (1 / kappa(cub, 1e-3, 1e-6)).toExponential(2), kmax(cub, 1e-3, 0.999).toFixed(6), 'G2：κ→0'],
+      ['超椭圆折线 n=' + N, kappa(sup, 1e-3, 1e-5).toExponential(3), (1 / kappa(sup, 1e-3, 1e-5)).toExponential(2), kSup.toFixed(6), 'G2（曲线），折线分段 G0']
+    ];
+    var h = '<table><tr><th>写法</th><th>接缝侧 κ</th><th>接缝侧 1/κ (px)</th><th>峰值 κ</th><th>档位</th></tr>';
+    rows.forEach(function (x) { h += '<tr>' + x.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; });
+    h += '</table><p class="note">' +
+      '① 贝塞尔 与 超椭圆 n=' + N + ' 的射线偏差：最大 <b>' + dev.worst.toFixed(3) + 'px</b>，RMS <b>' + dev.rms.toFixed(3) + 'px</b>' +
+      '（判据：&lt;0.2px 视为"抄同一条曲线"）。把 n 调到 5 附近时最小。<br>' +
+      '② 折线 ' + nseg + ' 段：实测最大偏离密采参照 <b>' + pd.toFixed(3) + 'px</b>；弦高公式 κ<sub>max</sub>s²/8 预测 <b>' + sag.toFixed(3) + 'px</b>' +
+      '（判据：两者应同量级，且都 &lt;0.5px；' + (Math.max(pd, sag) > 0.5 ? '<b>当前样本数不足</b>' : '当前样本数足够') + '）。</p>';
+    document.getElementById('tbl').innerHTML = h;
+  }
+
+  // 完整圆角矩形（平端贝塞尔版），w/h 用 200/120 示例
+  function fullRect(r, N, nseg) {
+    var w = 200, hh = 120;
+    // 四角：TR(0) TL(90) BL(180) BR(270)，每角一段 C，控制点落在该角的"盒角"上
+    var d = 'M ' + r + ',0' +
+      ' H ' + (w - r) +
+      ' C ' + w + ',0 ' + w + ',0 ' + w + ',' + r +
+      ' V ' + (hh - r) +
+      ' C ' + w + ',' + hh + ' ' + w + ',' + hh + ' ' + (w - r) + ',' + hh +
+      ' H ' + r +
+      ' C 0,' + hh + ' 0,' + hh + ' 0,' + (hh - r) +
+      ' V ' + r +
+      ' C 0,0 0,0 ' + r + ',0 Z';
+    return '<svg width="' + w + '" height="' + hh + '" viewBox="0 0 ' + w + ' ' + hh + '">\n    <path d="' + d + '" fill="#4c8bf5"/>\n  </svg>';
+  }
+
+  ['r', 'nn', 'nseg', 'tanb', 'osc', 'grid'].forEach(function (id) {
+    var e = document.getElementById(id);
+    e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景7 · 嵌套内角：内角 = 外角 − padding 何时失效</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  svg { background:#fff; border:1px solid var(--line); display:block; }
+  label { display:block; margin:6px 0; font-size:13px; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  .outer { background:linear-gradient(135deg,#4c8bf5,#7ad0c2); padding:0; display:grid; place-items:center; }
+  .inner { background:#1f2228; color:#dfe4ec; display:grid; place-items:center; font-size:12px; }
+</style>
+</head>
+<body>
+<h1>场景 7 · 嵌套圆角：内层的半径该怎么给，间距才"匀"</h1>
+<p class="note">三条常见规则同时算：几何差 <code>r_in = R − p</code>、比例 <code>r_in = R/2</code>、保底 <code>r_in = max(R−p, 6)</code>。判据不是"哪个数字好看"，而是<b>内外两条轮廓之间的法向距离是否恒定</b>。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>外角 R <input id="R" type="range" min="12" max="48" value="24" step="1"><b id="Rv"></b> px</label>
+    <label>内缩 p（padding） <input id="p" type="range" min="2" max="24" value="8" step="1"><b id="pv"></b> px</label>
+    <label>形状 n（2=圆弧） <input id="nn" type="range" min="2" max="8" value="4" step="0.5"><b id="nnv"></b></label>
+    <label><input id="band" type="checkbox" checked> 画出真等距内边界与"天真 r_in"的偏差带</label>
+  </div>
+  <div class="cell"><svg id="view" width="380" height="320" viewBox="0 0 380 320"><g id="scene"></g></svg>
+    <p class="note">放大 6×，看的是左上角那块补丁。蓝实线＝真等距内边界；红虚线＝<code>r_in = R − p</code> 天真写法。</p></div>
+  <div class="cell"><div id="rep"></div></div>
+</div>
+
+<h2>真实 CSS 嵌套（三层规则各一只）</h2>
+<div class="row" id="cssrow"></div>
+
+<script>
+(function () {
+  'use strict';
+  function val(id) { var e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : Number(e.value); }
+  var SC = 6, OX = 20, OY = 300;
+  function P(x, y) { return [OX + x * SC, OY - y * SC]; }
+  function pth(f, tmax, n) {
+    var d = '';
+    for (var i = 0; i <= n; i++) { var p = P(f(Math.PI / 2 * (i / n) * (tmax / (Math.PI / 2)))[0], f(Math.PI / 2 * (i / n) * (tmax / (Math.PI / 2)))[1]); d += (i ? ' L ' : 'M ') + p[0].toFixed(2) + ',' + p[1].toFixed(2); }
+    return d;
+  }
+  function patchAt(n, R, rad) {
+    var m = 2 / n;
+    return function (t) {
+      var c = Math.max(0, Math.cos(t)), s = Math.max(0, Math.sin(t));
+      return [R - rad * Math.pow(c, m), R - rad * Math.pow(s, m)];
+    };
+  }
+  function normalOffset(base, R, d, sign) {
+    return function (t) {
+      var h = 1e-6, p = base(t), a = base(t - h), b = base(t + h);
+      var tx = (b[0] - a[0]) / (2 * h), ty = (b[1] - a[1]) / (2 * h);
+      var L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L;
+      var nx = -ty, ny = tx;
+      if ((p[0] - R) * nx + (p[1] - R) * ny < 0) { nx = -nx; ny = -ny; }
+      return [p[0] + sign * d * nx, p[1] + sign * d * ny];
+    };
+  }
+  function radialAt(f, phi) {
+    var lo = 0, hi = Math.PI / 2;
+    for (var i = 0; i < 60; i++) { var mid = (lo + hi) / 2, p = f(mid); if (Math.atan2(-p[1], -p[0]) < phi) lo = mid; else hi = mid; }
+    var p = f((lo + hi) / 2); return Math.hypot(p[0], p[1]);
+  }
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  function devOf(n, R, p, rin) {   // 天真 rin 与真等距线的最大偏差
+    if (rin <= 0) return null;
+    var tru = normalOffset(patchAt(n, R, R), R, p, -1);
+    var naiv = patchAt(n, R, rin);
+    var sh = function (t) { var q = naiv(t); return [q[0] - R, q[1] - R]; };
+    var worst = 0, sum = 0, cnt = 0;
+    for (var t = 1e-3; t <= Math.PI / 2 - 1e-3; t += 5e-3) {
+      var q = tru(t), v = [q[0] - R, q[1] - R];
+      var phi = Math.atan2(-v[1], -v[0]);
+      var g = Math.abs(Math.hypot(v[0], v[1]) - radialAt(sh, phi));
+      worst = Math.max(worst, g); sum += g * g; cnt++;
+    }
+    return { worst: worst, rms: Math.sqrt(sum / cnt) };
+  }
+  function render() {
+    var R = val('R'), p = val('p'), n = val('nn');
+    document.getElementById('Rv').textContent = R; document.getElementById('pv').textContent = p; document.getElementById('nnv').textContent = n;
+
+    var geo = R - p, prop = R / 2, floor = Math.max(R - p, 6);
+    var tru = normalOffset(patchAt(n, R, R), R, p, -1);
+    var out = [];
+    out.push('<line ' + seg(P(R, R + 30), P(R, R - 2)) + ' stroke="#999"/>');
+    out.push('<line ' + seg(P(R + 30, R), P(R - 2, R)) + ' stroke="#999"/>');
+    out.push('<path d="' + pth(patchAt(n, R, R), Math.PI / 2, 90) + '" fill="none" stroke="#1c1f24" stroke-width="2"/>');
+    out.push('<path d="' + pth(tru, Math.PI / 2, 90) + '" fill="none" stroke="#0b6fb3" stroke-width="2"/>');
+    if (val('band') && geo > 0) {
+      var fwd = pth(tru, Math.PI / 2, 45), back = '';
+      var nv = patchAt(n, R, geo);
+      for (var i = 45; i >= 0; i--) { var q = nv(Math.PI / 2 * i / 45), s = P(q[0], q[1]); back += ' L ' + s[0].toFixed(2) + ',' + s[1].toFixed(2); }
+      out.push('<path d="' + fwd + back + ' Z" fill="rgba(180,35,44,.16)" stroke="none"/>');
+      out.push('<path d="' + pth(nv, Math.PI / 2, 90) + '" fill="none" stroke="#b4232c" stroke-width="2" stroke-dasharray="5 4"/>');
+    }
+    document.getElementById('scene').innerHTML = out.join('');
+
+    function seg(a, b) { return 'x1="' + a[0].toFixed(2) + '" y1="' + a[1].toFixed(2) + '" x2="' + b[0].toFixed(2) + '" y2="' + b[1].toFixed(2) + '"'; }
+
+    // κ 内外比（圆弧口径下 1/r 直接可比）
+    var kout = 1 / R, kin = geo > 0 ? 1 / geo : Infinity;
+    var dGeo = devOf(n, R, p, geo), dProp = devOf(n, R, p, prop), dFlo = devOf(n, R, p, floor);
+    // 内偏移自交上限
+    var kmax = 0, base = patchAt(n, R, R);
+    for (var t = 1e-3; t <= Math.PI / 2 - 1e-3; t += 2e-4) kmax = Math.max(kmax, kappa(base, t, 1e-5));
+    var safe = 1 / kmax;
+
+    function row(label, rin, d) {
+      if (rin <= 0) return '<tr><td>' + label + '</td><td>' + rin.toFixed(2) + '</td><td colspan="2">内角被吃光（r≤0 ⇒ 直角或被 f 缩放）</td></tr>';
+      if (!d) return '';
+      var okFlag = d.worst <= 0.5;
+      return '<tr><td>' + label + '</td><td>' + rin.toFixed(2) + '</td><td>' + d.worst.toFixed(3) + ' / ' + d.rms.toFixed(3) + '</td>' +
+        '<td class="' + (okFlag ? 'ok' : 'bad') + '">' + (okFlag ? '间距匀（≤0.5px）' : '间距不匀') + '</td></tr>';
+    }
+    document.getElementById('rep').innerHTML =
+      '<table><tr><th>规则</th><th>r_in</th><th>与真等距线偏差 最大/RMS (px)</th><th>判定</th></tr>' +
+      row('几何差 R−p', geo, dGeo) + row('比例 R/2', prop, dProp) + row('保底 max(R−p,6)', floor, dFlo) +
+      '</table><p class="note">' +
+      'κ 内外比（圆弧口径）= ' + (kin / kout).toFixed(3) + '×，即内角看着比外角尖这么多——这是"同心圆角"看着舒服的真正原因，和半径数字无关。<br>' +
+      '内缩自交上限 1/κ峰值 = <b>' + safe.toFixed(2) + 'px</b>；当前 p=' + p + ' ⇒ ' + (p >= safe ? '<b class="bad">越界，内轮廓会翻折</b>' : '<b class="ok">安全</b>') + '。<br>' +
+      '<b>n=2 是这张表的对照组</b>：把 n 拖到 2，"几何差 R−p"那一行的偏差必须变成 0.000 —— 圆弧上这条规则是<b>精确</b>的。</p>';
+
+    // 真实 CSS 三层
+    var sup = CSS.supports('corner-shape', 'squircle');
+    var html = '';
+    [['几何差 R−p', geo], ['比例 R/2', prop], ['保底 max(R−p,6)', floor]].forEach(function (cfg) {
+      var size = 2 * R + 2 * p + 90;
+      var cs = n > 2.0001 && sup ? 'corner-shape:superellipse(' + Math.log2(n).toFixed(3) + ');' : '';
+      html += '<div class="cell"><div class="outer" style="width:' + size + 'px;height:' + size + 'px;border-radius:' + R + 'px;' + cs + '">' +
+        '<div class="inner" style="width:' + (size - 2 * p) + 'px;height:' + (size - 2 * p) + 'px;border-radius:' + Math.max(cfg[1], 0) + 'px;' + cs + '">内角 ' + cfg[1].toFixed(0) + 'px</div></div>' +
+        '<p class="note">' + cfg[0] + '（padding ' + p + 'px）</p></div>';
+    });
+    document.getElementById('cssrow').innerHTML = html + (sup ? '' : '<p class="note bad">本机不支持 corner-shape，下面三只盒子都退成圆弧版</p>');
+  }
+  ['R', 'p', 'nn', 'band'].forEach(function (id) { var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render); });
+  render();
+})();
+</script>
+</body>
+</html>

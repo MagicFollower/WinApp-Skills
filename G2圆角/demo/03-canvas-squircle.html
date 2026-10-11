@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景3 · Canvas 自绘 squircle：采样密度与曲率热区</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,"Courier New",monospace; font-size:12px; }
+  .grid { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  canvas { display:block; background:#fff; border:1px solid var(--line); image-rendering:auto; }
+  label { display:block; margin:6px 0; font-size:13px; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .pass { color:var(--ok); font-weight:700; } .fail { color:var(--bad); font-weight:700; }
+</style>
+</head>
+<body>
+<h1>场景 3 · Canvas 自绘整块 squircle：边长、指数 n、每角样本数</h1>
+<p class="note">整块 squircle 的隐式方程 |x-c|<sup>n</sup> + |y-c|<sup>n</sup> = a<sup>n</sup>（c 是中心，a=边长/2）。第一象限参数化 P(θ)=(a·cos<sup>2/n</sup>θ, a·sin<sup>2/n</sup>θ)。与场景 2 的"角部补丁"全等，只是参照系不同：这里 θ=0 落在边的中点，θ=45° 落在角上。</p>
+
+<div class="grid">
+  <div class="cell">
+    <label>边长 <input id="side" type="range" min="48" max="480" value="320" step="8"><b id="sidev"></b> px</label>
+    <label>指数 n <input id="nn" type="range" min="2" max="10" value="5" step="0.5"><b id="nnv"></b></label>
+    <label>每角样本数 <input id="seg" type="range" min="3" max="60" value="26" step="1"><b id="segv"></b></label>
+    <label><input id="heat" type="checkbox" checked> 曲率热区上色（颜色深浅 = κ）</label>
+    <label><input id="zoom" type="checkbox" checked> 画左上角 8× 放大框</label>
+    <label><input id="arcv" type="checkbox"> 叠一层圆弧版本（arcTo，对照用）</label>
+  </div>
+  <div class="cell"><canvas id="main" width="520" height="520"></canvas></div>
+  <div class="cell"><canvas id="mag" width="220" height="220"></canvas><p class="note">左上角放大：样本不足时角上会出现棱面</p></div>
+</div>
+
+<h2>实测结果</h2>
+<div id="rep"></div>
+
+<script>
+(function () {
+  'use strict';
+  function val(id) { var e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : Number(e.value); }
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  function len(f, t0, t1, n) {
+    var L = 0, dt = (t1 - t0) / n, prev = f(t0);
+    for (var i = 1; i <= n; i++) { var p = f(t0 + i * dt); L += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prev = p; }
+    return L;
+  }
+  // 整块 squircle：返回四个象限弧的统一参数化，θ∈[0,2π)
+  function squircle(a, n) {
+    var m = 2 / n;
+    return function (th) {
+      var c = Math.cos(th), s = Math.sin(th);
+      return [a * Math.sign(c) * Math.pow(Math.abs(c), m), a * Math.sign(s) * Math.pow(Math.abs(s), m)];
+    };
+  }
+  function quad(a, n, k) { // 第 k 象限弧（k=0..3），局部 θ∈[0,π/2]
+    var f = squircle(a, n);
+    return function (t) { return f(Math.PI / 2 * k + t); };
+  }
+  // 折线到密采参照的最大偏离：逐参照点取"到最近线段"距离，再取最大（不能对所有线段取 max，那是在量最远距离）
+  function polyDev(f, segs) {
+    var N = 1500, ref = [], arr = [], worst = 0;
+    for (var i = 0; i <= N; i++) ref.push(f(Math.PI / 2 * i / N));
+    for (var j = 0; j < segs; j++) {
+      var A = f(Math.PI / 2 * j / segs), B = f(Math.PI / 2 * (j + 1) / segs);
+      arr.push([A[0], A[1], B[0] - A[0], B[1] - A[1]]);
+    }
+    for (var k = 0; k < ref.length; k++) {
+      var p = ref[k], dmin = Infinity;
+      for (var q = 0; q < arr.length; q++) {
+        var S = arr[q], L2 = S[2] * S[2] + S[3] * S[3];
+        var t = L2 ? ((p[0] - S[0]) * S[2] + (p[1] - S[1]) * S[3]) / L2 : 0;
+        t = Math.max(0, Math.min(1, t));
+        dmin = Math.min(dmin, Math.hypot(p[0] - (S[0] + t * S[2]), p[1] - (S[1] + t * S[3])));
+      }
+      worst = Math.max(worst, dmin);
+    }
+    return worst;
+  }
+  function heatColor(k, kmax) { // κ 从 0（接缝，蓝）到峰值（角，红）
+    var t = Math.min(1, k / kmax);
+    var hue = 210 - 210 * t;
+    return 'hsl(' + hue.toFixed(0) + ',80%,45%)';
+  }
+
+  function render() {
+    var side = val('side'), n = val('nn'), segs = val('seg');
+    document.getElementById('sidev').textContent = side;
+    document.getElementById('nnv').textContent = n;
+    document.getElementById('segv').textContent = segs;
+    var a = side / 2, cv = document.getElementById('main'), g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.save(); g.translate(cv.width / 2, cv.height / 2); g.scale(0.85, 0.85);
+
+    var f0 = quad(a, n, 0), kpk = 0;
+    for (var t = 1e-3; t <= Math.PI / 2 - 1e-3; t += 1e-3) kpk = Math.max(kpk, kappa(f0, t, 1e-5));
+
+    // 填充主体（用当前样本数的折线，所见即所测）
+    g.beginPath();
+    for (var q = 0; q < 4; q++) {
+      var fq = quad(a, n, q);
+      for (var i = 0; i <= segs; i++) {
+        var p = fq(Math.PI / 2 * i / segs);
+        if (q === 0 && i === 0) g.moveTo(p[0], p[1]); else g.lineTo(p[0], p[1]);
+      }
+    }
+    g.closePath();
+    g.fillStyle = 'rgba(76,139,245,.22)'; g.fill();
+
+    // 边线：热区上色或纯色
+    if (val('heat')) {
+      g.lineWidth = 3;
+      for (var q2 = 0; q2 < 4; q2++) {
+        var fq2 = quad(a, n, q2);
+        for (var i2 = 0; i2 < segs; i2++) {
+          var A = fq2(Math.PI / 2 * i2 / segs), B = fq2(Math.PI / 2 * (i2 + 1) / segs);
+          var tm = Math.PI / 2 * (i2 + 0.5) / segs, kk = kappa(fq2, Math.max(tm, 1e-4), Math.max(tm / 20, 1e-5));
+          g.strokeStyle = heatColor(kk, kpk);
+          g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke();
+        }
+      }
+    } else {
+      g.strokeStyle = '#1c1f24'; g.lineWidth = 2; g.stroke();
+    }
+    if (val('arcv')) {
+      var r = a; // 圆弧版本：半径 = 半个边长（等价 border-radius:50%）
+      g.strokeStyle = '#b4232c'; g.lineWidth = 2; g.setLineDash([6, 4]);
+      g.beginPath();
+      g.moveTo(-a + r, -a); g.lineTo(a - r, -a); g.arc(a - r, -a + r, r, -Math.PI / 2, 0);
+      g.lineTo(a, a - r); g.arc(a - r, a - r, r, 0, Math.PI / 2);
+      g.lineTo(-a + r, a); g.arc(-a + r, a - r, r, Math.PI / 2, Math.PI);
+      g.lineTo(-a, -a + r); g.arc(-a + r, -a + r, r, Math.PI, Math.PI * 1.5);
+      g.stroke(); g.setLineDash([]);
+    }
+    g.restore();
+
+    // 放大框：取左上角（θ=π 象限的局部坐标）
+    var mg = document.getElementById('mag');
+    mg.getContext('2d').clearRect(0, 0, mg.width, mg.height);
+    if (val('zoom')) {
+      var c2 = mg.getContext('2d'), M = 8, fq3 = quad(a, n, 2); // 左上角
+      c2.save(); c2.translate(-(-a + 0) * M + 10, -(-a) * M + 10); c2.scale(M, M);
+      c2.lineWidth = 2 / M;
+      if (val('heat')) {
+        for (var i3 = 0; i3 < segs; i3++) {
+          var A3 = fq3(Math.PI / 2 * i3 / segs), B3 = fq3(Math.PI / 2 * (i3 + 1) / segs);
+          var tm3 = Math.PI / 2 * (i3 + 0.5) / segs, kk3 = kappa(fq3, Math.max(tm3, 1e-4), Math.max(tm3 / 20, 1e-5));
+          c2.strokeStyle = heatColor(kk3, kpk);
+          c2.beginPath(); c2.moveTo(A3[0], A3[1]); c2.lineTo(B3[0], B3[1]); c2.stroke();
+        }
+      } else {
+        c2.beginPath();
+        for (var i4 = 0; i4 <= segs; i4++) { var p4 = fq3(Math.PI / 2 * i4 / segs); if (i4 === 0) c2.moveTo(p4[0], p4[1]); else c2.lineTo(p4[0], p4[1]); }
+        c2.strokeStyle = '#1c1f24'; c2.stroke();
+      }
+      c2.restore();
+      c2.font = '11px system-ui'; c2.fillStyle = '#666';
+      c2.fillText('左上角 ' + M + '×，框宽 ' + (mg.width / M).toFixed(0) + 'px 模型', 6, mg.height - 6);
+    }
+
+    // 报告
+    var dev = polyDev(f0, segs);
+    var Lq = len(f0, 0, Math.PI / 2, 4000), s = Lq / segs;
+    var sag = kpk * s * s / 8;
+    var need = Math.ceil(Lq / Math.sqrt(8 * 0.05 / kpk));
+    var seam = kappa(f0, 1e-3, 1e-5), edgeMid = kappa(f0, 1e-3, 1e-5);
+    var ok = dev <= 0.5 && sag <= 0.5;
+    document.getElementById('rep').innerHTML =
+      '<table><tr><th>项</th><th>值</th><th>说明</th></tr>' +
+      '<tr><td>边中点 κ（θ=1e-3）</td><td>' + seam.toExponential(3) + '</td><td>n&gt;2 时趋于 0 ⇒ 直边与角部接缝是 G2</td></tr>' +
+      '<tr><td>角部峰值 κ（θ=45°）</td><td>' + kappa(f0, Math.PI / 4, 1e-5).toFixed(6) + '</td><td>等效半径 ' + (1 / kappa(f0, Math.PI / 4, 1e-5) / 1).toFixed(2) + 'px = 边长的 ' + ((1 / kappa(f0, Math.PI / 4, 1e-5)) / side * 1).toFixed(4) + '</td></tr>' +
+      '<tr><td>峰值 κ / 边中点 κ</td><td>' + (kpk / Math.max(edgeMid, 1e-15)).toFixed(1) + '×</td><td>动态范围越大，"平直边突然收成一个尖角"的观感越强</td></tr>' +
+      '<tr><td>每角弧长</td><td>' + Lq.toFixed(3) + ' px</td><td>数值积分；同尺寸正圆的四分弧 = πa/2 = ' + (Math.PI * a / 2).toFixed(2) + 'px，超椭圆比它长 ' + ((Lq / (Math.PI * a / 2) - 1) * 100).toFixed(1) + '%（该增量只随 n 变，与边长无关）</td></tr>' +
+      '<tr><td>实测折线最大偏离</td><td>' + dev.toFixed(3) + ' px</td><td>对密采参照（1500 点/角）逐点求距</td></tr>' +
+      '<tr><td>弦高公式预测 κ<sub>max</sub>s²/8</td><td>' + sag.toFixed(3) + ' px</td><td>与实测同量级才可信</td></tr>' +
+      '<tr><td>满足 ε≤0.05px 所需样本数</td><td>' + need + ' /角（四角 ' + need * 4 + '）</td><td>由 s=√(8ε/κ<sub>max</sub>) 反解</td></tr>' +
+      '<tr><td>判定</td><td class="' + (ok ? 'pass' : 'fail') + '">' + (ok ? 'PASS' : 'FAIL') + '</td><td>判据：实测偏离与公式预测都 ≤ 0.5px（半个物理像素）</td></tr>' +
+      '</table><p class="note">把每角样本数往下调，直到出现 FAIL；再对照"所需样本数"那一行——这就是场景 3 的取参方法：先用 κ<sub>max</sub> 估，再用实测兜。</p>';
+  }
+  ['side', 'nn', 'seg', 'heat', 'zoom', 'arcv'].forEach(function (id) {
+    var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

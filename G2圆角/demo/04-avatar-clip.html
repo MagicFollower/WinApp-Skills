@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景4 · 头像 squircle 裁切：三层降级与点数需求</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code { font-family:Consolas,monospace; font-size:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  label { display:block; margin:6px 0; font-size:13px; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .pass { color:var(--ok); font-weight:700; } .fail { color:var(--bad); font-weight:700; }
+  .ava { display:block; }
+  .cap { display:block; margin-top:8px; font-size:12px; opacity:.8; max-width:200px; }
+  .withframe { border:6px solid rgba(255,255,255,.85); box-shadow:0 10px 26px rgba(0,0,0,.35); }
+</style>
+</head>
+<body>
+<h1>场景 4 · 头像/图片的 squircle 裁切：保底层、增强层、以及 clip-path 的点数需求</h1>
+<p class="note">三层对照：① <code>border-radius</code>（圆弧，全端可用）② <code>corner-shape</code>（形状跟边框/阴影一起走，Chrome 系）③ <code>clip-path: polygon()</code> 密采（全端同形，但<b>不带动</b> border 与 box-shadow）。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>边长 S <input id="side" type="range" min="32" max="256" value="96" step="8"><b id="sidev"></b> px</label>
+    <label>指数 n <input id="nn" type="range" min="3" max="8" value="5" step="0.5"><b id="nnv"></b></label>
+    <label>每角样本数 <input id="seg" type="range" min="3" max="40" value="12" step="1"><b id="segv"></b>（四角 <b id="seg4"></b> 段）</label>
+    <label><input id="ovl" type="checkbox"> 叠加"增强层轮廓"到 clip-path 层上（看两层是否同形）</label>
+  </div>
+  <div class="cell"><span class="cap">① 保底：圆弧</span><img class="ava" id="a1" width="96" height="96" alt="圆弧头像"><span class="cap">border-radius:50%</span></div>
+  <div class="cell"><span class="cap">② 增强：squircle</span><img class="ava" id="a2" width="96" height="96" alt="squircle 头像"><span class="cap" id="cap2">corner-shape:squircle</span></div>
+  <div class="cell"><span class="cap">③ 全端兜底：clip-path</span><img class="ava" id="a3" width="96" height="96" alt="clip-path 头像"><span class="cap" id="cap3">clip-path: polygon(...)</span></div>
+</div>
+
+<h2>边框与阴影跟不跟随？（这就是场景 4 与场景 5 的分界线）</h2>
+<div class="row">
+  <div class="cell"><img class="ava withframe" id="b1" width="96" height="96" alt="增强层带边框"><span class="cap">②+边框阴影：corner-shape 会带着 border 与 box-shadow 一起变形【规】</span></div>
+  <div class="cell"><img class="ava withframe" id="b2" width="96" height="96" alt="clip-path 带边框"><span class="cap">③+边框阴影：clip-path 只裁元素自身，border 被裁进内容、box-shadow 直接消失</span></div>
+</div>
+
+<h2>采样需求与实测（应与 demo/曲率校验.mjs 第 9 节对上）</h2>
+<div id="rep"></div>
+
+<script>
+(function () {
+  'use strict';
+  function val(id) { var e = document.getElementById(id); return e.type === 'checkbox' ? e.checked : Number(e.value); }
+  function f6(v) { return v.toFixed(6); }
+  // 整块 squircle 的一个象限弧：a=半轴，θ∈[0,π/2]，θ=0 在边中点
+  function quad(a, n) {
+    var m = 2 / n;
+    return function (t) {
+      var c = Math.max(0, Math.cos(t)), s = Math.max(0, Math.sin(t));   // 钳位，见报告 §3.4 坑 A
+      return [a * Math.pow(c, m), a * Math.pow(s, m)];
+    };
+  }
+  function kappa(f, t, h) {
+    var a = f(t - h), b = f(t), c = f(t + h);
+    var d1x = (c[0] - a[0]) / (2 * h), d1y = (c[1] - a[1]) / (2 * h);
+    var d2x = (c[0] - 2 * b[0] + a[0]) / (h * h), d2y = (c[1] - 2 * b[1] + a[1]) / (h * h);
+    return Math.abs(d1x * d2y - d1y * d2x) / Math.pow(d1x * d1x + d1y * d1y, 1.5);
+  }
+  function len(f, t0, t1, n) {
+    var L = 0, dt = (t1 - t0) / n, prev = f(t0);
+    for (var i = 1; i <= n; i++) { var p = f(t0 + i * dt); L += Math.hypot(p[0] - prev[0], p[1] - prev[1]); prev = p; }
+    return L;
+  }
+  // 正确的测距：逐参照点取"到最近线段"，再对所有点取最大
+  function polyDev(f, segs) {
+    var N = 900, ref = [], arr = [], worst = 0;
+    for (var i = 0; i <= N; i++) ref.push(f(Math.PI / 2 * i / N));
+    for (var j = 0; j < segs; j++) {
+      var A = f(Math.PI / 2 * j / segs), B = f(Math.PI / 2 * (j + 1) / segs);
+      arr.push([A[0], A[1], B[0] - A[0], B[1] - A[1]]);
+    }
+    for (var k = 0; k < ref.length; k++) {
+      var p = ref[k], dmin = Infinity;
+      for (var q = 0; q < arr.length; q++) {
+        var S = arr[q], L2 = S[2] * S[2] + S[3] * S[3];
+        var t = L2 ? ((p[0] - S[0]) * S[2] + (p[1] - S[1]) * S[3]) / L2 : 0;
+        t = Math.max(0, Math.min(1, t));
+        dmin = Math.min(dmin, Math.hypot(p[0] - (S[0] + t * S[2]), p[1] - (S[1] + t * S[3])));
+      }
+      worst = Math.max(worst, dmin);
+    }
+    return worst;
+  }
+  // 用 SVG data URI 造一张"照片"，避免任何外部依赖（file:// 也能跑）
+  function photo(size) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '">' +
+      '<defs><radialGradient id="g" cx="38%" cy="34%" r="72%">' +
+      '<stop offset="0%" stop-color="#ffd27a"/><stop offset="55%" stop-color="#d9663f"/><stop offset="100%" stop-color="#3b2b52"/>' +
+      '</radialGradient></defs><rect width="100%" height="100%" fill="url(#g)"/>' +
+      '<circle cx="50%" cy="46%" r="26%" fill="#fff" opacity="0.16"/>' +
+      Array.from({ length: 9 }, function (_, i) {
+        return '<line x1="' + (i + 1) * size / 10 + '" y1="0" x2="' + (i + 1) * size / 10 + '" y2="' + size + '" stroke="#fff" stroke-opacity="0.14"/>' +
+          '<line x1="0" y1="' + (i + 1) * size / 10 + '" x2="' + size + '" y2="' + (i + 1) * size / 10 + '" stroke="#fff" stroke-opacity="0.14"/>';
+      }).join('') + '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  // 整块 squircle 的 polygon（百分比，与边长无关 ⇒ 同一个 clip-path 可复用）
+  function polygon(a, n, segs) {
+    var pts = [], m = 2 / n;
+    for (var q = 0; q < 4; q++) {
+      for (var i = 0; i < segs; i++) {
+        var t = Math.PI / 2 * q + Math.PI / 2 * i / segs;
+        var c = Math.cos(t), s = Math.sin(t);
+        var x = 50 + 50 * Math.sign(c) * Math.pow(Math.abs(c), m);
+        var y = 50 + 50 * Math.sign(s) * Math.pow(Math.abs(s), m);
+        pts.push(x.toFixed(2) + '% ' + y.toFixed(2) + '%');
+      }
+    }
+    return 'polygon(' + pts.join(', ') + ')';
+  }
+  function render() {
+    var S = val('side'), n = val('nn'), segs = val('seg'), a = S / 2;
+    document.getElementById('sidev').textContent = S;
+    document.getElementById('nnv').textContent = n;
+    document.getElementById('segv').textContent = segs;
+    document.getElementById('seg4').textContent = segs * 4;
+
+    var src = photo(S);
+    ['a1', 'a2', 'a3', 'b1', 'b2'].forEach(function (id) {
+      var e = document.getElementById(id);
+      e.src = src; e.width = S; e.height = S;
+    });
+    var sup = CSS.supports('corner-shape', 'squircle');
+    document.getElementById('a1').style.borderRadius = '50%';
+    document.getElementById('a2').style.borderRadius = '50%';
+    document.getElementById('b1').style.borderRadius = '50%';
+    if (sup) {
+      document.getElementById('a2').style.cornerShape = 'squircle';
+      document.getElementById('b1').style.cornerShape = 'superellipse(' + Math.log2(n).toFixed(3) + ')';
+      document.getElementById('cap2').textContent = 'corner-shape: superellipse(' + Math.log2(n).toFixed(3) + ') → 指数 ' + n;
+    } else {
+      document.getElementById('cap2').textContent = '本机不支持 corner-shape，②退化回圆弧（与①相同）';
+    }
+    var cp = polygon(a, n, segs);
+    document.getElementById('a3').style.clipPath = cp;
+    document.getElementById('b2').style.clipPath = cp;
+    document.getElementById('cap3').textContent = 'clip-path 点数 = ' + (segs * 4) + '，字符串长度 ' + cp.length + ' 字符';
+    document.getElementById('ovl').onchange = function () {
+      document.getElementById('a3').style.outline = this.checked ? '2px solid #b4232c' : 'none';
+    };
+
+    // 模型侧：κ 峰值 → 需求段数 → 实测偏离
+    var q = quad(a, n), kmax = 0, kpkAt = 0;
+    for (var t = 1e-3; t <= Math.PI / 2 - 1e-3; t += 1e-4) {
+      var k = kappa(q, t, 1e-5);
+      if (k > kmax) { kmax = k; kpkAt = t; }
+    }
+    var L = len(q, 0, Math.PI / 2, 20000);
+    var need50 = Math.ceil(L / Math.sqrt(8 * 0.5 / kmax));
+    var need25 = Math.ceil(L / Math.sqrt(8 * 0.25 / kmax));
+    var dev = polyDev(q, segs);
+    var sag = kmax * Math.pow(L / segs, 2) / 8;
+    var okFlag = dev <= 0.5;
+    document.getElementById('rep').innerHTML =
+      '<table><tr><th>项</th><th>值</th><th>备注</th></tr>' +
+      '<tr><td>κ 峰值 / 位置</td><td>' + f6(kmax) + ' @θ=' + (kpkAt * 180 / Math.PI).toFixed(2) + '°</td><td>与数值台同一算法</td></tr>' +
+      '<tr><td>峰值等效半径</td><td>' + (1 / kmax).toFixed(3) + ' px</td><td>= 内描边/内阴影 spread 的安全上限（场景 5/6）</td></tr>' +
+      '<tr><td>每角弧长</td><td>' + L.toFixed(3) + ' px</td><td>—</td></tr>' +
+      '<tr><td>ε≤0.50px 需要</td><td>' + need50 + ' 段/角（四角 ' + need50 * 4 + '）</td><td>√S 律：边长翻 16 倍点数只翻约 4 倍</td></tr>' +
+      '<tr><td>ε≤0.25px 需要</td><td>' + need25 + ' 段/角（四角 ' + need25 * 4 + '）</td><td>同上，更严一档</td></tr>' +
+      '<tr><td>当前 ' + segs + ' 段实测偏离</td><td>' + dev.toFixed(3) + ' px</td><td>逐点取最近线段再取最大</td></tr>' +
+      '<tr><td>弦高公式预测</td><td>' + sag.toFixed(3) + ' px</td><td>保守上界，实测应在其之下</td></tr>' +
+      '<tr><td>判定</td><td class="' + (okFlag ? 'pass' : 'fail') + '">' + (okFlag ? 'PASS' : 'FAIL') + '</td><td>阈值 0.5px = 半个物理像素</td></tr>' +
+      '</table>' +
+      '<p class="note">对照表：<code>曲率校验.mjs</code> 第 9 节给的是 n=4/5、S=32…512 的整数档位（例如 n=5、S=96 ⇒ ε=0.5 时 12 段/角、四角 48）。本页滑到同一组参数应当复现同一行【算】。<br>' +
+      '③ 与 ② 的<b>形状一致性</b>只能靠叠轮廓目视判【渲】：勾上"叠加增强层轮廓"后，clip-path 层的方形 outline 与 ② 的角形不应混为一谈——outline 不跟 corner-shape 之外的裁切方式，这正是 clip-path 做不了"边框/阴影同形"的原因。</p>';
+  }
+  ['side', 'nn', 'seg', 'ovl'].forEach(function (id) {
+    var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

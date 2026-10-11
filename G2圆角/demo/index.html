@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>G2 圆角 demo 索引</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; } }
+  body { margin:0; padding:28px; background:var(--bg); color:var(--ink); font:14px/1.7 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; max-width:900px; }
+  h1 { font-size:22px; margin:0 0 6px; }
+  a { color:#3b74d0; text-decoration:none; } a:hover { text-decoration:underline; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:12px 0; }
+  table { border-collapse:collapse; width:100%; font-size:13px; } th,td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  code { font-family:Consolas,monospace; font-size:12px; }
+  .warn { border-left:3px solid #b4232c; padding-left:10px; }
+</style>
+</head>
+<body>
+<h1>G2 圆角 · 可运行 demo 索引</h1>
+<p>配套文档：<code>../G2圆角设计与分析报告.md</code>。全部页面零依赖，双击即可运行（file:// 下不引模块，脚本内联）。</p>
+
+<div class="card warn">
+  <b>看之前先分清两种证据</b>
+  <table>
+    <tr><th>类型</th><th>来自哪里</th><th>能证明什么</th><th>不能证明什么</th></tr>
+    <tr><td>渲染证据</td><td>浏览器真实绘制（A 组盒子、path、canvas 填充）</td><td>这个浏览器此刻把这个声明画成了什么样</td><td>不能证明别的浏览器一致；不能证明底层是圆弧还是超椭圆</td></tr>
+    <tr><td>模型证据</td><td>页面内 JS / <code>曲率校验.mjs</code> 按公式算</td><td>某种构造的 κ 是否连续、偏差多少 px</td><td>不是从浏览器像素反解的，不能当作实现证明</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3><a href="01-css-corner.html">01 · CSS 圆角：用过值缩放与 corner-shape</a></h3>
+  场景 1。看三件事：corner-shape 支持检测是否通过；<code>border-radius</code> 写过短边时虚线圆贴合判据；κ(s) 曲线里圆弧的"起跳"与超椭圆的"从 0 爬升"。
+</div>
+<div class="card">
+  <h3><a href="02-svg-path.html">02 · SVG：A 弧 / 平端三次贝塞尔 / 超椭圆折线</a></h3>
+  场景 2。三条曲线叠在同一角部，拖 r 与 n 看贴合度；下方表给出接缝侧 κ、1/κ、贝塞尔对超椭圆的最大射线偏差。
+</div>
+<div class="card">
+  <h3><a href="03-canvas-squircle.html">03 · Canvas 自绘整块 squircle</a></h3>
+  场景 3。曲率热区上色 + 8× 放大框；把每角样本数调小直到 PASS 变 FAIL，读出所需样本数。
+</div>
+<div class="card">
+  <h3><a href="04-avatar-clip.html">04 · 头像/图片的 squircle 裁切</a></h3>
+  场景 4。三层策略并排（圆弧保底 / corner-shape 增强 / clip-path 兜底），第二排专门演示 <code>clip-path</code> 不带动 border 与 box-shadow；点数与 PASS/FAIL 与 <code>曲率校验.mjs</code> 第 9 节同参数。
+</div>
+<div class="card">
+  <h3><a href="05-stroke-offset.html">05 · 描边与内边界：真法向偏移</a></h3>
+  场景 5。三条线叠画（外边界 / 真内边界 / "半径减边框宽"的天真写法）+ 偏差带填充。<b>先做对照组</b>：把 n 拖到 2，偏差行必须变成 0.000；再把 w 拖过 1/κ峰值 看等距线自交。
+</div>
+<div class="card">
+  <h3><a href="06-shadow-blur.html">06 · 大模糊阴影与外偏移</a></h3>
+  场景 6。外偏移线族 + Δκ–d 对数图：圆弧的接缝跳变被稀释成 1/(R+d) 但恒不为 0，G2 形状在同样偏移下保持 κ≈0。下半页是真实 <code>box-shadow</code> 与 inset 自交演示。
+</div>
+<div class="card">
+  <h3><a href="07-nested-corners.html">07 · 嵌套圆角：内层半径三条规则</a></h3>
+  场景 7。同一张表里比 <code>R−p</code> / <code>R/2</code> / <code>max(R−p,6)</code> 各自与真等距线的偏差。<b>先做对照组</b>：n 拖到 2，几何差那一行必须变成 0.000。
+</div>
+<div class="card">
+  <h3><a href="08-segmented-morph.html">08 · 滑动指示器：突变与掉档分开治</a></h3>
+  场景 8。四策略逐帧动画 + κ–w 曲线，图上标出两处咬合线（<code>w=2r</code> 与 <code>w=h</code>）；表里给每帧最大 |Δκ| 与全程最小 J1 比值。序列里故意放了一个 20px 的窄 tab。
+</div>
+<div class="card">
+  <h3><a href="09-square-circle-anim.html">09 · 方↔圆过渡：不对称比才是抖源</a></h3>
+  场景 9。五帧胶片对比 <code>50%</code> 与 <code>40px</code> 两种末帧写法；右图是两条接缝 κ 随 t 的曲线——实测单调，所以"曲率过冲"这个解释是错的。
+</div>
+<div class="card">
+  <h3><a href="10-responsive-scale.html">10 · 响应式圆角：定值 / 比例 / clamp 守的是不同量</a></h3>
+  场景 10。κ–S 对数图上四条策略分开走：定值的 κ 不随尺寸变但 <code>r/S</code> 掉 10 倍，比例的 <code>r/S</code> 恒定但小尺寸上角被推平，clamp 是分段的。S=96 恰好是交叉点，先在那一档确认四者数字相同，再拖滑块看差别。
+</div>
+<div class="card">
+  <h3><a href="11-tokens-matrix.html">11 · 组件库令牌：半径档 × 角形档 = 闸门矩阵</a></h3>
+  场景 11。上半是可抄的两套令牌 CSS；中间是矩阵本体（<code>1/κ峰值</code> 就是该档位最大可用 border），xs 那格配 3px 描边会直接报"会自交"；下方是本机 <code>CSS.supports</code> 探测表——<b>UA 一变就得重跑</b>。
+</div>
+<div class="card">
+  <h3><a href="12-curvature-lab.html">12 · 曲率实验室：从像素反解 κ，出回归报表</a></h3>
+  场景 12。本文唯一的独立真值路径。先跑 flat 对照拿<b>噪声地板</b>（实测 <code>1.100e-3</code>），再测圆弧（应 ≈ 1/r）与两种 G2 形状；末表是 J1–J4 回归。<b>读法要看页面顶部的三条陷阱</b>：画布尺寸必须容得下 R，θ 网格不能均匀，完全水平的线量不出地板。
+</div>
+<div class="card">
+  <h3>数值台：<code>node demo/曲率校验.mjs</code></h3>
+  报告正文所有表格的出处，共 14 节：台架自校验、圆弧接缝、超椭圆 κ 剖面与 s^(n-2) 律、平端贝塞尔两法交叉验证、采样密度、椭圆角部不对称、f 缩放、内外嵌套角、整块 squircle、裁切点数矩阵、法向与外偏移、动画插值四处、响应式四策略与 c(n)、档位×形状闸门表。
+</div>
+<p class="note" style="opacity:.75">四批已全部落地：场景 1–12 对应页面 01–12，第 6 章 FAQ 10 条在报告末尾（每条指回一个判据编号 J1–J4）。</p>
+</body>
+</html>

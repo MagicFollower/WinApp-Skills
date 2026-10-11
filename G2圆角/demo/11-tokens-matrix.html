@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场景11 · 组件库落地：半径令牌 × 角形令牌 × 降级矩阵</title>
+<style>
+  :root { color-scheme: light dark; --ink:#1c1f24; --bg:#f6f7f9; --card:#fff; --line:#d5d9e0; --ok:#14663d; --bad:#b4232c; }
+  @media (prefers-color-scheme: dark){ :root { --ink:#e6e8ec; --bg:#16181c; --card:#1f2228; --line:#3a4048; --ok:#67d3a3; --bad:#ff8f8f; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink); font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:24px 0 10px; border-left:3px solid var(--ink); padding-left:8px; }
+  p.note { margin:4px 0 12px; opacity:.8; } code, pre { font-family:Consolas,monospace; font-size:12px; }
+  pre { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px; overflow:auto; }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  table { border-collapse:collapse; font-size:12px; } th,td { border:1px solid var(--line); padding:4px 8px; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  label { font-size:13px; } select, input[type=number] { font:inherit; }
+  .anc { width:200px; height:120px; border-radius:28px; overflow:hidden; background:#cfd6e0; }
+  .kid { width:200px; height:200px; background:linear-gradient(135deg,#4c8bf5,#7ad0c2); }
+</style>
+</head>
+<body>
+<h1>场景 11 · 组件库：半径与角形是两套令牌，且不是独立的</h1>
+<p class="note">核心约束：一个 radius 档位能配的 <code>border-width</code> / <code>inset spread</code> / <code>outline-offset</code> 上限 = <code>1/κ峰值 = c(n)·r</code>，c 实测为 n=2→1.0000、n=3→0.5612、n=4→0.3964、n=5→0.3078、n=6→0.2520（数值台第 13 节，尺度无关）。</p>
+
+<div class="row">
+  <div class="cell">
+    <label>角形档位 n <input id="nn" type="range" min="2" max="6" value="5" step="0.5"><b id="nnv"></b></label>
+    <label>组件最小短边（校验 f 用） <input id="short" type="number" value="32" step="4" style="width:80px"> px</label>
+    <label>全局 border-width <input id="bw" type="number" value="3" step="1" style="width:80px"> px</label>
+    <div id="matrix"></div>
+  </div>
+  <div class="cell" style="max-width:560px">
+    <h3 style="margin:0 0 6px;font-size:14px">生成的令牌与分层（可直接抄）</h3>
+    <pre id="css"></pre>
+  </div>
+</div>
+
+<h2>能力探测（这台浏览器上逐项测，别信二手表）</h2>
+<div id="probe"></div>
+
+<h2>祖先裁切：一个必须写进规范的失效模式</h2>
+<div class="row">
+  <div class="cell">
+    <div class="anc"><div class="kid" id="kid1"></div></div>
+    <p class="note">父 <code>border-radius:28px; overflow:hidden</code> + 子只写 <code>border-radius</code>：子的角被父的圆弧<b>削平</b>，G2 形状在交界处丢失。</p>
+  </div>
+  <div class="cell">
+    <div class="anc" style="border-radius:0;overflow:visible"><div class="kid" id="kid2"></div></div>
+    <p class="note">父不做圆弧裁切，子自己裁自己的角形：<b>角形保住</b>。规范口径：谁负责角形，就不要让上一层用另一种角形去裁它。</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var TOKENS = [['xs', 4], ['sm', 8], ['md', 12], ['lg', 16], ['xl', 20], ['2xl', 24], ['3xl', 32]];
+  function coef(n) {
+    var tab = [[2, 1.0], [3, 0.5612], [4, 0.3964], [5, 0.3078], [6, 0.252]];
+    for (var i = 0; i < tab.length - 1; i++) {
+      if (n <= tab[i + 1][0]) { var a = tab[i], b = tab[i + 1]; return a[1] + (b[1] - a[1]) * (n - a[0]) / (b[0] - a[0]); }
+    }
+    return tab[tab.length - 1][1];
+  }
+  function render() {
+    var n = Number(document.getElementById('nn').value),
+        shortSide = Number(document.getElementById('short').value),
+        bw = Number(document.getElementById('bw').value);
+    document.getElementById('nnv').textContent = n + (n === 2 ? '（圆弧）' : n === 4 ? '（= corner-shape: squircle）' : '');
+    var c = coef(n), v = Math.log2(n).toFixed(3);
+
+    var html = '<table><tr><th>档位</th><th>--radius</th><th>f 咬住?<br>(短边 ' + shortSide + ')</th><th>用过 r</th><th>描边上限<br>(n=' + n + ')</th><th>配 ' + bw + 'px</th><th>κ</th></tr>';
+    TOKENS.forEach(function (t) {
+      var f = Math.min(1, shortSide / (2 * t[1])), used = t[1] * f, max = used * c;
+      html += '<tr><td>' + t[0] + '</td><td>' + t[1] + 'px</td>' +
+        '<td class="' + (f < 1 ? 'bad' : 'ok') + '">' + (f < 1 ? '会（f=' + f.toFixed(3) + '）' : '不会') + '</td>' +
+        '<td>' + used.toFixed(2) + '</td><td>' + max.toFixed(2) + 'px</td>' +
+        '<td class="' + (bw <= max ? 'ok' : 'bad') + '">' + (bw <= max ? '放得下' : '会自交') + '</td>' +
+        '<td>' + (1 / used).toFixed(6) + '</td></tr>';
+    });
+    document.getElementById('matrix').innerHTML = html + '</table><p class="note">读法：档位越小、形状越方，<b>两个约束同时收紧</b>——小档位被 f 咬（用过值比字面值小），方形状把描边上限压到 0.31·r。所以 "3px 全局描边 + r=8 档位 + squircle" 是典型的不合法组合。</p>';
+
+    document.getElementById('css').textContent =
+      ':root {\n' +
+      '  /* 两套独立令牌：大小 与 形状 */\n' +
+      TOKENS.map(function (t) { return '  --radius-' + t[0] + ': ' + t[1] + 'px;   /* 描边上限 ' + (t[1] * c).toFixed(1) + 'px @n=' + n + ' */'; }).join('\n') + '\n' +
+      '  --corner-shape: superellipse(' + v + ');   /* 指数 p = 2^v = ' + n + ' */\n' +
+      '  --border-w: ' + bw + 'px;\n' +
+      '}\n\n' +
+      '@layer presentation {            /* 保底：全端都是圆弧，但已经有角 */\n' +
+      '  .card { border-radius: var(--radius-lg); border: var(--border-w) solid var(--line); }\n' +
+      '}\n' +
+      '@layer enhancement {             /* 增强：只改形状，不改大小 */\n' +
+      '  @supports (corner-shape: squircle) {\n' +
+      '    .card { corner-shape: var(--corner-shape); }\n' +
+      '  }\n' +
+      '}\n\n' +
+      '/* 评审硬规则（可写进 lint）：\n' +
+      '   border-width / inset spread / outline-offset  ≤  0.31 × 该档用过值（n=5 时）\n' +
+      '   角形只在一层负责：祖先不要同时用 border-radius + overflow:hidden 裁子元素 */';
+
+    var probes = [
+      ['corner-shape: squircle', 'corner-shape', 'squircle'],
+      ['corner-shape: superellipse(2.322)', 'corner-shape', 'superellipse(2.322)'],
+      ['border-shape: round', 'border-shape', 'round'],
+      ['clip-path: shape()', 'clip-path', 'shape(rect(0% 100% 100% 0% round 20%))'],
+      ['clip-path: path()', 'clip-path', 'path("M 0,24 C 0,0 0,0 24,0")'],
+      ['paint-order', 'paint-order', 'stroke'],
+      ['transition: corner-shape', 'transition-property', 'corner-shape']
+    ];
+    var ph = '<table><tr><th>能力</th><th>本机 CSS.supports</th><th>含义</th></tr>';
+    probes.forEach(function (p) {
+      var okFlag = !!(window.CSS && CSS.supports && CSS.supports(p[1], p[2]));
+      var meaning = p[0].indexOf('border-shape') === 0 ? '草案阶段，勿依赖；与 corner-shape 互斥'
+        : p[0].indexOf('shape()') > 0 ? '不可用就只能退回 polygon()/path()'
+        : p[0].indexOf('path()') > 0 ? '可用则能用真曲线裁切（注意 path 用用户单位，不随尺寸缩放）'
+        : p[0].indexOf('paint-order') === 0 ? '可控制描边/填充次序，SVG 自绘描边时用'
+        : p[0].indexOf('corner-shape') === 0 ? '增强层可用' : '动画可用';
+      ph += '<tr><td><code>' + p[0] + '</code></td><td class="' + (okFlag ? 'ok' : 'bad') + '">' + (okFlag ? 'true' : 'false') + '</td><td>' + meaning + '</td></tr>';
+    });
+    document.getElementById('probe').innerHTML = ph + '</table><p class="note">UA：<code>' + navigator.userAgent.slice(0, 70) + '…</code>　这张表只描述<b>你这台</b>浏览器；换引擎必须重跑，不要引用文章里的版本号。</p>';
+
+    var cs = 'corner-shape';
+    ['kid1', 'kid2'].forEach(function (id) {
+      var e = document.getElementById(id);
+      e.style.borderRadius = '28px';
+      if (CSS.supports(cs, 'squircle')) e.style.cornerShape = 'squircle';
+    });
+  }
+  ['nn', 'short', 'bw'].forEach(function (id) {
+    var e = document.getElementById(id); e.addEventListener('input', render); e.addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>
