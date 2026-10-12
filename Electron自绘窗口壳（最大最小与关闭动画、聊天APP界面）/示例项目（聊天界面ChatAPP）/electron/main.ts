@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeImage, nativeTheme, screen } from 'electron';
+import { app, BrowserWindow, clipboard, ipcMain, nativeImage, nativeTheme, screen, session } from 'electron';
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -488,7 +488,7 @@ async function runWinMenuProbe(win: BrowserWindow): Promise<void> {
     return {
       winW: +w.width.toFixed(1), chatW: +ca.width.toFixed(1),
       pillActionsGap: +(acts.left - pill.right).toFixed(1),
-      inputW: +R('.composer-input input').width.toFixed(1),
+      inputW: +R('.draft-box').width.toFixed(1),
       innerW: window.innerWidth,
       heights: { side: +sb.height.toFixed(1), chat: +ca.height.toFixed(1), right: +rp.height.toFixed(1) },
       topInsets: { side: +(sb.top - w.top).toFixed(1), chat: +(ca.top - w.top).toFixed(1), right: +(rp.top - w.top).toFixed(1) }
@@ -633,9 +633,9 @@ const PHRASE_STATE = `(() => {
     // 上限到底解析成多少、以及是谁在限它:cqh 没有尺寸容器时会退成 none
     cap: (() => { const cs = getComputedStyle(document.querySelector('.phrase-section')); return { maxHeight: cs.maxHeight, flex: cs.flex, h: Math.round(document.querySelector('.phrase-section').getBoundingClientRect().height) }; })(),
     chipsScroll: chips ? { client: chips.clientHeight, content: chips.scrollHeight } : null,
-    draft: document.querySelector('.composer-input input').value,
+    draft: document.querySelector('.draft-box').textContent,
     msgs: document.querySelectorAll('.msg-row').length,
-    // 纯数字会被判成 bigemoji(渲染成 .bigemoji 而不是 .text),所以量整行
+    // 量整行而不是内层:气泡里可能是 .text,也可能是种子那种 .bigemoji,读数不该跟着类名跑
     lastMsg: document.querySelector('.msg-row:last-child')?.textContent ?? null,
     gridH: Math.round(document.querySelector('.emoji-grid').getBoundingClientRect().height),
     editing: !!edit,
@@ -1028,7 +1028,7 @@ const COLS_STATE = `(() => {
       return g ? f(g.scrollWidth - g.clientWidth) : null;
     })(),
     composerClip: (() => { const c = document.querySelector('.composer-wrap'); return f(c.scrollWidth - c.clientWidth); })(),
-    inputW: (() => { const i = document.querySelector('.composer-input input'); return f(i.getBoundingClientRect().width); })(),
+    inputW: (() => { const i = document.querySelector('.draft-box'); return f(i.getBoundingClientRect().width); })(),
     msgClip: (() => { const l = document.querySelector('.message-list'); return f(l.scrollWidth - l.clientWidth); })()
   };
 })()`;
@@ -1075,8 +1075,137 @@ async function runColsProbe(win: BrowserWindow): Promise<void> {
  */
 const DRAG = process.argv.includes('--drag');
 const MINANIM = process.argv.includes('--minanim');
+const COPY = process.argv.includes('--copy');
 // 对照腿:同一进程、同一 Electron,只换窗口样式,用来定位"最小化没有 shell 动画"到底卡在哪一条样式上
 const PLAIN = process.argv.includes('--plain');
+
+/**
+ * 「面板格子里的表情能不能用真鼠标框住、复制出码字」这一挡。
+ * 页面侧能量的都量过了(程序化选区 + 真 Ctrl+C 都拿到了码字),但那条路绕开了 user-select:
+ * setBaseAndExtent 不受它约束,真实指针才受。上一轮就是靠程序化选区的 toString() 判绿,
+ * 用户一句话就推翻 —— 所以这里只认 sendInputEvent 的按下→拖动→抬起。
+ * 四腿读数:
+ * ① 拖选后 getSelection() 是那颗码位 ⇒ 格子真能框住
+ * ② 拖选后草稿不变 ⇒ 选字那一枪没被当成"点格子入框"(捕获层的 click 吞掉了)
+ * ③ Ctrl+C 后主进程读回的剪贴板(先写哨兵,读回不是哨兵才证明是这次复制写的)
+ * ④ 短按同一格仍入框 ⇒ ②的对照,防那个吞掉把正常点击一起吞了
+ */
+const GLYPH_BOX = (sel: string) => `(() => {
+  const el = document.querySelector('${sel}');
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return {
+    txt: el.textContent,
+    box: [Math.round(r.width * 10) / 10, Math.round(r.height * 10) / 10],
+    x0: Math.round(r.left + 2), x1: Math.round(r.right - 2), y: Math.round(r.top + r.height / 2),
+    sel: getComputedStyle(el).userSelect
+  };
+})()`;
+
+const COPY_STATE = `(() => {
+  const s = getSelection();
+  return {
+    str: s ? s.toString() : null,
+    collapsed: s ? s.isCollapsed : null,
+    draft: document.querySelector('.draft-box').textContent,
+    msgs: document.querySelectorAll('.msg-row').length
+  };
+})()`;
+
+async function runCopyProbe(win: BrowserWindow): Promise<void> {
+  const wc = win.webContents;
+  const out: Record<string, unknown> = {};
+  const SENTINEL = 'CLIP-SENTINEL-UNCHANGED';
+  const state = () =>
+    wc.executeJavaScript(COPY_STATE) as Promise<{ str: string | null; collapsed: boolean | null; draft: string; msgs: number }>;
+
+  const dragAcross = async (sel: string) => {
+    const g = (await wc.executeJavaScript(GLYPH_BOX(sel))) as
+      | { txt: string; box: number[]; x0: number; x1: number; y: number; sel: string }
+      | null;
+    if (!g) return { missing: sel };
+    wc.sendInputEvent({ type: 'mouseMove', x: g.x0, y: g.y });
+    wc.sendInputEvent({ type: 'mouseDown', x: g.x0, y: g.y, button: 'left', clickCount: 1 });
+    for (let i = 1; i <= 5; i++) {
+      wc.sendInputEvent({ type: 'mouseMove', x: Math.round(g.x0 + ((g.x1 - g.x0) * i) / 5), y: g.y });
+      await sleep(16);
+    }
+    wc.sendInputEvent({ type: 'mouseUp', x: g.x1, y: g.y, button: 'left', clickCount: 1 });
+    await sleep(140);
+    return g;
+  };
+
+  /** Ctrl+C 两种发法都试:读回还是哨兵只能说明"这一挡没量到",不能报成"复制失败"。
+   *  Electron 44 的 clipboard.readText/writeText 是异步的,少 await 就是拿 Promise 跟字符串比。 */
+  const realCopy = async () => {
+    await clipboard.writeText(SENTINEL);
+    wc.sendInputEvent({ type: 'keyDown', keyCode: 'C', modifiers: ['control'] });
+    wc.sendInputEvent({ type: 'keyUp', keyCode: 'C', modifiers: ['control'] });
+    await sleep(160);
+    const viaKeyDown = await clipboard.readText();
+    if (viaKeyDown !== SENTINEL) return { viaKeyDown };
+    wc.sendInputEvent({ type: 'rawKeyDown', keyCode: 'C', modifiers: ['control'] });
+    wc.sendInputEvent({ type: 'char', keyCode: 'c', modifiers: ['control'] });
+    wc.sendInputEvent({ type: 'keyUp', keyCode: 'C', modifiers: ['control'] });
+    await sleep(160);
+    return { viaKeyDown, viaRawChar: await clipboard.readText() };
+  };
+
+  const tap = async (sel: string, ms: number) => {
+    const c = (await wc.executeJavaScript(CENTER(sel))) as { x: number; y: number; hit: string };
+    wc.sendInputEvent({ type: 'mouseMove', x: c.x, y: c.y });
+    wc.sendInputEvent({ type: 'mouseDown', x: c.x, y: c.y, button: 'left', clickCount: 1 });
+    await sleep(ms);
+    wc.sendInputEvent({ type: 'mouseUp', x: c.x, y: c.y, button: 'left', clickCount: 1 });
+    await sleep(140);
+    return c;
+  };
+
+  /* 在 document 捕获层记每一次打在格子上的 click:这一层在 React 根容器之前,所以
+     "Chrome 到底派发了 click 没有"和"我们的 guard 有没有把它吞掉"是两个分开的读数。
+     少了这一格,拖选后草稿不变只能证明"没插入",证不了"不吞就会插入"。 */
+  await wc.executeJavaScript(`(() => {
+    window.__cellClicks = [];
+    document.addEventListener('click', (e) => {
+      const c = e.target.closest && e.target.closest('.emoji-cell, [data-epr-part="emoji"]');
+      if (!c) return;
+      const s = getSelection();
+      window.__cellClicks.push({ txt: c.textContent, inCell: !!s && !s.isCollapsed && c.contains(s.anchorNode) && c.contains(s.focusNode) });
+    }, true);
+    return 1;
+  })()`);
+  const clicks = () => wc.executeJavaScript(`window.__cellClicks`) as Promise<{ txt: string; inCell: boolean }[]>;
+
+  out.tab = await wc.executeJavaScript(`document.querySelector('.panel-tab.active')?.textContent ?? null`);
+
+  out.bigDrag = await dragAcross('.emoji-cell .ep-glyph');
+  out.bigAfterDrag = await state();
+  out.bigClip = await realCopy();
+  out.bigDragClicks = await clicks();
+
+  // ④ 对照腿分两枪:4a 先清掉选区再短按同一格(应当入框);4b 按另一格(选区不在它里面)
+  await wc.executeJavaScript(`getSelection().removeAllRanges()`);
+  const draftBeforeTap = (out.bigAfterDrag as { draft: string }).draft;
+  out.tapClean = await tap('.emoji-cell', 60);
+  out.afterTapClean = await state();
+  out.tapCleanInserted = (out.afterTapClean as { draft: string }).draft !== draftBeforeTap;
+
+  out.tapOther = await tap('.emoji-cell:nth-child(3)', 60);
+  out.afterTapOther = await state();
+  out.tapOtherInserted = (out.afterTapOther as { draft: string }).draft !== (out.afterTapClean as { draft: string }).draft;
+  out.allClicks = await clicks();
+
+  // 表情 tab(picker 自绘的 button)跑同一条选区+剪贴板腿
+  await wc.executeJavaScript(
+    `(() => { const t = [...document.querySelectorAll('.panel-tab')].find((x) => x.textContent === '表情'); t.click(); return t ? 1 : 0; })()`);
+  await sleep(500);
+  out.pickerDrag = await dragAcross('.epr-emoji .ep-glyph');
+  out.pickerAfterDrag = await state();
+  out.pickerClip = await realCopy();
+  out.pickerDragClicks = await clicks();
+
+  console.log('copy ' + JSON.stringify(out));
+}
 
 const DRAG_FN = `(() => {
   window.__bandPoint = (sel) => {
@@ -1501,6 +1630,13 @@ function createWindow(): BrowserWindow {
           .finally(() => app.quit());
       }, 1500);
     }
+    if (COPY) {
+      setTimeout(() => {
+        void runCopyProbe(win)
+          .catch((err: unknown) => console.log('copy-failed ' + String(err)))
+          .finally(() => app.quit());
+      }, 1500);
+    }
     if (MINANIM) {
       setTimeout(() => {
         void runMinAnimProbe(win)
@@ -1583,10 +1719,110 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
-ipcMain.handle('app:ping', () => {
+/* ===== 零网络判据（离线 emoji-picker 的验收，来自 offline-emoji-picker skill Step 5）=====
+   三条设计各防一种假绿：
+   · 同一条钩子也数 file:// —— 钩子没挂上时 remote 同样是 0，本地计数 >0 才证明它在收事件；
+   · 远程请求 cancel:true —— 只观测不阻断的话，CDN 真被请求到页面照样显示，判据就成了事后诸葛；
+   · --netprobe 反向对照 —— 主动打一次库里那条 CDN 地址，看钩子接不接得住。
+   只在 file:// 交付路径上装：开发模式走 http://localhost，会被这道钩子拦死。 */
+const NETPROBE = process.argv.includes('--netprobe');
+const remoteRequests: string[] = [];
+const localFiles = new Map<string, number>();
+
+function installNetworkGuard(): void {
+  session.defaultSession.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
+    const scheme = details.url.slice(0, details.url.indexOf(':')).toLowerCase();
+    if (scheme === 'file' || scheme === 'data' || scheme === 'blob') {
+      if (scheme === 'file') {
+        const name = decodeURIComponent(details.url.split('/').pop()!.split('?')[0]);
+        localFiles.set(name, (localFiles.get(name) || 0) + 1);
+      }
+      callback({});
+      return;
+    }
+    remoteRequests.push(details.url);
+    callback({ cancel: true });
+  });
+}
+
+function reportNetwork(): void {
+  const listed = [...localFiles.entries()].sort().map(([n, c]) => n + (c > 1 ? 'x' + c : ''));
+  console.log(
+    `network remote=${remoteRequests.length} local-files=${localFiles.size} [${listed.join(', ')}]` +
+      (remoteRequests.length ? ' ' + JSON.stringify(remoteRequests.slice(0, 5)) : '')
+  );
+}
+
+// 库里硬编码的那条 jsDelivr 模板，取一个真实码位当反向对照
+const NETPROBE_JS =
+  `fetch('https://cdn.jsdelivr.net/npm/emoji-datasource-apple@16.0.0/img/apple/64/1f600.png', {cache:'no-store'})` +
+  ` .then(r => 'RESOLVED status=' + r.status) .catch(e => 'REJECTED ' + String(e && e.message).slice(0, 60))`;
+
+/**
+ * 表情面板自证：大表情 tab 每格有没有图 → 切到 表情 tab 量 picker → 用**原生 setter** 驱动搜索
+ * （直接 input.value= 会被 React 的 value tracker 当成没变，搜索根本不跑，2026-10-12 踩过）
+ * → 把 DOM 里出现过的 atlas 页各真解码一次（DOM 里有 .ep-glyph 只证明 React 挂上了）。
+ */
+const EMOJI_SELFTEST_JS = `(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const qa = (s) => [...document.querySelectorAll(s)];
+  const out = { bigTab: { cells: qa('.emoji-cell').length, sprite: qa('.emoji-cell .ep-glyph').length } };
+  try {
+    const tab = qa('.panel-tab').find((t) => t.textContent.trim() === '表情');
+    if (!tab) throw new Error('找不到「表情」tab，面板里的 tab 是: ' + qa('.panel-tab').map((t) => t.textContent).join('/'));
+    tab.click();
+    await sleep(500);
+    out.picker = {
+      cells: qa('.ep-picker [data-epr-part="emoji"]').length,
+      catIcons: qa('.ep-picker .ep-cat-icon').length,
+      skinTones: qa('.ep-picker [data-epr-part="skin-tone-button"]').length,
+      hasSearch: !!document.querySelector('.ep-picker input')
+    };
+    const input = document.querySelector('.ep-picker input');
+    if (!input) throw new Error('picker 里没有搜索框');
+    const setv = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setv.call(input, '笑脸');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(900);
+    out.searchZh = {
+      // 播报节点在库的 root 之外（aria-live 区），只在 .ep-picker 里找会读成 null
+      announced: [...document.querySelectorAll('*')].map((e) => (e.childNodes.length === 1 && e.firstChild && e.firstChild.nodeType === 3 ? e.textContent.trim() : '')).filter((t) => /个结果|没有匹配/.test(t))[0] || null,
+      cells: qa('.ep-picker [data-epr-part="emoji"]').length
+    };
+    // 从 background-image 里取 URL：不用正则 —— 这段是塞进模板字面量再注进页面的，
+    // 正则里的 \\) 会被转义成未配对的 )，整条脚本编译期就废（2026-10-12 踩过）。
+    const urls = [...new Set(qa('.ep-glyph').map((e) => {
+      const bg = getComputedStyle(e).backgroundImage;
+      return bg.startsWith('url("') ? bg.slice(5, -2) : bg.startsWith('url(') ? bg.slice(4, -1) : '';
+    }).filter(Boolean))];
+    out.decoded = [];
+    for (const u of urls) {
+      try { const im = new Image(); im.src = u; await im.decode(); out.decoded.push(u.split('/').pop() + '=' + im.naturalWidth + 'x' + im.naturalHeight); }
+      catch (err) { out.decoded.push('FAIL ' + String(err).slice(0, 40)); }
+    }
+  } catch (err) {
+    out.error = String(err && err.message ? err.message : err);
+  }
+  return out;
+})()`;
+
+ipcMain.handle('app:ping', (e) => {
   if (SELFTEST) {
-    console.log('selftest-ok');
-    setTimeout(() => app.quit(), 300);
+    const wc = e.sender;
+    void (async () => {
+      await new Promise((r) => setTimeout(r, 900));
+      try {
+        console.log('emoji ' + JSON.stringify(await wc.executeJavaScript(EMOJI_SELFTEST_JS)));
+      } catch (err) {
+        console.log('emoji ERROR ' + String(err));
+      }
+      if (NETPROBE) {
+        console.log('netprobe control-fetch=' + String(await wc.executeJavaScript(NETPROBE_JS)));
+      }
+      reportNetwork();
+      console.log('selftest-ok');
+      app.quit();
+    })();
   }
   return 'pong';
 });
@@ -1687,6 +1923,8 @@ void app.whenReady().then(() => {
     app.quit();
     return;
   }
+  // 零网络判据只在 file:// 交付路径上装（开发模式走 http://localhost 会被自己拦死）
+  if (!process.env.VITE_DEV_SERVER_URL) installNetworkGuard();
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

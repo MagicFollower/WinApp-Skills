@@ -1,0 +1,42 @@
+/* offline-emoji-picker 需要的最小样式。宿主已有的排版规则不要搬进来。
+   令牌都挂在 .ep-picker 作用域上，不污染 :root；宿主想换色只需在外面定义 --ep-*。 */
+
+.ep-picker {
+  /* 库自己拥有的外观令牌（这三个在 dist 里 grep 得到，别自己发明第四个） */
+  --epr-picker-border-color: transparent;
+  --epr-bg-color: var(--ep-surface, #ffffff);
+  --epr-category-label-bg-color: var(--ep-surface, #ffffff);
+
+  /* 弹层是宿主绝对定位的，宽高由这里给死，否则库会按内容撑开 */
+  width: 100% !important;
+  height: 360px !important;
+}
+
+/* 雪碧图格子。库的 cell 是 flex 容器，不加 flex:none 时固定的 30px 会被压缩成 24px，
+   字形右侧被切掉；display 必须是块级，行内 span 的宽高不生效（这条最容易漏）。
+   格子里现在有码位文本（SpriteCell / 大表情格子都往里放了字符）：透明 + overflow:hidden
+   让画出来的仍只是背景那一格，user-select 必须显式放开——body 是 none，这里不写 text
+   就拖不出选区、复制不到码字。font-size 按实测墨盒系数（宽 1.373 / 高 1.333 的几何均数）
+   缩回贴图 30px 的尺寸，选中时原生高亮正好盖住这一格，不会糊出一圈大方框。 */
+.ep-glyph {
+  display: block;
+  flex: none;
+  overflow: hidden;
+  color: transparent;
+  user-select: text;
+  font-size: calc(30px / 1.353);
+  line-height: 1.333;
+}
+/* 与气泡/输入框同一口径：选中时 Chrome 把前景换成系统 HighlightText，元素上的 color:transparent
+   被顶掉，Win11 彩色字形就翻到贴图上；只有 ::selection 自己的 color 压回透明才压得住。
+   底用半透明（实色 Highlight 会画在 background-image 之上，把这一格整个糊掉）。 */
+.ep-glyph::selection {
+  color: transparent;
+  background: color-mix(in srgb, Highlight 32%, transparent);
+}
+
+/* 消费方自绘的 cell 是裸 <button>，会继承 UA 边框。这里只重置 border——
+   background/hover 归库所有，靠 --epr-hover-bg-color 走，别抢。 */
+.ep-picker [data-epr-part='emoji'] {
+  border: 0;
+}

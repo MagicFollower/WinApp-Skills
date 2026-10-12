@@ -6,7 +6,9 @@ import { chatSubtitle, findChat, senderColor } from '../data/seed';
 import { palette } from '../lib/palette';
 import { reduceMotion } from '../lib/motionPref';
 import { useAppStore } from '../stores/app';
-import type { Message } from '../types';
+import { emojiGlyph } from '../emoji/atlas';
+import { EmojiGlyph } from '../emoji/SpriteCell';
+import type { GlyphSize, Message, MessagePart } from '../types';
 import {
   IconBell,
   IconDots,
@@ -17,6 +19,30 @@ import {
   IconSend,
   IconSmile,
 } from './Icons';
+
+/** 把草稿 DOM 读成分段:文本节点是 text 档,token 按自己的 data-size 成段,相邻同档合并。 */
+function draftParts(box: HTMLElement): MessagePart[] {
+  const parts: MessagePart[] = [];
+  for (const node of Array.from(box.childNodes)) {
+    const text = node.textContent ?? '';
+    if (!text) continue;
+    const size = node instanceof HTMLElement ? ((node.dataset.size as GlyphSize) ?? 'text') : 'text';
+    const last = parts[parts.length - 1];
+    /* 只并相邻的文本段。表情 token 一格一段,不能并:atlas 的键是按单格码位切的,
+       两格并成 "1f62e-200d-1f4a8-1f602" 就查不到贴图,发出去会掉回系统字形(实测)。 */
+    if (size === 'text' && last && last.size === 'text') last.text += text;
+    else parts.push({ text, size });
+  }
+  return parts;
+}
+
+/** 带分段的气泡逐段渲染:表情段走与面板同一张 atlas 的贴图,其余跟着气泡正文 14.5px。 */
+function bubbleText(msg: Message) {
+  if (!msg.parts) return msg.text;
+  return msg.parts.map((p, i) =>
+    p.size === 'text' ? p.text : <EmojiGlyph key={i} text={p.text} tier={p.size} />
+  );
+}
 
 function Bubble({ msg }: { msg: Message }) {
   if (msg.kind === 'bigemoji') {
@@ -58,20 +84,38 @@ function Bubble({ msg }: { msg: Message }) {
             }}
           />
         )}
-        <div className="text">{msg.text}</div>
+        <div className="text">{bubbleText(msg)}</div>
       </div>
     </div>
   );
 }
 
+/* 表情做成不可编辑的整块:一次退格删掉整个码位串,而不是像 <input> 那样逐 UTF-16
+   单元删、删进 ZWJ/变体选择器中间留下孤立代理对。外观与面板同一张 atlas(emojiGlyph),
+   data-size 是 draftParts 读回档位的唯一依据。 */
+function glyphToken(text: string, size: 'sm' | 'lg') {
+  const g = emojiGlyph(text, size);
+  const span = document.createElement('span');
+  span.className = g.className;
+  if (g.style) Object.assign(span.style, g.style);
+  span.dataset.size = size;
+  span.contentEditable = 'false';
+  span.textContent = text;
+  return span;
+}
+
 export function ChatArea() {
-  const { messages, send, togglePanel, draft, setDraft } = useAppStore();
+  const { messages, send, togglePanel } = useAppStore();
+  const draftQueue = useAppStore((s) => s.draftQueue);
+  const ackDraft = useAppStore((s) => s.ackDraft);
   const activeChatId = useAppStore((s) => s.activeChatId);
   const active = findChat(activeChatId);
   const theme = active.themeId;
   const [lastCovered, setLastCovered] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const appliedInsert = useRef<WeakSet<object>>(new WeakSet());
 
   useEffect(() => {
     document.documentElement.dataset.chatTheme = theme;
@@ -118,11 +162,30 @@ export function ChatArea() {
     syncJump();
   };
 
+  /* 面板那一格 → 按队列顺序落到框尾(和原来 appendDraft 的字符串拼接同位置:点格子会让输入框
+     失焦,光标本来就不在了)。去重按命令对象本身而不是"应用到第几号 id":id 计数器在 store 模块里、
+     这个游标在组件里,store 被热更替后 id 从 1 重来,游标还停在高值,会把新命令整批滤掉(实测点格子没反应)。 */
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    const pending = draftQueue.filter((d) => !appliedInsert.current.has(d));
+    if (!pending.length) return;
+    for (const d of pending) {
+      appliedInsert.current.add(d);
+      box.appendChild(
+        d.size === 'text' ? document.createTextNode(d.text) : glyphToken(d.text, d.size)
+      );
+    }
+    ackDraft(pending[pending.length - 1].id);
+  }, [draftQueue, ackDraft]);
+
   const submit = () => {
-    const t = draft.trim();
-    if (!t) return;
-    send(t);
-    setDraft('');
+    const box = boxRef.current;
+    if (!box) return;
+    const parts = draftParts(box);
+    if (!parts.map((p) => p.text).join('').trim()) return;
+    send(parts);
+    box.textContent = '';
   };
 
   const composerPill = (
@@ -134,15 +197,33 @@ export function ChatArea() {
         <IconImage />
       </button>
       <div className="composer-input">
-        <input
-          placeholder="消息"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+        {/* 单字号的 <input> 连"这一格是表情还是打字"都记不住,所以这里是 contenteditable:
+            打字/粘贴是文本节点,两档表情各是一个 token(.draft-sm 在框里与正文同字号,
+            但气泡要靠它才知道该放大谁)。内容不进 React 树 —— 框就是草稿的真源。 */}
+        <div
+          ref={boxRef}
+          className="draft-box"
+          contentEditable
+          suppressContentEditableWarning
+          role="textbox"
+          aria-label="消息"
+          data-placeholder="消息"
+          spellCheck={false}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
+            if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+            e.preventDefault();
+            submit();
+          }}
+          onPaste={(e) => {
+            e.preventDefault();
+            // 走 insertText 而不是自己拼 DOM:落点仍是光标位置,也留在撤销栈里。
+            const t = (e.clipboardData?.getData('text/plain') ?? '').replace(/[\r\n]+/g, ' ');
+            if (t) document.execCommand('insertText', false, t);
+          }}
+          onInput={() => {
+            const box = boxRef.current;
+            // 删空后 Chrome 留一个 <br> 撑场:：empty 失效,占位文案不会再出现。
+            if (box && !box.textContent && box.childNodes.length) box.textContent = '';
           }}
         />
         <button className="icon-btn" aria-label="表情" onClick={togglePanel}>

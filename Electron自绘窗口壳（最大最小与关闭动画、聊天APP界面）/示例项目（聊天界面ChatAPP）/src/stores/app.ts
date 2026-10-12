@@ -1,15 +1,16 @@
 import { create } from 'zustand';
-import type { ChatFilter, EmojiTab, Message } from '../types';
+import type { ChatFilter, EmojiTab, GlyphSize, Message, MessagePart } from '../types';
 import { QUICK_PHRASES, SEED_MESSAGES } from '../data/seed';
 
-const BIGEMOJI_RE = /^[\p{Extended_Pictographic}\d\s🀄️⃣*#]{1,8}$/u;
-
-function classify(text: string): Message['kind'] {
-  const t = text.trim();
-  if (t.length > 0 && t.length <= 8 && BIGEMOJI_RE.test(t) && !/[a-zA-Z\u4e00-\u9fff]/.test(t)) {
-    return 'bigemoji';
-  }
-  return 'text';
+/** 一条"把字符落进输入框"的命令:输入框是 contenteditable,DOM 才是草稿的真源,
+    store 里再存一份 draft 就会有两个真源(光标在中间时字符串拼接还会写错位置)。
+    存队列而不是单条:同一拍里连点两格,React 只会把最后一条送进渲染,前一条会丢(实测)。 */
+interface DraftInsert {
+  text: string;
+  /** 这一格从哪个字号档来的,气泡照同一档渲染(框内另有自己的两档) */
+  size: GlyphSize;
+  /** 单调递增:同一段文字连点两次也要当成新命令 */
+  id: number;
 }
 
 interface AppState {
@@ -21,7 +22,7 @@ interface AppState {
   emojiTab: EmojiTab;
   phrases: string[];
   phrasesOpen: boolean;
-  draft: string;
+  draftQueue: DraftInsert[];
   setFilter: (f: ChatFilter) => void;
   setSearch: (s: string) => void;
   selectChat: (id: string) => void;
@@ -30,12 +31,13 @@ interface AppState {
   togglePhrases: () => void;
   addPhrase: (p: string) => void;
   updatePhrase: (old: string, next: string) => void;
-  setDraft: (d: string) => void;
-  appendDraft: (t: string) => void;
-  send: (text: string) => void;
+  appendDraft: (t: string, size?: GlyphSize) => void;
+  ackDraft: (id: number) => void;
+  send: (parts: MessagePart[]) => void;
 }
 
 let seq = 100;
+let insertSeq = 0;
 
 export const useAppStore = create<AppState>((set) => ({
   filter: '全部',
@@ -43,10 +45,10 @@ export const useAppStore = create<AppState>((set) => ({
   activeChatId: 'c0',
   messages: SEED_MESSAGES,
   panelOpen: true,
-  emojiTab: '定制',
+  emojiTab: '大表情',
   phrases: [...QUICK_PHRASES],
   phrasesOpen: true,
-  draft: '',
+  draftQueue: [],
   setFilter: (filter) => set({ filter }),
   setSearch: (search) => set({ search }),
   selectChat: (activeChatId) => set({ activeChatId }),
@@ -61,9 +63,13 @@ export const useAppStore = create<AppState>((set) => ({
       const rest = s.phrases.filter((p) => p !== old);
       return { phrases: value && !rest.includes(value) ? [...rest, value] : rest };
     }),
-  setDraft: (draft) => set({ draft }),
-  appendDraft: (t) => set((s) => ({ draft: s.draft + t })),
-  send: (text) =>
+  appendDraft: (text, size = 'text') =>
+    set((s) => ({ draftQueue: [...s.draftQueue, { text, size, id: ++insertSeq }] })),
+  /* 输入框应用到这里就可以把旧的丢掉;按 id 过滤而不是清空,免得跨拍的插入被误删。 */
+  ackDraft: (id) => set((s) => ({ draftQueue: s.draftQueue.filter((d) => d.id > id) })),
+  /* 发出的消息一律是文本气泡:大小由分段自己带,不再用"整段长得像 emoji"去猜
+     (那条规则把 666 这类纯数字也判成了大表情)。 */
+  send: (parts) =>
     set((s) => ({
       messages: [
         ...s.messages,
@@ -72,8 +78,9 @@ export const useAppStore = create<AppState>((set) => ({
           chatId: s.activeChatId,
           sender: '我',
           own: true,
-          kind: classify(text),
-          text: text.trim(),
+          kind: 'text',
+          text: parts.map((p) => p.text).join(''),
+          parts,
           createdAt: Date.now(),
         },
       ],

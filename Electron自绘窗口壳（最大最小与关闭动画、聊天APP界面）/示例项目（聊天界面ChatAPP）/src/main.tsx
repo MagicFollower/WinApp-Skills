@@ -4,6 +4,7 @@ import App from './App';
 import './styles/tokens.css';
 import './styles/global.css';
 import './styles/app.css';
+import './emoji/picker.css';
 
 if (!('api' in window)) {
   document.documentElement.classList.add('browser');

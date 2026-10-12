@@ -288,6 +288,20 @@ html.browser .window {
   overflow: hidden;
   background: var(--chat-wash);
   transition: background var(--t-panel) var(--ease);
+  /* 输入栏四档高度。框里出现大表情贴图(48)时整条要长高,而消息列表的下沿、
+     底部渐隐带、回到底部钮都锚在这个高度上 —— 所以它们读同一组变量,不再各写各的常数。 */
+  --draft-h: 32px;
+  --pill-h: 40px;
+  --bar-h: 52px;
+  --wrap-h: 64px;
+}
+/* :has 而不是 JS 状态:框是 contenteditable,React 不重渲染它,只有 CSS 能实时看到里面有没有大表情。
+   选择器要能匹配到"回落成系统字形的数字",所以标记打在 data-size 上而不是贴图类上。 */
+.chat-area:has(.composer-input [data-size='lg']) {
+  --draft-h: 56px;
+  --pill-h: 64px;
+  --bar-h: 76px;
+  --wrap-h: 88px;
 }
 
 .chat-header {
@@ -396,8 +410,10 @@ html.browser .window {
    把首末条推回可见区,所以滚动内容会流经头部/输入栏下方而不是被它们截断。 */
 .message-list {
   flex: 1;
-  margin: -68px 0 -64px;
-  padding: 76px 20px 76px;
+  /* 上沿的 -68/76 是头部那条带;下沿两个值都从 --wrap-h 推:内容要能滑进输入栏底下(-wrap-h),
+     落底时又要留出输入栏实高 + 12 间距。输入栏长高时这两条跟着走,不用手改常数。 */
+  margin: -68px 0 calc(var(--wrap-h) * -1);
+  padding: 76px 20px calc(var(--wrap-h) + 12px);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -426,7 +442,7 @@ html.browser .window {
 }
 .chat-fade--bottom {
   bottom: 0;
-  height: 64px;
+  height: var(--wrap-h);
   background: linear-gradient(0deg, var(--chat-veil) 0%, transparent 100%);
   -webkit-mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.62) 42%, transparent 100%);
   mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.62) 42%, transparent 100%);
@@ -555,10 +571,13 @@ html.browser .window {
 }
 .composer {
   flex: 1;
+  /* min-width:auto 会把 nowrap 草稿的整段宽度当成下限,长文本一进来整条胶囊被顶宽、
+     溢出 .composer-wrap(实测胶囊 474→672)。输入框不是 <input> 了,这里得自己封顶。 */
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 52px;
+  height: var(--bar-h);
   padding: 0 8px;
   border-radius: var(--r-pill);
   background: var(--card-bg);
@@ -579,31 +598,106 @@ html.browser .window {
 }
 .composer-input {
   flex: 1;
+  /* 同 .composer:内层也要封下限,否则草稿一长它就盖过外层胶囊 */
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 40px;
+  height: var(--pill-h);
   padding: 0 6px 0 14px;
   border-radius: var(--r-pill);
   background: rgba(0, 0, 0, 0.05);
 }
-.composer-input input {
+.draft-box {
   flex: 1;
-  font-size: 14px;
   min-width: 0;
+  height: var(--draft-h);
+  line-height: var(--draft-h);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  outline: none;
+  /* body 上是 user-select:none,这里不翻回来就框不出选区 */
+  user-select: text;
+  cursor: text;
+}
+/* 两档字号的唯一真源：贴图与系统字形回落共用这一对数。
+   line-height 锁 1：气泡是 1.55，48 的字身不锁会把那行顶到 74 高。 */
+.glyph-sm {
+  font-size: 28px;
+}
+.glyph-lg {
+  font-size: 48px;
+}
+.glyph-sm,
+.glyph-lg {
+  line-height: 1;
+}
+/* 贴图：尺寸与背景由 emojiGlyph() 现算（与面板同一张 atlas、同一码位）。
+   里面的字符必须留着且带真实字号 —— 上一版用 font-size:0 藏字，结果那颗 emoji
+   鼠标拖选和双击都选不中（实测它的墨盒高 0），复制出来是空的。
+   现在留着字但涂成透明：盒宽仍由内联 style 钉死，超出的字身被 overflow:hidden 裁掉，
+   看不见但选得到、复制得到。 */
+.emoji-img {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: middle;
+  color: transparent;
+  /* 墨盒不只比贴图宽，还整体偏上：line-height:1 时 48px 档的墨盒顶边在盒上方 6px、底边差 7px。
+     实测 1.333 这一档三处都对齐(lg/sm 的 offTop=0、面板格 -1)，所以高亮正好压在图标上。
+     写在 .glyph-*{line-height:1} 之后：同为单类选择器，靠顺序取胜。 */
+  line-height: 1.333;
+}
+/* 选中态要单独管：Chrome 会把选中文字的前景换成系统 HighlightText，元素上的 color:transparent
+   在这一步被顶掉，Segoe 字形就整张画到贴图上(实测选中恐龙/企鹅时出现双层)。
+   只有把 ::selection 自己的 color 也压回透明才压得住；未选中时 color:transparent 本来就有效
+   (实测 11 个变体未选中态全是 atlas 脸，所以贴图不需要再叠一层 ::before 去盖)。
+   底色也不能用不透明值：系统 Highlight 画在元素 background-image 之上，整块糊死后贴图就没了
+   (实测实色 Highlight 只剩一块蓝)。color-mix(Highlight 32%) 既透出贴图又与文字选中同色系。 */
+.emoji-img::selection {
+  color: transparent;
+  background: color-mix(in srgb, Highlight 32%, transparent);
+}
+/* 气泡里 emoji 与文字按"画面底"对齐，不是按盒子底对齐。
+   盒底压在基线上(baseline)时实测还差 2.5px：贴图在 64 源格里底部留白(lg 最大 1.5px、sm 0.9px，
+   canvas 读 alpha 包围盒量的)，而文字墨底在基线下方(CJK 1px、数字/西文 0px，measureText 的
+   actualBoundingBoxDescent)。两个方向加起来 → 取 lg −2px / sm −1px，让画面底落在基线下 0.5/0.1px，
+   对 CJK 与数字两种文字都在 ±0.5px 内。
+   代价实测：单行气泡高 68→71.5(sm 48→49.5)、emoji 上下内边距视觉 10/13.5。
+   输入框不跟这条：那里 line-height 就是 --draft-h(56)，strut 的基线在盒腰上，往下挪会把 emoji
+   顶出盒外(实测 gapTop 0 且 scrollHeight>clientHeight 被裁)，所以框内保持 middle。 */
+.bubble .emoji-img {
+  vertical-align: -2px;
+}
+.bubble .emoji-img.glyph-sm {
+  vertical-align: -1px;
+}
+/* 格内那份透明文本只负责"被选中/被复制"，画出来的是背景那一格。它的选区墨盒按字体算：
+   实测 48px 字号 → 65.9×64（宽 1.373、高 1.333 倍），一选中就糊出比图标大一圈的方框。
+   把字号按两者的几何均数缩回贴图尺寸，原生高亮正好盖住图标，颜色与普通文字选中一致。
+   只缩 .emoji-img 这一支：没有 atlas 时 .glyph-* 的字号就是系统字形的字号，动了会把回落档改小。 */
+.emoji-img.glyph-sm {
+  font-size: calc(28px / 1.353);
+}
+.emoji-img.glyph-lg {
+  font-size: calc(48px / 1.353);
+}
+.draft-box:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
 }
 .composer-input:focus-within {
   box-shadow: 0 0 0 2px rgba(43, 182, 115, 0.35);
 }
 /* 上划后才浮出的「回到最新消息」钮:居中标在聊天区中线、输入栏上方 12px。
-   bottom 的 64 = .composer-wrap 的高(52 胶囊 + 12 下内边距),再加 12 间距;
+   bottom = --wrap-h(输入栏整条实高) + 12 间距;输入栏因为大表情长高时这里跟着走。
    锚在 .chat-area 而不是输入栏上,所以右栏展开让输入栏避让时它也不会跟着挪。
    动画必须自带 translateX(-50%):复用 msg-in/pop-in 那种写 transform 的关键帧会在
    播放期间顶掉居中位移,结束时又弹回来 —— 实测就是"出现后再往左偏一段"。 */
 .jump-bottom {
   position: absolute;
   left: 50%;
-  bottom: 76px;
+  bottom: calc(var(--wrap-h) + 12px);
   z-index: 3;
   transform: translateX(-50%);
   width: 32px;
@@ -670,6 +764,18 @@ html.browser .window {
 .panel-tabs {
   display: flex;
   gap: 2px;
+}
+/* 离线 emoji-picker 在面板里的落位：不是弹层，高度跟剩余空间走。
+   picker.css 里那条 `.ep-picker{height:360px !important}` 是给宿主弹层用的，
+   这里用 .right-panel .ep-picker(0,2,0 > 0,1,0) 同为 !important 按特异度取胜，不改模板文件。 */
+.panel-picker {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  --ep-surface: var(--card-bg);
+}
+.right-panel .ep-picker {
+  height: 100% !important;
 }
 .panel-tab {
   flex: 1;
